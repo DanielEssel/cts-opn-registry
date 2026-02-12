@@ -26,7 +26,7 @@ export default function RiderDetail({ rider }: RiderDetailProps) {
   ]
 
   return (
-    <div className="space-y-8 py-6">
+    <div className="space-y-8 py-6 p-4">
       {/* Profile Header */}
       <div className="flex flex-col items-center text-center space-y-3">
         <div className="h-24 w-24 rounded-full bg-slate-100 border-2 border-white shadow-md flex items-center justify-center overflow-hidden">

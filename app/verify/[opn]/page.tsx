@@ -1,27 +1,77 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
+import { db } from "@/lib/firebase"
+import { doc, getDoc } from "firebase/firestore"
 import { 
-  User, MapPin, Calendar, Fingerprint, 
-  Clock, Hash, BadgeCheck, Shield 
+  User, MapPin, Fingerprint, 
+  Hash, BadgeCheck, Shield, 
+  AlertTriangle, Loader2 
 } from "lucide-react"
 
 export default function RegistryLookupPage() {
   const params = useParams()
-  const opn = params.opn
+  const opn = params.opn as string
+  
+  const [rider, setRider] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [currentTime, setCurrentTime] = useState("")
 
-  // Data mapping based on your requirements
-  const rider = {
-    fullName: "KWESI MENSAH",
-    opnNumber: opn,
-    dateOfIssue: "2026-02-10",
-    dateOfExpiry: "2026-08-10",
-    district: "KUMASI METROPOLITAN",
-    idNumber: "GHA-72234023-1",
-    status: "ACTIVE" 
+  useEffect(() => {
+    // Update time only on client to avoid hydration mismatch
+    setCurrentTime(new Date().toLocaleTimeString())
+    
+    async function fetchRider() {
+  try {
+    const normalizedOpn = opn.toUpperCase().trim();
+
+    // STEP 1: Direct hit on the registry (Fastest)
+    const registryRef = doc(db, "opn_registry", normalizedOpn);
+    const registrySnap = await getDoc(registryRef);
+
+    if (registrySnap.exists()) {
+      const { riderId } = registrySnap.data();
+
+      // STEP 2: Direct hit on the rider document
+      const riderRef = doc(db, "riders", riderId);
+      const riderSnap = await getDoc(riderRef);
+
+      if (riderSnap.exists()) {
+        setRider(riderSnap.data());
+      }
+    } else {
+      setRider(null); // OPN doesn't exist in registry
+    }
+  } catch (error) {
+    console.error("Registry lookup error:", error);
+  } finally {
+    setLoading(false);
+  }
+}
+
+    if (opn) fetchRider();
+  }, [opn]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100">
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+        <p className="text-sm font-bold text-slate-500 mt-4 uppercase tracking-widest">Verifying OPN...</p>
+      </div>
+    )
   }
 
-  const currentTime = new Date().toLocaleTimeString();
+  if (!rider) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-red-50 p-6 text-center">
+        <AlertTriangle className="h-16 w-16 text-red-600 mb-4" />
+        <h1 className="text-2xl font-black text-red-900">INVALID PERMIT</h1>
+        <p className="text-red-700 mt-2 max-w-xs">This OPN was not found in the National Registry. Proceed with caution.</p>
+        <button onClick={() => window.location.reload()} className="mt-6 text-sm font-bold underline text-red-900">RETRY SCAN</button>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center pb-10">
@@ -35,7 +85,7 @@ export default function RegistryLookupPage() {
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[10px] text-slate-400 uppercase font-bold">Portal Access</p>
+          <p className="text-[10px] text-slate-400 uppercase font-bold">Official Access</p>
           <p className="text-[10px] font-mono">{currentTime}</p>
         </div>
       </div>
@@ -64,12 +114,14 @@ export default function RegistryLookupPage() {
 
             <div className="grid grid-cols-2 gap-6">
               <section className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date of Issue</label>
-                <p className="text-sm font-bold text-slate-800">{rider.dateOfIssue}</p>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Registration Date</label>
+                <p className="text-sm font-bold text-slate-800">
+                   {rider.createdAt?.toDate().toLocaleDateString('en-GB') || "N/A"}
+                </p>
               </section>
               <section className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date of Expiry</label>
-                <p className="text-sm font-bold text-red-600">{rider.dateOfExpiry}</p>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Permit Status</label>
+                <p className="text-sm font-bold text-green-600 uppercase italic">● {rider.status || "Active"}</p>
               </section>
             </div>
 
@@ -78,11 +130,11 @@ export default function RegistryLookupPage() {
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                   <MapPin className="h-3 w-3" /> District
                 </label>
-                <p className="text-sm font-bold text-slate-800 uppercase">{rider.district}</p>
+                <p className="text-sm font-bold text-slate-800 uppercase">{rider.town}</p>
               </section>
               <section className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                  <Fingerprint className="h-3 w-3" /> Ghana Card
+                  <Fingerprint className="h-3 w-3" /> ID Number
                 </label>
                 <p className="text-sm font-bold text-slate-800 uppercase">{rider.idNumber}</p>
               </section>
@@ -93,7 +145,7 @@ export default function RegistryLookupPage() {
           <div className="bg-blue-50/50 p-4 border-t border-blue-100 flex items-center gap-3">
             <BadgeCheck className="h-5 w-5 text-blue-600 shrink-0" />
             <p className="text-[10px] text-blue-700 leading-tight font-medium">
-              This record is digitally signed and pulled directly from the transport authority's secure database.
+              Verified record. This OPN is authenticated by the Permit-Track Digital Signature.
             </p>
           </div>
         </div>
@@ -102,7 +154,7 @@ export default function RegistryLookupPage() {
         <div className="p-4 bg-slate-200/50 rounded-2xl flex items-start gap-3">
           <div className="h-2 w-2 rounded-full bg-slate-400 mt-1 animate-pulse" />
           <p className="text-[9px] text-slate-500 font-medium uppercase leading-relaxed tracking-wider">
-            Unauthorized use or duplication of this digital permit is a punishable offense under the Electronic Communications Act.
+            Law Enforcement Note: Verify physical ID card against the name above.
           </p>
         </div>
       </div>
