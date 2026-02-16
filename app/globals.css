@@ -122,3 +122,49 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Grid Pattern Background */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgb(229, 231, 235) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(229, 231, 235) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-green-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-green-700;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-green-500 ring-offset-2;
+}
+
+/* Image hover effects */
+@keyframes imageZoom {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
