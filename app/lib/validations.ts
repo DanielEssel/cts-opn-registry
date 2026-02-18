@@ -10,11 +10,19 @@ const ghanaCardRegex = /^GHA-\d{9}-\d$/;
 // Phone number validation (10 digits)
 const phoneRegex = /^\d{10}$/;
 
+// Voter ID validation (10 digits)
+const voterIdRegex = /^\d{10}$/;
+
+// Passport validation (letter + digits, 7-9 chars)
+const passportRegex = /^[A-Z]\d{6,8}$/;
+
+// Driver's License validation: FAT-00000000-00000 (3 letters - 8 digits - 5 digits)
+const driversLicenseRegex = /^[A-Z]{3}-\d{8}-\d{5}$/;
+
 // ============================================================================
-// CONSTANTS
+// DISTRICT CODES
 // ============================================================================
 
-// District codes mapping for OPN generation
 export const DISTRICT_CODES: Record<string, string> = {
   "Accra Metro": "AM",
   Krowor: "KR",
@@ -31,15 +39,18 @@ export const DISTRICT_CODES: Record<string, string> = {
   "Ablekuma West": "AW",
 };
 
-// Vehicle category codes for OPN generation
+// ============================================================================
+// VEHICLE CATEGORY CODES
+// ============================================================================
+
 export const CATEGORY_CODES: Record<string, string> = {
-  Pragya: "P",
+  "Pragya": "P",
   "Motorbike/Okada": "M",
   "Tricycle/Aboboyaa": "T",
 };
 
 // ============================================================================
-// STEP 1: BIO DATA SCHEMA
+// BIO DATA SCHEMA
 // ============================================================================
 
 export const bioDataSchema = z.object({
@@ -53,7 +64,7 @@ export const bioDataSchema = z.object({
     .string()
     .regex(phoneRegex, "Phone number must be exactly 10 digits"),
 
-  idType: z.enum(["GHANA_CARD", "PASSPORT", "DRIVERS_LICENSE"], {
+  idType: z.enum(["GHANA_CARD", "VOTERS_ID", "PASSPORT"], {
     message: "Please select a valid ID type",
   }),
 
@@ -70,34 +81,41 @@ export const bioDataSchema = z.object({
     message: "Please select a gender",
   }),
 }).superRefine((data, ctx) => {
-  // Validate Ghana Card format
+
+  // ========================================================================
+  // GHANA CARD VALIDATION
+  // ========================================================================
   if (data.idType === "GHANA_CARD") {
     if (!ghanaCardRegex.test(data.idNumber)) {
       ctx.addIssue({
         path: ["idNumber"],
-        message: "Invalid Ghana Card format (GHA-XXXXXXXXX-X)",
+        message: "Invalid Ghana Card format. Expected: GHA-712014412-4",
         code: z.ZodIssueCode.custom,
       });
     }
   }
 
-  // Validate Passport format
+  // ========================================================================
+  // VOTER ID VALIDATION
+  // ========================================================================
+  if (data.idType === "VOTERS_ID") {
+    if (!voterIdRegex.test(data.idNumber)) {
+      ctx.addIssue({
+        path: ["idNumber"],
+        message: "Invalid Voter ID format. Expected: 4393000029 (10 digits)",
+        code: z.ZodIssueCode.custom,
+      });
+    }
+  }
+
+  // ========================================================================
+  // PASSPORT VALIDATION
+  // ========================================================================
   if (data.idType === "PASSPORT") {
-    if (data.idNumber.length < 6) {
+    if (!passportRegex.test(data.idNumber)) {
       ctx.addIssue({
         path: ["idNumber"],
-        message: "Invalid Passport number (minimum 6 characters)",
-        code: z.ZodIssueCode.custom,
-      });
-    }
-  }
-
-  // Validate Driver's License format
-  if (data.idType === "DRIVERS_LICENSE") {
-    if (data.idNumber.length < 5) {
-      ctx.addIssue({
-        path: ["idNumber"],
-        message: "Invalid Driver's License number",
+        message: "Invalid Passport format. Expected: G2282683 (1 letter + 6-8 digits)",
         code: z.ZodIssueCode.custom,
       });
     }
@@ -105,7 +123,7 @@ export const bioDataSchema = z.object({
 });
 
 // ============================================================================
-// STEP 2: LOCATION SCHEMA
+// LOCATION SCHEMA
 // ============================================================================
 
 export const locationSchema = z.object({
@@ -142,7 +160,7 @@ export const locationSchema = z.object({
 });
 
 // ============================================================================
-// STEP 3: VEHICLE INFO SCHEMA
+// VEHICLE INFO SCHEMA
 // ============================================================================
 
 export const vehicleInfoSchema = z.object({
@@ -167,14 +185,14 @@ export const vehicleInfoSchema = z.object({
 });
 
 // ============================================================================
-// STEP 4: COMPLIANCE SCHEMA
+// COMPLIANCE SCHEMA
 // ============================================================================
 
 export const complianceSchema = z.object({
   driversLicenseNumber: z
     .string()
-    .min(5, "License number must be at least 5 characters")
-    .max(20, "License number is too long"),
+    .min(16, "Driver's License number is required")
+    .max(16, "Driver's License must be exactly 16 characters"),
 
   licenseExpiryDate: z.string().refine((date) => {
     const expiry = new Date(date);
@@ -182,21 +200,38 @@ export const complianceSchema = z.object({
     return expiry > today;
   }, "License must not be expired"),
 
+  nextOfKinName: z
+    .string()
+    .min(3, "Next of kin name must be at least 3 characters")
+    .max(100, "Next of kin name is too long")
+    .regex(/^[a-zA-Z\s]+$/, "Name must contain only letters and spaces"),
+
   nextOfKinContact: z
     .string()
     .regex(phoneRegex, "Next of kin contact must be exactly 10 digits"),
 
   passportPhoto: z
     .instanceof(File)
-    .optional()
-    .or(z.string().url().optional())
     .refine(
-      (file) => {
-        if (typeof file === "string" || !file) return true;
-        return file.size <= 5 * 1024 * 1024; // 5MB max
-      },
+      (file) => file.size <= 5 * 1024 * 1024,
       "Photo must be less than 5MB"
+    )
+    .refine(
+      (file) => ["image/jpeg", "image/png"].includes(file.type),
+      "Photo must be JPEG or PNG"
     ),
+}).superRefine((data, ctx) => {
+
+  // ========================================================================
+  // DRIVER'S LICENSE VALIDATION
+  // ========================================================================
+  if (!driversLicenseRegex.test(data.driversLicenseNumber)) {
+    ctx.addIssue({
+      path: ["driversLicenseNumber"],
+      message: "Invalid Driver's License format. Expected: FAT-12345678-00001",
+      code: z.ZodIssueCode.custom,
+    });
+  }
 });
 
 // ============================================================================
@@ -267,52 +302,4 @@ export const validateRiderRegistration = async (data: unknown) => {
     }
     throw error;
   }
-};
-
-/**
- * Generate OPN code from registration data
- */
-export const generateOPN = (data: {
-  districtMunicipality: string;
-  vehicleCategory: string;
-}): string => {
-  const districtCode = DISTRICT_CODES[data.districtMunicipality] || "XX";
-  const categoryCode = CATEGORY_CODES[data.vehicleCategory] || "X";
-  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
-  const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
-
-  return `OPN-${districtCode}${categoryCode}${timestamp}${randomSuffix}`;
-};
-
-/**
- * Validate phone number
- */
-export const isValidPhoneNumber = (phone: string): boolean => {
-  return phoneRegex.test(phone);
-};
-
-/**
- * Validate Ghana Card number
- */
-export const isValidGhanaCard = (card: string): boolean => {
-  return ghanaCardRegex.test(card);
-};
-
-/**
- * Calculate age from date of birth
- */
-export const calculateAge = (dob: string): number => {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age--;
-  }
-
-  return age;
 };

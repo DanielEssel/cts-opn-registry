@@ -30,8 +30,8 @@ const DL_VALIDATION_RULES = {
   example: "FAT-12345678-00001",
   format: "AAA-XXXXXXXX-XXXXX",
   help: "3 letters, 8 digits, 5 digits (e.g., FAT-12345678-00001)",
-  totalChars: 16, // Including hyphens
-  actualDigits: 14, // 3 letters + 8 digits + 5 digits
+  totalChars: 18, // Including hyphens
+  actualDigits: 16, // 3 letters + 8 digits + 5 digits
 };
 
 // ============================================================================
@@ -249,46 +249,7 @@ export function ComplianceStep({ form }: ComplianceStepProps) {
         />
       </div>
 
-            {/* Driver's License Info Box */}
-      <div
-        className={`p-4 rounded-lg border-2 transition-colors ${
-          isDLValid && dlNumber
-            ? "bg-green-50 border-green-200"
-            : "bg-blue-50 border-blue-200"
-        }`}
-      >
-        <h4
-          className={`font-semibold mb-3 ${
-            isDLValid && dlNumber ? "text-green-900" : "text-blue-900"
-          }`}
-        >
-          Driver's License Format Guide
-        </h4>
-        <ul
-          className={`text-sm space-y-2 ${
-            isDLValid && dlNumber ? "text-green-800" : "text-blue-800"
-          }`}
-        >
-          <li>
-            ✓ Format:{" "}
-            <code
-              className={`px-2 py-1 rounded ml-2 font-mono font-bold ${
-                isDLValid && dlNumber ? "bg-green-100" : "bg-blue-100"
-              }`}
-            >
-              {DL_VALIDATION_RULES.example}
-            </code>
-          </li>
-          <li>✓ Pattern: 3 letters - 8 digits - 5 digits</li>
-          <li>✓ Input: {DL_VALIDATION_RULES.actualDigits} characters (auto-formatted)</li>
-          <li>✓ Display: {DL_VALIDATION_RULES.totalChars} characters (with hyphens)</li>
-          <li>✓ Example: {DL_VALIDATION_RULES.example}</li>
-          <li className="pt-2 font-semibold">
-            💡 Type 14 characters total, hyphens will auto-add
-          </li>
-        </ul>
-      </div>
-
+            
       {/* ========================================================================
           NEXT OF KIN INFO BOX
           ======================================================================== */}

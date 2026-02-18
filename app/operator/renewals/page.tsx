@@ -5,7 +5,7 @@ import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import OperatorNavbar from "@/components/operator/operator-navbar";
-import RenewalsTracker from "@/components/operator/renewals-tracker";
+import RenewalsTracker from "@/components/operator/StepIndicator";
 import { BadgeIcon, Mail, Phone, MapPin, Heart } from "lucide-react";
 import Link from "next/link";
 

@@ -269,20 +269,7 @@ export function BioDataStep({ form }: BioDataStepProps) {
                     )}
                   </div>
 
-                  {/* Help Text with Ghana Card specifics */}
-                  <p className="text-xs text-gray-500 mt-2">
-                    {idType === "GHANA_CARD" ? (
-                      <>
-                        {rule?.help}
-                        <br />
-                        <span className="text-blue-600 font-semibold mt-1 block">
-                          ℹ️ Type only the digits, GHA- and hyphens will be added automatically
-                        </span>
-                      </>
-                    ) : (
-                      rule?.help
-                    )}
-                  </p>
+                  
 
                   {/* Validation Message */}
                   {idNumber && idValidation && (
@@ -339,8 +326,8 @@ export function BioDataStep({ form }: BioDataStepProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Male">👨 Male</SelectItem>
-                  <SelectItem value="Female">👩 Female</SelectItem>
+                  <SelectItem value="Male"> Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
                   <SelectItem value="Other">⚧ Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -349,50 +336,6 @@ export function BioDataStep({ form }: BioDataStepProps) {
           )}
         />
       </div>
-
-      {/* ID Type Info Box */}
-      {currentIDRule && (
-        <div className={`mt-6 p-4 rounded-lg border-2 ${
-          isValid && idNumber
-            ? "bg-green-50 border-green-200"
-            : "bg-blue-50 border-blue-200"
-        }`}>
-          <h4 className={`font-semibold mb-2 ${
-            isValid && idNumber
-              ? "text-green-900"
-              : "text-blue-900"
-          }`}>
-            {currentIDRule.label} Information
-          </h4>
-          <ul className={`text-sm space-y-1 ${
-            isValid && idNumber
-              ? "text-green-800"
-              : "text-blue-800"
-          }`}>
-            <li>
-              ✓ Format: 
-              <code className={`px-2 py-1 rounded ml-2 font-mono font-bold ${
-                isValid && idNumber
-                  ? "bg-green-100"
-                  : "bg-blue-100"
-              }`}>
-                {currentIDRule.example}
-              </code>
-            </li>
-            <li>✓ Length: {currentIDRule.digitCount}</li>
-            <li>✓ {currentIDRule.help}</li>
-            {currentIDRule.autoFormat && (
-              <li className={`font-semibold mt-2 ${
-                isValid && idNumber
-                  ? "text-green-700"
-                  : "text-blue-600"
-              }`}>
-                ⚡ Auto-formatted - just type the digits!
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

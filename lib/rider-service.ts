@@ -179,9 +179,11 @@ export async function saveRiderRegistration(
       passportPhotoUrl = await uploadPassportPhoto(data.passportPhoto, data.idNumber);
     }
 
-    // 3. Prepare rider record with new schema
+    // 3. Prepare rider record with complete schema
     const riderRecord: RiderRecord = {
-      // Bio Data
+      // ====================================================================
+      // BIO DATA
+      // ====================================================================
       fullName: data.fullName,
       phoneNumber: data.phoneNumber,
       idType: data.idType,
@@ -189,24 +191,33 @@ export async function saveRiderRegistration(
       dateOfBirth: data.dateOfBirth,
       gender: data.gender,
 
-      // Location
+      // ====================================================================
+      // LOCATION
+      // ====================================================================
       region: data.region,
       districtMunicipality: data.districtMunicipality,
       residentialTown: data.residentialTown,
       town: data.residentialTown,
 
-      // Vehicle Info
+      // ====================================================================
+      // VEHICLE INFO
+      // ====================================================================
       vehicleCategory: data.vehicleCategory,
       plateNumber: data.plateNumber.toUpperCase(),
       chassisNumber: data.chassisNumber.toUpperCase(),
 
-      // Compliance
+      // ====================================================================
+      // COMPLIANCE
+      // ====================================================================
       driversLicenseNumber: data.driversLicenseNumber.toUpperCase(),
       licenseExpiryDate: data.licenseExpiryDate,
+      nextOfKinName: data.nextOfKinName,
       nextOfKinContact: data.nextOfKinContact,
       passportPhotoUrl,
 
-      // OPN & Status
+      // ====================================================================
+      // OPN & STATUS
+      // ====================================================================
       opn,
       opnPrefix,
       sequence,
@@ -294,6 +305,86 @@ export async function lookupByGhanaCard(
     };
   } catch (error) {
     console.error("❌ Error looking up rider by Ghana Card:", error);
+    return {
+      found: false,
+      error: "An error occurred while searching.",
+    };
+  }
+}
+
+/**
+ * Look up rider by Voter ID Number
+ */
+export async function lookupByVoterID(
+  idNumber: string
+): Promise<RiderLookupResult> {
+  try {
+    const ridersRef = collection(db, "riders");
+    const q = query(
+      ridersRef,
+      where("idNumber", "==", idNumber),
+      where("idType", "==", "VOTERS_ID"),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      return { found: false };
+    }
+
+    const docSnap = snapshot.docs[0];
+    const riderData = docSnap.data() as RiderRecord;
+
+    return {
+      found: true,
+      rider: {
+        ...riderData,
+        id: docSnap.id,
+      },
+    };
+  } catch (error) {
+    console.error("❌ Error looking up rider by Voter ID:", error);
+    return {
+      found: false,
+      error: "An error occurred while searching.",
+    };
+  }
+}
+
+/**
+ * Look up rider by Passport Number
+ */
+export async function lookupByPassport(
+  idNumber: string
+): Promise<RiderLookupResult> {
+  try {
+    const ridersRef = collection(db, "riders");
+    const q = query(
+      ridersRef,
+      where("idNumber", "==", idNumber),
+      where("idType", "==", "PASSPORT"),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      return { found: false };
+    }
+
+    const docSnap = snapshot.docs[0];
+    const riderData = docSnap.data() as RiderRecord;
+
+    return {
+      found: true,
+      rider: {
+        ...riderData,
+        id: docSnap.id,
+      },
+    };
+  } catch (error) {
+    console.error("❌ Error looking up rider by Passport:", error);
     return {
       found: false,
       error: "An error occurred while searching.",
@@ -423,6 +514,26 @@ export function isPermitExpired(expiryDate: string): boolean {
  * Calculate days until expiry
  */
 export function daysUntilExpiry(expiryDate: string): number {
+  const expiry = new Date(expiryDate);
+  const today = new Date();
+  const diffTime = expiry.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
+/**
+ * Check if license is expired
+ */
+export function isLicenseExpired(expiryDate: string): boolean {
+  const expiry = new Date(expiryDate);
+  const today = new Date();
+  return expiry < today;
+}
+
+/**
+ * Calculate days until license expiry
+ */
+export function daysUntilLicenseExpiry(expiryDate: string): number {
   const expiry = new Date(expiryDate);
   const today = new Date();
   const diffTime = expiry.getTime() - today.getTime();

@@ -11,11 +11,8 @@ import {
   LogOut,
   Menu,
   X,
-  RefreshCw,
   FileText,
   BarChart3,
-  CheckCircle2,
-  AlertCircle,
   Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,36 +33,22 @@ interface OperatorProfile {
 }
 
 interface NavStats {
-  pendingRenewals: number;
   todayRegistrations: number;
-  approvalsPending: number;
 }
 
+// OPERATOR ONLY: Register Driver + Daily Report
 const navItems = [
   {
     label: "Register Driver",
     href: "/operator/register",
     icon: FileText,
+    description: "Register new riders for OPN permits",
   },
   {
     label: "Daily Report",
     href: "/operator/daily-report",
     icon: BarChart3,
-  },
-  {
-    label: "Renewals",
-    href: "/operator/renewals",
-    icon: RefreshCw,
-  },
-  {
-    label: "OPN Issuance",
-    href: "/operator/opn-issuance",
-    icon: CheckCircle2,
-  },
-  {
-    label: "Approvals",
-    href: "/operator/approvals",
-    icon: AlertCircle,
+    description: "View today's registration activity",
   },
 ];
 
@@ -74,9 +57,7 @@ export default function OperatorNavbar() {
   const pathname = usePathname();
   const [profile, setProfile] = useState<OperatorProfile | null>(null);
   const [stats, setStats] = useState<NavStats>({
-    pendingRenewals: 0,
     todayRegistrations: 0,
-    approvalsPending: 0,
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -93,6 +74,13 @@ export default function OperatorNavbar() {
 
           if (isMounted && docSnap.exists()) {
             const data = docSnap.data();
+            
+            // Verify operator role
+            if (data.role !== "Operator" && data.role !== "District Admin") {
+              router.push("/login");
+              return;
+            }
+
             setProfile({
               fullName: data.fullName || "Operator",
               email: auth.currentUser.email || "",
@@ -111,20 +99,19 @@ export default function OperatorNavbar() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [router]);
 
-  // Fetch stats with real-time listener
+  // Fetch stats with real-time listener (today's registrations only)
   useEffect(() => {
     if (!auth.currentUser || !profile) return;
 
     let isMounted = true;
 
-    // Fetch today's registrations
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const ridersRef = collection(db, "riders");
-    
+
     const q = query(
       ridersRef,
       where("createdBy", "==", auth.currentUser.uid)
@@ -136,8 +123,6 @@ export default function OperatorNavbar() {
         if (!isMounted) return;
 
         let todayCount = 0;
-        let renewalCount = 0;
-        let pendingCount = 0;
 
         snapshot.docs.forEach((doc) => {
           const data = doc.data();
@@ -149,28 +134,10 @@ export default function OperatorNavbar() {
               todayCount++;
             }
           }
-
-          // Count pending renewals
-          if (data.expiryDate && data.status === "Active") {
-            const expiryDate = new Date(data.expiryDate);
-            const thirtyDaysFromNow = new Date(
-              today.getTime() + 30 * 24 * 60 * 60 * 1000
-            );
-            if (expiryDate <= thirtyDaysFromNow && expiryDate > today) {
-              renewalCount++;
-            }
-          }
-
-          // Count pending approvals
-          if (data.status === "Pending") {
-            pendingCount++;
-          }
         });
 
         setStats({
           todayRegistrations: todayCount,
-          pendingRenewals: renewalCount,
-          approvalsPending: pendingCount,
         });
 
         setLoading(false);
@@ -202,7 +169,6 @@ export default function OperatorNavbar() {
     return pathname === href || pathname.startsWith(href);
   };
 
-  // Profile avatar with memoization to prevent re-renders
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "OP";
     return name
@@ -221,7 +187,7 @@ export default function OperatorNavbar() {
           <div className="flex items-center justify-between gap-6">
             {/* LEFT - LOGO & TITLE */}
             <Link
-              href="/register"
+              href="/operator/register"
               className="flex items-center gap-3 flex-shrink-0 group"
             >
               <div className="h-10 w-10 rounded-lg bg-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
@@ -229,11 +195,11 @@ export default function OperatorNavbar() {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-base font-bold text-slate-900">OPN Registry</h1>
-                <p className="text-xs text-slate-500 font-medium">Operator Portal</p>
+                <p className="text-xs text-slate-500 font-medium">Operator</p>
               </div>
             </Link>
 
-            {/* CENTER - NAVIGATION ITEMS (Desktop) */}
+            {/* CENTER - NAVIGATION ITEMS (Desktop) - Simplified */}
             <div className="hidden lg:flex items-center gap-0 flex-1 ml-8">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -242,6 +208,7 @@ export default function OperatorNavbar() {
                 return (
                   <Link key={item.href} href={item.href} prefetch={true}>
                     <button
+                      title={item.description}
                       className={`px-4 py-2 flex items-center gap-2 text-sm font-semibold border-b-2 transition-all ${
                         isActive
                           ? "border-green-600 text-green-700 bg-green-50/50"
@@ -258,13 +225,13 @@ export default function OperatorNavbar() {
 
             {/* RIGHT - PROFILE & ACTIONS */}
             <div className="flex items-center gap-3 ml-auto">
-              {/* Notifications */}
-              <button className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors hidden sm:block">
-                <Bell className="h-5 w-5 text-slate-600" />
-                {stats.approvalsPending > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                )}
-              </button>
+              {/* Info Badge - Show today's count */}
+              <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-semibold text-blue-900">
+                  {loading ? "..." : stats.todayRegistrations} today
+                </span>
+              </div>
 
               {/* Profile Dropdown */}
               <DropdownMenu>
@@ -283,59 +250,60 @@ export default function OperatorNavbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-4 py-3 border-b">
-                    <p className="font-semibold text-slate-900">
+                  {/* Profile Info */}
+                  <div className="px-4 py-3 border-b bg-gradient-to-br from-green-50 to-emerald-50">
+                    <p className="font-bold text-slate-900">
                       {profile?.fullName || "Operator"}
                     </p>
                     <p className="text-xs text-slate-600 mt-1">{profile?.email}</p>
-                    <p className="text-xs text-slate-500 mt-1 font-medium">
+                    <p className="text-xs text-green-700 font-semibold mt-2 uppercase tracking-wider">
                       📍 {profile?.entity}
                     </p>
                     {profile?.phone && (
-                      <p className="text-xs text-slate-500 mt-1">📱 {profile.phone}</p>
+                      <p className="text-xs text-slate-600 mt-1">📱 {profile.phone}</p>
                     )}
                   </div>
 
-                  {/* Quick Stats in Dropdown */}
+                  {/* Today's Stats */}
                   <div className="px-4 py-3 border-b space-y-2">
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">
+                      Today's Summary
+                    </p>
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-700 font-medium">
-                        Today's Registrations:
-                      </span>
-                      <Badge className="bg-blue-100 text-blue-700 font-semibold">
+                      <span className="text-slate-600">Registrations:</span>
+                      <Badge className="bg-blue-100 text-blue-700 font-bold">
                         {loading ? "..." : stats.todayRegistrations}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-700 font-medium">Pending Renewals:</span>
-                      <Badge className="bg-orange-100 text-orange-700 font-semibold">
-                        {loading ? "..." : stats.pendingRenewals}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-700 font-medium">Approvals Pending:</span>
-                      <Badge className="bg-red-100 text-red-700 font-semibold">
-                        {loading ? "..." : stats.approvalsPending}
                       </Badge>
                     </div>
                   </div>
 
                   <DropdownMenuSeparator />
 
+                  {/* Quick Actions */}
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/operator/profile"
-                      className="font-medium text-slate-900 cursor-pointer"
+                      href="/operator/register"
+                      className="font-medium text-slate-900 cursor-pointer py-2"
                     >
-                      Profile Settings
+                      📝 Quick Register
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/operator/daily-report"
+                      className="font-medium text-slate-900 cursor-pointer py-2"
+                    >
+                      📊 View Report
                     </Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator />
 
+                  {/* Logout */}
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="text-red-600 cursor-pointer font-medium"
+                    className="text-red-600 cursor-pointer font-bold py-2"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
@@ -372,25 +340,39 @@ export default function OperatorNavbar() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <button
-                      className={`w-full px-4 py-2 flex items-center gap-2 text-sm font-semibold rounded transition-colors ${
+                      className={`w-full px-4 py-3 flex items-center gap-2 text-sm font-semibold rounded transition-colors ${
                         isActive
                           ? "bg-green-50 text-green-700"
                           : "text-slate-600 hover:bg-slate-50"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
-                      {item.label}
+                      <div className="text-left">
+                        <p>{item.label}</p>
+                        <p className="text-xs text-gray-500 font-normal">{item.description}</p>
+                      </div>
                     </button>
                   </Link>
                 );
               })}
+
+              {/* Mobile Stats */}
+              <div className="px-4 py-3 bg-blue-50 border border-blue-200 rounded mx-2 mt-2">
+                <p className="text-xs font-bold text-blue-900 uppercase mb-2">Today</p>
+                <p className="text-sm text-blue-700 font-bold">
+                  {loading ? "..." : stats.todayRegistrations} Registrations
+                </p>
+              </div>
+
               <DropdownMenuSeparator className="my-2" />
+
+              {/* Mobile Logout */}
               <button
                 onClick={() => {
                   handleLogout();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded flex items-center gap-2 text-sm font-semibold transition-colors"
+                className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded flex items-center gap-2 text-sm font-semibold transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 Logout

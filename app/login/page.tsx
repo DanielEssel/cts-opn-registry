@@ -5,26 +5,24 @@ import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   BadgeIcon,
-  User,
+  Mail,
   Lock,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   Eye,
   EyeOff,
-  Shield,
-  Users,
-  Zap,
-  BarChart3,
-  FileText,
+  ArrowRight,
 } from "lucide-react";
+
+// ============================================================================
+// LOGIN PAGE
+// ============================================================================
 
 export default function LoginPage() {
   const [userType, setUserType] = useState<"admin" | "operator">("operator");
@@ -34,6 +32,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  // ========================================================================
+  // HANDLE LOGIN
+  // ========================================================================
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,13 +64,10 @@ export default function LoginPage() {
       if (userType === "admin") {
         // Check if user is Super Admin or Admin
         if (userRole === "Super Admin" || userRole === "Admin") {
-          // Navigate to admin dashboard
           router.push("/dashboard");
         } else {
-          // User tried to login as admin but doesn't have admin role
-          setError("You do not have administrator privileges. Please login as Operator.");
+          setError("You do not have administrator privileges.");
           setLoading(false);
-          // Sign out the user
           await auth.signOut();
           return;
         }
@@ -79,20 +78,17 @@ export default function LoginPage() {
           userRole === "District Admin" ||
           userRole === "Super Admin"
         ) {
-          // Navigate to operator dashboard
-          router.push("/registration");
+          router.push("/operator/register");
         } else {
-          // User tried to login as operator but doesn't have operator role
-          setError("Invalid user type for operator login. Please try administrator login.");
+          setError("Invalid user type for operator login.");
           setLoading(false);
-          // Sign out the user
           await auth.signOut();
           return;
         }
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      
+
       // Handle specific Firebase errors
       if (err.code === "auth/user-not-found") {
         setError("No account found with this email address.");
@@ -105,291 +101,196 @@ export default function LoginPage() {
       } else {
         setError("Login failed. Please check your credentials and try again.");
       }
-      
+
       setLoading(false);
     }
   };
 
-  const features =
-    userType === "admin"
-      ? [
-          {
-            icon: Users,
-            title: "Rider Management",
-            description: "Manage all registered riders across districts",
-          },
-          {
-            icon: BarChart3,
-            title: "System Analytics",
-            description: "View consolidated reporting and insights",
-          },
-          {
-            icon: FileText,
-            title: "Audit Trail",
-            description: "Track all administrative activities",
-          },
-          {
-            icon: Zap,
-            title: "Full Control",
-            description: "Complete system administration access",
-          },
-        ]
-      : [
-          {
-            icon: BadgeIcon,
-            title: "Register Riders",
-            description: "Quick permit registration for riders",
-          },
-          {
-            icon: FileText,
-            title: "Manage Renewals",
-            description: "Process permit renewals efficiently",
-          },
-          {
-            icon: BarChart3,
-            title: "Local Analytics",
-            description: "Track local registration statistics",
-          },
-          {
-            icon: CheckCircle2,
-            title: "Real-time Updates",
-            description: "Get instant status notifications",
-          },
-        ];
+  // ========================================================================
+  // RENDER
+  // ========================================================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse delay-500" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-6xl">
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* LEFT SIDE - ILLUSTRATION & GUIDE */}
-          <div className="hidden lg:flex flex-col justify-center space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
-            {/* Branding */}
-            <div className="space-y-4">
-              <div className="inline-flex items-center justify-center">
-                <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-2xl shadow-green-500/50">
-                  <Shield className="h-10 w-10 text-white" />
-                </div>
-              </div>
-              <h1 className="text-5xl font-black text-white tracking-tight">
-                OPN Registry
-              </h1>
-              <p className="text-xl text-slate-300 font-semibold">
-                Operating Permit Management System
-              </p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col">
+      {/* HEADER */}
+      <div className="border-b border-slate-200 bg-white sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg">
+              <BadgeIcon className="h-6 w-6 text-white" />
             </div>
-
-            {/* Features List */}
-            <div className="space-y-4">
-              {features.map((feature, idx) => {
-                const Icon = feature.icon;
-                return (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group cursor-pointer"
-                  >
-                    <div className="p-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl group-hover:from-green-500/40 group-hover:to-emerald-500/40 transition-all flex-shrink-0">
-                      <Icon className="h-6 w-6 text-green-400" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-white text-sm">
-                        {feature.title}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Security Badge */}
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 backdrop-blur-xl">
-              <div className="flex items-center gap-3 mb-2">
-                <Shield className="h-5 w-5 text-blue-400" />
-                <p className="font-bold text-white text-sm">Enterprise Security</p>
-              </div>
-              <p className="text-xs text-slate-300">
-                Military-grade encryption • Two-factor authentication • Audit logging • ISO compliant
-              </p>
-            </div>
-          </div>
-
-          {/* RIGHT SIDE - LOGIN FORM */}
-          <div className="animate-in fade-in slide-in-from-right-8 duration-700">
-            {/* Tab Switch */}
-            <div className="mb-8">
-              <div className="flex gap-3 p-1.5 bg-white/5 border border-white/10 rounded-xl backdrop-blur-xl">
-                {[
-                  { id: "operator", label: "Operator" },
-                  { id: "admin", label: "Administrator" },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setUserType(tab.id as "admin" | "operator");
-                      setError(""); // Clear error when switching tabs
-                    }}
-                    className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
-                      userType === tab.id
-                        ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/50"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* LOGIN CARD */}
-            <Card className="border-white/10 bg-white/5 backdrop-blur-2xl shadow-2xl rounded-3xl overflow-hidden">
-              {/* Card Header */}
-              <CardHeader className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-b border-white/10 px-8 py-8">
-                <CardTitle className="text-3xl font-black text-white mb-2">
-                  Welcome Back
-                </CardTitle>
-                <p className="text-sm text-slate-300">
-                  {userType === "admin"
-                    ? "Sign in to system administration dashboard"
-                    : "Sign in to your operator account"}
-                </p>
-              </CardHeader>
-
-              {/* Card Content */}
-              <CardContent className="p-8">
-                <form onSubmit={handleLogin} className="space-y-6">
-                  {/* EMAIL FIELD */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-white uppercase tracking-widest">
-                      Email Address
-                    </label>
-                    <div className="relative group">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-green-400 transition-colors group-focus-within:text-green-300" />
-                      <Input
-                        type="email"
-                        placeholder={
-                          userType === "admin"
-                            ? "admin@opn.gov.gh"
-                            : "operator@opn.gov.gh"
-                        }
-                        className="pl-12 h-12 bg-white/5 border-2 border-white/10 text-white rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/30 transition-all placeholder:text-slate-500"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={loading}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* PASSWORD FIELD */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-white uppercase tracking-widest">
-                      Password
-                    </label>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-green-400 transition-colors group-focus-within:text-green-300" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••••••"
-                        className="pl-12 pr-12 h-12 bg-white/5 border-2 border-white/10 text-white rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/30 transition-all placeholder:text-slate-500"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={loading}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-green-400 transition-colors"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-5 w-5" />
-                        ) : (
-                          <Eye className="h-5 w-5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* ERROR ALERT */}
-                  {error && (
-                    <Alert className="bg-red-500/10 border-2 border-red-500/20 rounded-xl animate-in shake duration-300">
-                      <AlertCircle className="h-5 w-5 text-red-400" />
-                      <AlertDescription className="text-red-300 font-semibold ml-3">
-                        {error}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* SIGN IN BUTTON */}
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl shadow-2xl shadow-green-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-8 text-base"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                        Authenticating...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-5 w-5 mr-2" />
-                        Sign In as {userType === "admin" ? "Administrator" : "Operator"}
-                      </>
-                    )}
-                  </Button>
-
-                  {/* FORGOT PASSWORD */}
-                  <div className="text-center pt-2">
-                    <a
-                      href="#"
-                      className="text-sm text-green-400 hover:text-green-300 font-semibold transition-colors"
-                    >
-                      Forgot your password?
-                    </a>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-
-            {/* SECURITY INFO - Mobile Version */}
-            <div className="mt-6 p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl lg:hidden">
-              <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">
-                    Security Notice
-                  </p>
-                  <p className="text-xs text-slate-300">
-                    All access attempts are monitored and logged. Unauthorized access is prohibited.
-                  </p>
-                </div>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">OPN Registry</h1>
+              <p className="text-xs text-slate-500">Operating Permit Management System</p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* FOOTER */}
-        <div className="mt-12 text-center border-t border-white/10 pt-6">
-          <p className="text-xs text-slate-400 font-medium">
-            &copy; 2024 OPN Registry System • All rights reserved • Version 2.0
+      {/* MAIN CONTENT */}
+      <div className="flex-1 flex items-center justify-center p-4 py-12">
+        <Card className="w-full max-w-md border-0 shadow-lg">
+          <CardContent className="p-8">
+            {/* WELCOME MESSAGE */}
+            <div className="mb-8 text-center">
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome</h2>
+              <p className="text-sm text-slate-500">
+                Sign in to your account to continue
+              </p>
+            </div>
+
+            {/* USER TYPE TOGGLE */}
+            <div className="mb-8 p-1 bg-slate-100 rounded-lg flex gap-1">
+              {[
+                { id: "operator", label: "Operator" },
+                { id: "admin", label: "Admin" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setUserType(tab.id as "admin" | "operator");
+                    setError("");
+                  }}
+                  className={`flex-1 py-2 px-3 rounded-md font-semibold text-sm transition-all ${
+                    userType === tab.id
+                      ? "bg-white text-green-600 shadow-sm border border-green-200"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* ERROR ALERT */}
+            {error && (
+              <Alert className="mb-6 bg-red-50 border border-red-200 rounded-lg">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-700 text-sm ml-3">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* LOGIN FORM */}
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* EMAIL FIELD */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                  <Input
+                    type="email"
+                    placeholder={
+                      userType === "admin"
+                        ? "admin@example.com"
+                        : "operator@example.com"
+                    }
+                    className="pl-10 h-11 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* PASSWORD FIELD */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••••••"
+                    className="pl-10 pr-10 h-11 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* REMEMBER ME */}
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="rounded border-slate-300" />
+                  <span className="text-slate-600">Remember me</span>
+                </label>
+                <a
+                  href="#"
+                  className="text-green-600 hover:text-green-700 font-semibold"
+                >
+                  Forgot password?
+                </a>
+              </div>
+
+              {/* SIGN IN BUTTON */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all mt-6 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* DIVIDER */}
+            <div className="my-6 flex items-center gap-3">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-xs text-slate-500">Version 2.0</span>
+              <div className="flex-1 h-px bg-slate-200" />
+            </div>
+
+            {/* INFO BOX */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+              <p className="text-xs text-blue-700 font-semibold">
+                💡 Demo Credentials
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Operator: operator@test.com
+                <br />
+                Admin: admin@test.com
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* FOOTER */}
+      <div className="border-t border-slate-200 bg-white py-6">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-xs text-slate-500">
+            &copy; 2026 OPN Registry System • All rights reserved
           </p>
         </div>
       </div>
-
-      {/* Animated corner decorations */}
-      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-green-500/20 to-transparent rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-emerald-500/20 to-transparent rounded-full blur-3xl pointer-events-none" />
     </div>
   );
 }

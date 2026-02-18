@@ -24,6 +24,7 @@ import {
   vehicleInfoSchema,
   complianceSchema,
 } from "@/app/lib/validations";
+
 import { saveRiderRegistration } from "@/lib/rider-service";
 import { StepIndicator } from "./Step-Indicator";
 import { BioDataStep } from "./steps/bio-data-step";
@@ -31,6 +32,10 @@ import { LocationStep } from "./steps/location-step";
 import { VehicleInfoStep } from "./steps/vehicle-info-step";
 import { ComplianceStep } from "./steps/compliance-step";
 import { PreviewStep } from "./steps/preview-step";
+
+// ============================================================================
+// REGISTRATION STEPS
+// ============================================================================
 
 const STEPS = [
   { id: 1, title: "Bio Data", description: "Personal Information" },
@@ -40,31 +45,46 @@ const STEPS = [
   { id: 5, title: "Review", description: "Verify Information" },
 ];
 
+// ============================================================================
+// REGISTRATION FORM COMPONENT
+// ============================================================================
+
 export function RegistrationForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [generatedOPN, setGeneratedOPN] = useState("");
+  const [generatedRiderId, setGeneratedRiderId] = useState("");
   const [error, setError] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const form = useForm<RiderRegistrationData>({
     resolver: zodResolver(riderRegistrationSchema),
     defaultValues: {
-      region: "Greater Accra",
+      // Bio Data
       fullName: "",
       phoneNumber: "",
-      ghanaCardNumber: "",
+      idType: undefined,
+      idNumber: "",
       dateOfBirth: "",
       gender: undefined,
+
+      // Location
+      region: "Greater Accra",
       districtMunicipality: undefined,
       residentialTown: "",
+
+      // Vehicle Info
       vehicleCategory: undefined,
       plateNumber: "",
       chassisNumber: "",
+
+      // Compliance
       driversLicenseNumber: "",
       licenseExpiryDate: "",
+      nextOfKinName: "",
       nextOfKinContact: "",
+      passportPhoto: undefined,
     },
     mode: "onChange",
   });
@@ -83,29 +103,35 @@ export function RegistrationForm() {
     }
   });
 
-  // Validate current step before proceeding
+  // ========================================================================
+  // VALIDATE STEP
+  // ========================================================================
+
+  /**
+   * Validate current step before proceeding
+   */
   const validateStep = async (step: number): Promise<boolean> => {
     let fieldsToValidate: (keyof RiderRegistrationData)[] = [];
 
     switch (step) {
       case 1:
         fieldsToValidate = Object.keys(
-          bioDataSchema.shape,
+          bioDataSchema.shape
         ) as (keyof RiderRegistrationData)[];
         break;
       case 2:
         fieldsToValidate = Object.keys(
-          locationSchema.shape,
+          locationSchema.shape
         ) as (keyof RiderRegistrationData)[];
         break;
       case 3:
         fieldsToValidate = Object.keys(
-          vehicleInfoSchema.shape,
+          vehicleInfoSchema.shape
         ) as (keyof RiderRegistrationData)[];
         break;
       case 4:
         fieldsToValidate = Object.keys(
-          complianceSchema.shape,
+          complianceSchema.shape
         ) as (keyof RiderRegistrationData)[];
         break;
       case 5:
@@ -116,6 +142,10 @@ export function RegistrationForm() {
     const result = await form.trigger(fieldsToValidate);
     return result;
   };
+
+  // ========================================================================
+  // NAVIGATION HANDLERS
+  // ========================================================================
 
   const handleNext = async () => {
     const isValid = await validateStep(currentStep);
@@ -138,6 +168,10 @@ export function RegistrationForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // ========================================================================
+  // SUBMIT HANDLER
+  // ========================================================================
+
   const onSubmit = async (data: RiderRegistrationData) => {
     setIsSubmitting(true);
     setError("");
@@ -147,23 +181,30 @@ export function RegistrationForm() {
 
       if (result.success) {
         setGeneratedOPN(result.opn);
+        setGeneratedRiderId(result.riderId);
         setSubmitSuccess(true);
         form.reset();
         setPhotoPreview(null);
         window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        setError(result.error || "Failed to register rider. Please try again.");
       }
     } catch (err) {
       console.error("Registration error:", err);
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to register rider. Please try again.",
+          : "Failed to register rider. Please try again."
       );
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // ========================================================================
+  // RENDER STEP
+  // ========================================================================
 
   const renderStep = () => {
     switch (currentStep) {
@@ -183,6 +224,10 @@ export function RegistrationForm() {
         return null;
     }
   };
+
+  // ========================================================================
+  // SUCCESS SCREEN
+  // ========================================================================
 
   if (submitSuccess) {
     return (
@@ -219,6 +264,12 @@ export function RegistrationForm() {
               <p className="text-4xl md:text-5xl font-bold text-green-700 font-mono tracking-wider break-all">
                 {generatedOPN}
               </p>
+              {generatedRiderId && (
+                <div className="mt-4 pt-4 border-t border-green-200">
+                  <p className="text-xs text-green-600 mb-1">Rider ID</p>
+                  <p className="text-sm font-mono text-green-700">{generatedRiderId}</p>
+                </div>
+              )}
             </div>
 
             {/* Info Cards */}
@@ -250,6 +301,7 @@ export function RegistrationForm() {
                 onClick={() => {
                   setSubmitSuccess(false);
                   setGeneratedOPN("");
+                  setGeneratedRiderId("");
                   setCurrentStep(1);
                 }}
                 size="lg"
@@ -273,13 +325,18 @@ export function RegistrationForm() {
     );
   }
 
+  // ========================================================================
+  // REGISTRATION FORM
+  // ========================================================================
+
   return (
     <Card className="max-w-5xl mx-auto shadow-xl border-2 border-gray-100">
+      {/* Header */}
       <CardHeader className="border-b bg-gradient-to-r from-green-50 to-emerald-50">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-3xl font-bold text-gray-900">
-              Rider Registration
+              🏍️ Rider Registration
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
               <Badge
@@ -302,22 +359,29 @@ export function RegistrationForm() {
         </div>
       </CardHeader>
 
+      {/* Content */}
       <CardContent className="pt-8">
+        {/* Step Indicator */}
         <StepIndicator steps={STEPS} currentStep={currentStep} />
 
+        {/* Error Alert */}
         {error && (
           <Alert variant="destructive" className="mb-6 border-2">
             <AlertDescription className="font-medium">{error}</AlertDescription>
           </Alert>
         )}
 
+        {/* Form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Step Content */}
             <div className="bg-white rounded-xl p-6 border border-gray-100">
               {renderStep()}
             </div>
 
+            {/* Navigation Buttons */}
             <div className="flex justify-between items-center pt-6 border-t-2 border-gray-100">
+              {/* Back Button */}
               <Button
                 type="button"
                 variant="outline"
@@ -330,7 +394,9 @@ export function RegistrationForm() {
                 Back
               </Button>
 
+              {/* Right Action Buttons */}
               <div className="flex gap-3">
+                {/* Edit Button - Only on Review Step */}
                 {currentStep === 5 && (
                   <Button
                     type="button"
@@ -345,6 +411,7 @@ export function RegistrationForm() {
                   </Button>
                 )}
 
+                {/* Next Button or Submit Button */}
                 {currentStep < STEPS.length ? (
                   <Button
                     type="button"
@@ -357,10 +424,10 @@ export function RegistrationForm() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  // SUBMIT BUTTON - Only enabled when operator is ready after review
+                  // SUBMIT BUTTON - Review Step
                   <Button
                     type="submit"
-                    disabled={isSubmitting} // Only disabled during actual submission
+                    disabled={isSubmitting}
                     size="lg"
                     className="bg-green-600 hover:bg-green-700 shadow-lg min-w-[180px]"
                   >

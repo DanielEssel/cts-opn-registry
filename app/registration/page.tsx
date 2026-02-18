@@ -90,7 +90,7 @@ export default function OperatorRegistry() {
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-6 py-8">
         <div className="mb-6">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-2">
-            📝 Register New Rider
+            Register New Rider
           </h1>
           <p className="text-slate-500 font-medium">
             Quick permit registration for {profile.entity}
