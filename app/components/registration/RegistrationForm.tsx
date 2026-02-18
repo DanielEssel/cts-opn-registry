@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, CheckCircle2, ArrowLeft, ArrowRight, Edit, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  ArrowLeft,
+  ArrowRight,
+  Edit,
+  Sparkles,
+} from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,7 +71,7 @@ export function RegistrationForm() {
 
   // Watch for photo changes to update preview
   const watchPhoto = form.watch("passportPhoto");
-  
+
   // Update photo preview when photo changes
   useState(() => {
     if (watchPhoto instanceof File) {
@@ -82,16 +89,24 @@ export function RegistrationForm() {
 
     switch (step) {
       case 1:
-        fieldsToValidate = Object.keys(bioDataSchema.shape) as (keyof RiderRegistrationData)[];
+        fieldsToValidate = Object.keys(
+          bioDataSchema.shape,
+        ) as (keyof RiderRegistrationData)[];
         break;
       case 2:
-        fieldsToValidate = Object.keys(locationSchema.shape) as (keyof RiderRegistrationData)[];
+        fieldsToValidate = Object.keys(
+          locationSchema.shape,
+        ) as (keyof RiderRegistrationData)[];
         break;
       case 3:
-        fieldsToValidate = Object.keys(vehicleInfoSchema.shape) as (keyof RiderRegistrationData)[];
+        fieldsToValidate = Object.keys(
+          vehicleInfoSchema.shape,
+        ) as (keyof RiderRegistrationData)[];
         break;
       case 4:
-        fieldsToValidate = Object.keys(complianceSchema.shape) as (keyof RiderRegistrationData)[];
+        fieldsToValidate = Object.keys(
+          complianceSchema.shape,
+        ) as (keyof RiderRegistrationData)[];
         break;
       case 5:
         // Preview step - validate all fields
@@ -129,7 +144,7 @@ export function RegistrationForm() {
 
     try {
       const result = await saveRiderRegistration(data);
-      
+
       if (result.success) {
         setGeneratedOPN(result.opn);
         setSubmitSuccess(true);
@@ -142,7 +157,7 @@ export function RegistrationForm() {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to register rider. Please try again."
+          : "Failed to register rider. Please try again.",
       );
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
@@ -162,10 +177,7 @@ export function RegistrationForm() {
         return <ComplianceStep form={form} />;
       case 5:
         return (
-          <PreviewStep 
-            data={form.getValues()} 
-            photoPreview={photoPreview}
-          />
+          <PreviewStep data={form.getValues()} photoPreview={photoPreview} />
         );
       default:
         return null;
@@ -184,7 +196,7 @@ export function RegistrationForm() {
                 <CheckCircle2 className="w-14 h-14 text-white" />
               </div>
             </div>
-            
+
             {/* Success Message */}
             <div className="space-y-2">
               <Badge className="mb-2 bg-green-100 text-green-700 border-green-200 px-4 py-1">
@@ -213,7 +225,9 @@ export function RegistrationForm() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
               <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
                 <div className="text-2xl mb-1">✓</div>
-                <p className="text-sm font-medium text-gray-900">Valid 6 Months</p>
+                <p className="text-sm font-medium text-gray-900">
+                  Valid 6 Months
+                </p>
                 <p className="text-xs text-gray-500">From today</p>
               </div>
               <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
@@ -223,7 +237,9 @@ export function RegistrationForm() {
               </div>
               <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
                 <div className="text-2xl mb-1">🛡️</div>
-                <p className="text-sm font-medium text-gray-900">Present Always</p>
+                <p className="text-sm font-medium text-gray-900">
+                  Present Always
+                </p>
                 <p className="text-xs text-gray-500">During checks</p>
               </div>
             </div>
@@ -266,7 +282,10 @@ export function RegistrationForm() {
               Rider Registration
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
-              <Badge variant="outline" className="border-green-600 text-green-700">
+              <Badge
+                variant="outline"
+                className="border-green-600 text-green-700"
+              >
                 Greater Accra Region
               </Badge>
               Operating Permit System
@@ -338,9 +357,10 @@ export function RegistrationForm() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
+                  // SUBMIT BUTTON - Only enabled when operator is ready after review
                   <Button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting} // Only disabled during actual submission
                     size="lg"
                     className="bg-green-600 hover:bg-green-700 shadow-lg min-w-[180px]"
                   >

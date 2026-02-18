@@ -25,8 +25,8 @@ interface VehicleInfoStepProps {
 
 const VEHICLE_CATEGORIES = [
   { value: "Pragya", label: "Pragya", icon: Car },
-  { value: "Motorbike/Okada", label: "Motorbike/Okada", icon: Bike },
-  { value: "Tricycle/Aboboyaa", label: "Tricycle/Aboboyaa", icon: Car },
+  { value: "Motorbike(Okada)", label: "Motorbike(Okada)", icon: Bike },
+  { value: "Tricycle(Aboboyaa)", label: "Tricycle(Aboboyaa)", icon: Car },
 ];
 
 export function VehicleInfoStep({ form }: VehicleInfoStepProps) {

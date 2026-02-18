@@ -71,23 +71,47 @@ export function BioDataStep({ form }: BioDataStepProps) {
         />
 
         <FormField
-          control={form.control}
-          name="ghanaCardNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ghana Card Number *</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="GHA-123456789-1"
-                  {...field}
-                  className="h-11 uppercase"
-                  onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+  control={form.control}
+  name="idType"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>ID Type *</FormLabel>
+      <Select onValueChange={field.onChange} defaultValue={field.value}>
+        <FormControl>
+          <SelectTrigger className="h-11">
+            <SelectValue placeholder="Select ID type" />
+          </SelectTrigger>
+        </FormControl>
+        <SelectContent>
+          <SelectItem value="GHANA_CARD">Ghana Card</SelectItem>
+          <SelectItem value="VOTERS_ID">Voter's ID</SelectItem>
+          <SelectItem value="PASSPORT">Passport</SelectItem>
+        </SelectContent>
+      </Select>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
+<FormField
+  control={form.control}
+  name="idNumber"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>ID Number *</FormLabel>
+      <FormControl>
+        <Input
+          placeholder="Enter ID number"
+          {...field}
+          className="h-11 uppercase"
+          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
         />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
 
         <FormField
           control={form.control}

@@ -2,6 +2,8 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
+import { getStorage } from "firebase/storage";
+
 
 export const firebaseConfig = {
   apiKey: "AIzaSyChFFKpDW_PCtRDeU7UItKlOnlg0TN_gS8",
@@ -18,6 +20,7 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 // Initialize Analytics ONLY if we are in the browser (window is defined)
 // and if the browser supports it

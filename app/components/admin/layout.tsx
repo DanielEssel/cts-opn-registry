@@ -43,7 +43,7 @@ const navigation = [
   },
   {
     name: "Renewals",
-    href: "/renew-permit",
+    href: "/renewals",
     icon: RefreshCw,
   },
   {
@@ -161,6 +161,27 @@ export default function AdminLayout({
               </div>
             </nav>
 
+            {/* Help Section */}
+            <div className="p-4 border-t border-gray-200">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <HelpCircle className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-sm text-gray-900 mb-1">
+                      Need Help?
+                    </h3>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Contact support for assistance
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full text-xs h-8">
+                      Get Support
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* User Profile Section */}
             <div className="p-4 border-t border-gray-200 bg-gray-50">
