@@ -3,17 +3,8 @@
 import { RiderRegistrationData } from "@/app/lib/validations";
 import { Badge } from "@/components/ui/badge";
 import {
-  User,
-  Phone,
-  CreditCard,
-  Calendar,
-  MapPin,
-  Home,
-  Bike,
-  FileText,
-  Users,
-  CheckCircle2,
-  Camera,
+  User, Phone, CreditCard, Calendar, MapPin,
+  Home, Bike, FileText, Users, CheckCircle2, Camera,
 } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -25,11 +16,8 @@ interface PreviewStepProps {
 
 export function PreviewStep({ data, photoPreview }: PreviewStepProps) {
   const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "MMM dd, yyyy");
-    } catch {
-      return dateString;
-    }
+    try { return format(new Date(dateString), "MMM dd, yyyy"); }
+    catch { return dateString; }
   };
 
   const calculateAge = (dateString: string) => {
@@ -37,140 +25,135 @@ export function PreviewStep({ data, photoPreview }: PreviewStepProps) {
     const birthDate = new Date(dateString);
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
     return age;
   };
 
-  const InfoField = ({ label, value, icon: Icon }: { label: string; value: string; icon: React.ReactNode }) => (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2">
-        {Icon && <span className="text-green-600">{Icon}</span>}
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</p>
+  const ID_LABELS: Record<string, string> = {
+    GHANA_CARD: "Ghana Card",
+    VOTERS_ID: "Voter's ID",
+    PASSPORT: "Passport",
+  };
+
+  // ── Reusable field row ──────────────────────────────────────────────────
+  const Field = ({
+    label,
+    value,
+    icon: Icon,
+    mono = false,
+  }: {
+    label: string;
+    value: string;
+    icon: React.ElementType;
+    mono?: boolean;
+  }) => (
+    <div className="flex items-start gap-3 py-3">
+      <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+        <Icon className="h-4 w-4 text-gray-500" />
       </div>
-      <p className="text-sm font-semibold text-gray-900">{value}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
+        <p className={`text-sm font-semibold text-gray-900 truncate ${mono ? "font-mono" : ""}`}>{value || "—"}</p>
+      </div>
+    </div>
+  );
+
+  // ── Section wrapper ─────────────────────────────────────────────────────
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-200">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{title}</p>
+      </div>
+      <div className="px-4 divide-y divide-gray-100">{children}</div>
     </div>
   );
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Verify Your Details</h2>
-        <p className="text-gray-600">Review all information before submitting</p>
+    <div className="space-y-5">
+
+      {/* Header */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">Review & Confirm</h3>
+        <p className="text-sm text-gray-500 mt-1">Check all details before submitting</p>
       </div>
 
-      {/* PHOTO SECTION */}
-      {photoPreview && (
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200/50 p-6">
-          <div className="flex items-center gap-4">
-            <div className="relative w-24 h-24 rounded-xl overflow-hidden border-3 border-green-300 shadow-lg flex-shrink-0">
-              <Image
-                src={photoPreview}
-                alt="Passport Photo"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Camera className="h-4 w-4 text-green-600" />
-                <p className="text-xs font-bold text-green-700 uppercase tracking-wider">Passport Photo</p>
-              </div>
-              <p className="text-sm font-semibold text-gray-900 mb-2">Uploaded</p>
-              {data.passportPhoto instanceof File && (
-                <p className="text-xs text-gray-500">
-                  {data.passportPhoto.name} • {(data.passportPhoto.size / 1024).toFixed(1)} KB
-                </p>
-              )}
-            </div>
+      {/* Photo + Name banner */}
+      <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+        {photoPreview ? (
+          <div className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-green-300 flex-shrink-0 shadow-sm">
+            <Image src={photoPreview} alt="Passport Photo" fill className="object-cover" />
           </div>
-        </div>
-      )}
-
-      {/* PERSONAL INFO GRID */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Full Name" value={data.fullName} icon={<User className="h-4 w-4" />} />
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Gender" value={data.gender || "-"} icon={<User className="h-4 w-4" />} />
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Age" value={`${calculateAge(data.dateOfBirth)} years`} icon={<Calendar className="h-4 w-4" />} />
-        </div>
-        <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Phone" value={data.phoneNumber} icon={<Phone className="h-4 w-4" />} />
-        </div>
-        <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Ghana Card" value={data.ghanaCardNumber} icon={<CreditCard className="h-4 w-4" />} />
-        </div>
-      </div>
-
-      {/* LOCATION INFO GRID */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Region" value={data.region} icon={<MapPin className="h-4 w-4" />} />
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="District" value={data.districtMunicipality || "-"} icon={<Home className="h-4 w-4" />} />
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Town" value={data.residentialTown} icon={<Home className="h-4 w-4" />} />
-        </div>
-      </div>
-
-      {/* VEHICLE INFO GRID */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-              <Bike className="h-4 w-4 text-yellow-600" />
-              Vehicle Category
+        ) : (
+          <div className="w-16 h-16 rounded-lg bg-green-100 border-2 border-dashed border-green-300 flex items-center justify-center flex-shrink-0">
+            <Camera className="h-6 w-6 text-green-400" />
+          </div>
+        )}
+        <div>
+          <p className="font-bold text-gray-900 text-base">{data.fullName}</p>
+          <p className="text-sm text-gray-500">{data.gender} · {calculateAge(data.dateOfBirth)} years old</p>
+          {data.passportPhoto instanceof File && (
+            <p className="text-xs text-green-600 mt-0.5 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" /> {data.passportPhoto.name}
             </p>
-            <Badge className="w-fit bg-yellow-100 text-yellow-800 border-none font-semibold">
+          )}
+        </div>
+      </div>
+
+      {/* Personal Info */}
+      <Section title="Personal Information">
+        <Field label="Phone Number" value={data.phoneNumber} icon={Phone} mono />
+        <Field label="Date of Birth" value={formatDate(data.dateOfBirth)} icon={Calendar} />
+        <Field
+          label={ID_LABELS[data.idType] || "ID Number"}
+          value={data.idNumber}
+          icon={CreditCard}
+          mono
+        />
+      </Section>
+
+      {/* Location */}
+      <Section title="Location">
+        <Field label="Region" value={data.region} icon={MapPin} />
+        <Field label="District / Municipality" value={data.districtMunicipality || "—"} icon={Home} />
+        <Field label="Residential Town" value={data.residentialTown} icon={Home} />
+      </Section>
+
+      {/* Vehicle */}
+      <Section title="Vehicle Information">
+        <div className="py-3 flex items-start gap-3">
+          <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+            <Bike className="h-4 w-4 text-gray-500" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Vehicle Category</p>
+            <Badge className="bg-yellow-100 text-yellow-800 border-none font-semibold text-xs">
               {data.vehicleCategory}
             </Badge>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Plate Number" value={data.plateNumber} icon={<Bike className="h-4 w-4" />} />
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Chassis Number" value={data.chassisNumber} icon={<Bike className="h-4 w-4" />} />
+        <Field label="Plate Number" value={data.plateNumber} icon={Bike} mono />
+        <Field label="Chassis Number" value={data.chassisNumber} icon={Bike} mono />
+      </Section>
+
+      {/* Compliance */}
+      <Section title="Compliance & Documents">
+        <Field label="Driver's License" value={data.driversLicenseNumber} icon={FileText} mono />
+        <Field label="License Expiry" value={formatDate(data.licenseExpiryDate)} icon={Calendar} />
+        <Field label="Next of Kin Name" value={data.nextOfKinName} icon={Users} />
+        <Field label="Next of Kin Contact" value={data.nextOfKinContact} icon={Phone} mono />
+      </Section>
+
+      {/* Ready banner */}
+      <div className="flex items-start gap-3 p-4 bg-green-50 rounded-xl border border-green-200">
+        <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold text-green-900">Ready to Submit</p>
+          <p className="text-xs text-green-700 mt-0.5">
+            Your OPN will be generated instantly. Permit is valid for 6 months from today.
+          </p>
         </div>
       </div>
 
-      {/* COMPLIANCE INFO GRID */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Driver's License" value={data.driversLicenseNumber} icon={<FileText className="h-4 w-4" />} />
-        </div>
-        <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="License Expiry" value={formatDate(data.licenseExpiryDate)} icon={<Calendar className="h-4 w-4" />} />
-        </div>
-        <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Next of Kin" value={data.nextOfKinContact} icon={<Users className="h-4 w-4" />} />
-        </div>
-      </div>
-
-      {/* CONFIRMATION BOX */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200/50 p-6">
-        <div className="flex gap-4">
-          <div className="flex-shrink-0 pt-1">
-            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-green-600">
-              <CheckCircle2 className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 mb-2">Ready to Submit?</h3>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              Your OPN will be generated instantly after submission. Your permit is valid for 6 months from today.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

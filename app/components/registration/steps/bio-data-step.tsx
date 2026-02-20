@@ -33,8 +33,8 @@ const ID_VALIDATION_RULES = {
     example: "GHA-712014412-4",
     format: "GHA-XXXXXXXXX-X",
     digitCount: "9 digits + 1 check digit",
-    minLength: 14, // GHA-XXXXXXXXX-X
-    maxLength: 14,
+    minLength: 15, // GHA-XXXXXXXXX-X
+    maxLength: 15,
     help: "Ghana Card: 9 digits, then 1 check digit (auto-formatted with GHA- and hyphens)",
     autoFormat: true,
   },
@@ -237,7 +237,7 @@ export function BioDataStep({ form }: BioDataStepProps) {
                           idType === "GHANA_CARD" ? "font-mono tracking-widest" : ""
                         } ${
                           idNumber && !isValid
-                            ? "border-red-500 focus:ring-red-500"
+                            ? "border-green-500 focus:ring-red-500"
                             : idNumber && isValid
                             ? "border-green-500 focus:ring-green-500"
                             : ""

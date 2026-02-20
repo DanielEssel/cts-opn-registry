@@ -4,19 +4,10 @@ import { z } from "zod";
 // REGEX PATTERNS
 // ============================================================================
 
-// Ghana Card Number validation pattern: GHA-XXXXXXXXX-X
 const ghanaCardRegex = /^GHA-\d{9}-\d$/;
-
-// Phone number validation (10 digits)
 const phoneRegex = /^\d{10}$/;
-
-// Voter ID validation (10 digits)
 const voterIdRegex = /^\d{10}$/;
-
-// Passport validation (letter + digits, 7-9 chars)
 const passportRegex = /^[A-Z]\d{6,8}$/;
-
-// Driver's License validation: FAT-00000000-00000 (3 letters - 8 digits - 5 digits)
 const driversLicenseRegex = /^[A-Z]{3}-\d{8}-\d{5}$/;
 
 // ============================================================================
@@ -39,6 +30,33 @@ export const DISTRICT_CODES: Record<string, string> = {
   "Ablekuma West": "AW",
 };
 
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+const calculateAge = (dateString: string) => {
+  const dob = new Date(dateString);
+  if (isNaN(dob.getTime())) return null;
+
+  const today = new Date();
+
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < dob.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
+
+const normalizeUpper = (value: string) => value.trim().toUpperCase();
+
+
 // ============================================================================
 // VEHICLE CATEGORY CODES
 // ============================================================================
@@ -56,71 +74,62 @@ export const CATEGORY_CODES: Record<string, string> = {
 export const bioDataSchema = z.object({
   fullName: z
     .string()
+    .trim()
     .min(3, "Full name must be at least 3 characters")
-    .max(100, "Full name is too long")
+    .max(100)
     .regex(/^[a-zA-Z\s]+$/, "Name must contain only letters and spaces"),
 
   phoneNumber: z
     .string()
+    .trim()
     .regex(phoneRegex, "Phone number must be exactly 10 digits"),
 
-  idType: z.enum(["GHANA_CARD", "VOTERS_ID", "PASSPORT"], {
-    message: "Please select a valid ID type",
-  }),
+  idType: z.enum(["GHANA_CARD", "VOTERS_ID", "PASSPORT"]),
 
-  idNumber: z.string().min(5, "ID number must be at least 5 characters"),
+  idNumber: z
+    .string()
+    .trim()
+    .min(5, "ID number is required"),
 
-  dateOfBirth: z.string().refine((date) => {
-    const dob = new Date(date);
-    const today = new Date();
-    const age = today.getFullYear() - dob.getFullYear();
-    return age >= 18 && age <= 100;
-  }, "Rider must be at least 18 years old"),
+  dateOfBirth: z
+    .string()
+    .refine((date) => {
+      const age = calculateAge(date);
+      return age !== null && age >= 18 && age <= 100;
+    }, "Rider must be between 18 and 100 years old"),
 
-  gender: z.enum(["Male", "Female", "Other"], {
-    message: "Please select a gender",
-  }),
+  gender: z.enum(["Male", "Female", "Other"]),
 }).superRefine((data, ctx) => {
+  const idNumber = normalizeUpper(data.idNumber);
 
-  // ========================================================================
-  // GHANA CARD VALIDATION
-  // ========================================================================
-  if (data.idType === "GHANA_CARD") {
-    if (!ghanaCardRegex.test(data.idNumber)) {
-      ctx.addIssue({
-        path: ["idNumber"],
-        message: "Invalid Ghana Card format. Expected: GHA-712014412-4",
-        code: z.ZodIssueCode.custom,
-      });
-    }
-  }
+  const validators: Record<string, { regex: RegExp; message: string }> = {
+    GHANA_CARD: {
+      regex: ghanaCardRegex,
+      message: "Invalid Ghana Card format. Expected: GHA-712014412-4",
+    },
+    VOTERS_ID: {
+      regex: voterIdRegex,
+      message: "Invalid Voter ID format. Expected: 4393000029 (10 digits)",
+    },
+    PASSPORT: {
+      regex: passportRegex,
+      message:
+        "Invalid Passport format. Expected: G2282683 (1 letter + 6-8 digits)",
+    },
+  };
 
-  // ========================================================================
-  // VOTER ID VALIDATION
-  // ========================================================================
-  if (data.idType === "VOTERS_ID") {
-    if (!voterIdRegex.test(data.idNumber)) {
-      ctx.addIssue({
-        path: ["idNumber"],
-        message: "Invalid Voter ID format. Expected: 4393000029 (10 digits)",
-        code: z.ZodIssueCode.custom,
-      });
-    }
-  }
+  const validator = validators[data.idType];
 
-  // ========================================================================
-  // PASSPORT VALIDATION
-  // ========================================================================
-  if (data.idType === "PASSPORT") {
-    if (!passportRegex.test(data.idNumber)) {
-      ctx.addIssue({
-        path: ["idNumber"],
-        message: "Invalid Passport format. Expected: G2282683 (1 letter + 6-8 digits)",
-        code: z.ZodIssueCode.custom,
-      });
-    }
+  if (!validator.regex.test(idNumber)) {
+    ctx.addIssue({
+      path: ["idNumber"],
+      message: validator.message,
+      code: z.ZodIssueCode.custom,
+    });
   }
 });
+
+ 
 
 // ============================================================================
 // LOCATION SCHEMA
@@ -184,55 +193,45 @@ export const vehicleInfoSchema = z.object({
     .regex(/^[A-Z0-9]+$/i, "Chassis number must be alphanumeric (letters and numbers only)"),
 });
 
-// ============================================================================
-// COMPLIANCE SCHEMA
-// ============================================================================
-
 export const complianceSchema = z.object({
   driversLicenseNumber: z
     .string()
-    .min(16, "Driver's License number is required")
-    .max(16, "Driver's License must be exactly 16 characters"),
+    .trim()
+    .transform(normalizeUpper)
+    .refine(
+      (value) => driversLicenseRegex.test(value),
+      "Invalid Driver's License format. Expected: FAT-12345678-00001"
+    ),
 
   licenseExpiryDate: z.string().refine((date) => {
     const expiry = new Date(date);
+    if (isNaN(expiry.getTime())) return false;
+
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     return expiry > today;
   }, "License must not be expired"),
 
   nextOfKinName: z
     .string()
+    .trim()
     .min(3, "Next of kin name must be at least 3 characters")
-    .max(100, "Next of kin name is too long")
+    .max(100)
     .regex(/^[a-zA-Z\s]+$/, "Name must contain only letters and spaces"),
 
   nextOfKinContact: z
     .string()
+    .trim()
     .regex(phoneRegex, "Next of kin contact must be exactly 10 digits"),
 
-  passportPhoto: z
-    .instanceof(File)
-    .refine(
-      (file) => file.size <= 5 * 1024 * 1024,
-      "Photo must be less than 5MB"
-    )
-    .refine(
-      (file) => ["image/jpeg", "image/png"].includes(file.type),
-      "Photo must be JPEG or PNG"
-    ),
-}).superRefine((data, ctx) => {
-
-  // ========================================================================
-  // DRIVER'S LICENSE VALIDATION
-  // ========================================================================
-  if (!driversLicenseRegex.test(data.driversLicenseNumber)) {
-    ctx.addIssue({
-      path: ["driversLicenseNumber"],
-      message: "Invalid Driver's License format. Expected: FAT-12345678-00001",
-      code: z.ZodIssueCode.custom,
-    });
-  }
+  passportPhoto: z.any()
+  .refine((file) => file instanceof File, "Please upload a passport photo")
+  .refine((file) => !(file instanceof File) || file.size <= 5 * 1024 * 1024, "Photo must be less than 5MB")
+  .refine((file) => !(file instanceof File) || ["image/jpeg", "image/png"].includes(file.type), "Photo must be JPEG or PNG")
+  .optional(),
 });
+
 
 // ============================================================================
 // COMBINED REGISTRATION SCHEMA

@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, X, Check } from "lucide-react";
+import { Camera, X, Check, Loader2, RefreshCcw } from "lucide-react";
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void;
@@ -12,135 +12,185 @@ interface CameraCaptureProps {
 export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const streamRef = useRef<MediaStream | null>(null);
+
   const [captured, setCaptured] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, []);
 
   const startCamera = async () => {
     try {
+      setLoading(true);
+      setError(null);
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+        video: { facingMode: "environment" },
+        audio: false,
       });
+
+      streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setIsOpen(true);
+        await videoRef.current.play();
       }
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      alert("Unable to access camera. Please check permissions.");
-    }
-  };
 
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext("2d");
-      if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0);
-        const imageData = canvasRef.current.toDataURL("image/jpeg", 0.9);
-        setCaptured(imageData);
-      }
-    }
-  };
-
-  const confirmCapture = () => {
-    if (canvasRef.current) {
-      canvasRef.current.toBlob(
-        (blob) => {
-          if (blob) {
-            const file = new File([blob], "passport-photo.jpg", {
-              type: "image/jpeg",
-            });
-            onCapture(file);
-            stopCamera();
-          }
-        },
-        "image/jpeg",
-        0.9
-      );
+      setCameraReady(true);
+    } catch (err) {
+      console.error(err);
+      setError("Camera permission denied or unavailable.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach((track) => track.stop());
-      setIsOpen(false);
-      setCaptured(null);
-    }
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setCameraReady(false);
   };
 
-  const handleCancel = () => {
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const { videoWidth: vw, videoHeight: vh } = video;
+    const ratio = 3 / 4;
+
+    let cropW = vw;
+    let cropH = vw / ratio;
+
+    if (cropH > vh) {
+      cropH = vh;
+      cropW = vh * ratio;
+    }
+
+    const sx = (vw - cropW) / 2;
+    const sy = (vh - cropH) / 2;
+
+    canvas.width = 600;
+    canvas.height = 800;
+
+    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, 600, 800);
+    setCaptured(canvas.toDataURL("image/jpeg", 0.85));
+  };
+
+  const retakePhoto = () => setCaptured(null);
+
+  const confirmCapture = () => {
+    canvasRef.current?.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const file = new File([blob], "passport-photo.jpg", { type: "image/jpeg" });
+        stopCamera();
+        onCapture(file);
+      },
+      "image/jpeg",
+      0.85
+    );
+  };
+
+  const handleClose = () => {
     stopCamera();
     onCancel();
   };
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Capture Passport Photo</h2>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      {/* Fixed height modal so buttons are never pushed off screen */}
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col h-[90vh] max-h-[680px] overflow-hidden">
+
+        {/* Header */}
+        <div className="flex-none p-4 border-b flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Take Passport Photo</h2>
           <button
-            onClick={handleCancel}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            onClick={handleClose}
+            aria-label="Close camera"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="relative bg-black aspect-video">
-          {!captured ? (
+        {/* Camera / Preview — flex-1 fills remaining space */}
+        <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden min-h-0">
+
+          {loading && (
+            <Loader2 className="h-8 w-8 text-white animate-spin" />
+          )}
+
+          {error && (
+            <div className="flex flex-col items-center gap-3 p-6 text-center">
+              <p className="text-red-400 text-sm">{error}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={startCamera}
+                className="text-white border-white hover:bg-white/10"
+              >
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {!captured && cameraReady && !error && (
             <video
               ref={videoRef}
               autoPlay
               playsInline
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src={captured}
-              alt="Captured"
+              muted
               className="w-full h-full object-cover"
             />
           )}
 
-          {/* Camera guide overlay */}
-          {!captured && (
+          {captured && (
+            <img
+              src={captured}
+              alt="Captured photo preview"
+              className="w-full h-full object-cover"
+            />
+          )}
+
+          {/* Face guide overlay */}
+          {!captured && cameraReady && !loading && !error && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="border-4 border-green-400 rounded-lg w-48 h-64 opacity-50" />
-              <p className="absolute bottom-4 text-white text-sm text-center w-full">
-                Position your face in the frame
-              </p>
+              <div className="border-4 border-green-400 rounded-xl w-36 h-48 opacity-70" />
             </div>
           )}
         </div>
 
         <canvas ref={canvasRef} className="hidden" />
 
-        <div className="p-4 flex gap-2">
+        {/* Controls — always pinned to bottom */}
+        <div className="flex-none p-4 border-t bg-white flex gap-2">
           {!captured ? (
             <>
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleCancel}
+                onClick={handleClose}
                 className="flex-1"
               >
-                Cancel
+                <X className="h-4 w-4 mr-2" />
+                Close
               </Button>
               <Button
                 type="button"
                 onClick={capturePhoto}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                disabled={!cameraReady || !!error}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
               >
                 <Camera className="h-4 w-4 mr-2" />
                 Capture
@@ -151,7 +201,7 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setCaptured(null)}
+                onClick={retakePhoto}
                 className="flex-1"
               >
                 Retake
@@ -159,14 +209,15 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
               <Button
                 type="button"
                 onClick={confirmCapture}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
               >
                 <Check className="h-4 w-4 mr-2" />
-                Confirm
+                Use Photo
               </Button>
             </>
           )}
         </div>
+
       </div>
     </div>
   );

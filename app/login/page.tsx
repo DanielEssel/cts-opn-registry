@@ -112,20 +112,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col">
-      {/* HEADER */}
-      <div className="border-b border-slate-200 bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg">
-              <BadgeIcon className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">OPN Registry</h1>
-              <p className="text-xs text-slate-500">Operating Permit Management System</p>
-            </div>
-          </div>
-        </div>
-      </div>
+     
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex items-center justify-center p-4 py-12">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Loader2,
+  Plus,
+  Printer,
 } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -31,10 +33,6 @@ import { VehicleInfoStep } from "@/app/components/registration/steps/vehicle-inf
 import { ComplianceStep } from "@/app/components/registration/steps/compliance-step";
 import { PreviewStep } from "./steps/preview-step";
 
-// ============================================================================
-// REGISTRATION STEPS
-// ============================================================================
-
 const STEPS = [
   { id: 1, title: "Bio Data", description: "Personal Information" },
   { id: 2, title: "Location", description: "Residential Details" },
@@ -43,15 +41,18 @@ const STEPS = [
   { id: 5, title: "Review", description: "Verify Information" },
 ];
 
-// ============================================================================
-// REGISTRATION PAGE
-// ============================================================================
+const STEP_SCHEMAS: Record<number, object> = {
+  1: bioDataSchema.shape,
+  2: locationSchema.shape,
+  3: vehicleInfoSchema.shape,
+  4: complianceSchema.shape,
+};
 
 export default function RegistrationPage() {
   const searchParams = useSearchParams();
   const stepParam = searchParams.get("step");
   const [currentStep, setCurrentStep] = useState<number>(
-    stepParam ? parseInt(stepParam) : 1
+    stepParam ? parseInt(stepParam) : 1,
   );
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,25 +65,18 @@ export default function RegistrationPage() {
     resolver: zodResolver(riderRegistrationSchema),
     mode: "onChange",
     defaultValues: {
-      // Bio Data
       fullName: "",
       phoneNumber: "",
       idType: undefined,
       idNumber: "",
       dateOfBirth: "",
       gender: undefined,
-
-      // Location
       region: "Greater Accra",
       districtMunicipality: undefined,
       residentialTown: "",
-
-      // Vehicle Info
       vehicleCategory: undefined,
       plateNumber: "",
       chassisNumber: "",
-
-      // Compliance
       driversLicenseNumber: "",
       licenseExpiryDate: "",
       nextOfKinName: "",
@@ -91,83 +85,60 @@ export default function RegistrationPage() {
     },
   });
 
-  // Watch for photo changes to update preview
   const watchPhoto = form.watch("passportPhoto");
-
-  useState(() => {
+  useEffect(() => {
     if (watchPhoto instanceof File) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
+      reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(watchPhoto);
+    } else {
+      setPhotoPreview(null);
     }
-  });
-
-  // ========================================================================
-  // VALIDATE STEP
-  // ========================================================================
+  }, [watchPhoto]);
 
   const validateStep = async (step: number): Promise<boolean> => {
-    let fieldsToValidate: (keyof RiderRegistrationData)[] = [];
+    if (step === 5) return form.formState.isValid;
 
-    switch (step) {
-      case 1:
-        fieldsToValidate = Object.keys(
-          bioDataSchema.shape
-        ) as (keyof RiderRegistrationData)[];
-        break;
-      case 2:
-        fieldsToValidate = Object.keys(
-          locationSchema.shape
-        ) as (keyof RiderRegistrationData)[];
-        break;
-      case 3:
-        fieldsToValidate = Object.keys(
-          vehicleInfoSchema.shape
-        ) as (keyof RiderRegistrationData)[];
-        break;
-      case 4:
-        fieldsToValidate = Object.keys(
-          complianceSchema.shape
-        ) as (keyof RiderRegistrationData)[];
-        break;
-      case 5:
-        // Preview step - validate all fields
-        return form.formState.isValid;
+    const schema = STEP_SCHEMAS[step];
+    if (!schema) return true;
+
+    const fields = Object.keys(schema) as (keyof RiderRegistrationData)[];
+    const result = await form.trigger(fields);
+
+    if (!result) {
+      const errors = form.formState.errors;
+      const failedFields = fields
+        .filter((f) => errors[f])
+        .map((f) => {
+          const msg = (errors[f] as { message?: string })?.message;
+          return msg || f;
+        });
+
+      if (failedFields.length > 0) {
+        setError(`Please fix the following: ${failedFields.join(", ")}`);
+      } else {
+        setError("Please complete all required fields before continuing.");
+      }
     }
 
-    const result = await form.trigger(fieldsToValidate);
     return result;
   };
 
-  // ========================================================================
-  // HANDLE NEXT
-  // ========================================================================
-
   const handleNext = async () => {
+    setError("");
     const isValid = await validateStep(currentStep);
     if (isValid) {
-      setCompletedSteps([...new Set([...completedSteps, currentStep])]);
+      setCompletedSteps((prev) => [...new Set([...prev, currentStep])]);
       setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
-      setError("");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
-
-  // ========================================================================
-  // HANDLE BACK
-  // ========================================================================
 
   const handleBack = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
     setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  // ========================================================================
-  // HANDLE SUBMIT
-  // ========================================================================
 
   const onSubmit = async (data: RiderRegistrationData) => {
     setIsSubmitting(true);
@@ -179,7 +150,7 @@ export default function RegistrationPage() {
       if (result.success) {
         setGeneratedOPN(result.opn);
         setSuccess(true);
-        setCompletedSteps([...new Set([...completedSteps, currentStep])]);
+        setCompletedSteps((prev) => [...new Set([...prev, currentStep])]);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setError(result.error || "Failed to register rider.");
@@ -191,10 +162,6 @@ export default function RegistrationPage() {
       setIsSubmitting(false);
     }
   };
-
-  // ========================================================================
-  // RENDER STEP
-  // ========================================================================
 
   const renderStep = () => {
     switch (currentStep) {
@@ -215,114 +182,232 @@ export default function RegistrationPage() {
     }
   };
 
-  // ========================================================================
-  // SUCCESS SCREEN
-  // ========================================================================
-
+  // ─── SUCCESS / CERTIFICATE SCREEN ────────────────────────────────────────────
   if (success) {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* PROGRESS SIDEBAR */}
-        <div className="lg:col-span-1">
-          <RegistrationProgress
-            steps={STEPS}
-            currentStep={currentStep}
-            completedSteps={completedSteps}
-          />
-        </div>
+    const registeredData = form.getValues();
+    const issuedDate = new Date().toLocaleDateString("en-GH", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const issuedTime = new Date().toLocaleTimeString("en-GH", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-        {/* SUCCESS CONTENT */}
-        <div className="lg:col-span-3">
-          <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-12">
-            <div className="text-center space-y-6">
-              {/* SUCCESS ICON */}
-              <div className="flex justify-center">
-                <div className="p-4 bg-green-600 rounded-full">
-                  <CheckCircle2 className="h-16 w-16 text-white" />
+    return (
+      <>
+        {/* ── Print-only styles injected via a style tag ─────────────────── */}
+        <style>{`
+          @media print {
+            /* Hide everything except the certificate */
+            body * { visibility: hidden; }
+            #opn-certificate, #opn-certificate * { visibility: visible; }
+            #opn-certificate {
+              position: fixed;
+              inset: 0;
+              margin: 0;
+              padding: 32px;
+              background: #fff !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            /* Ensure borders and bg colours print */
+            .cert-header { background-color: #15803d !important; color: #fff !important; }
+            .cert-opn-box { border: 3px solid #15803d !important; background-color: #f0fdf4 !important; }
+            .cert-divider { border-color: #166534 !important; }
+            .cert-field-label { color: #166534 !important; }
+            .cert-watermark { opacity: 0.06 !important; }
+          }
+        `}</style>
+
+        {/* ── Screen UI ─────────────────────────────────────────────────── */}
+        <div className="space-y-6">
+          {/* Screen-only top banner */}
+          <div className="print:hidden flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+            <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0" />
+            <div>
+              <p className="font-semibold text-green-800">Registration Successful</p>
+              <p className="text-sm text-green-700">
+                A permit number has been generated. Print or save it for your records.
+              </p>
+            </div>
+          </div>
+
+          {/* ── Certificate card (shown on screen + printed) ────────────── */}
+          <div
+            id="opn-certificate"
+            className="bg-white border-2 border-gray-300 rounded-2xl overflow-hidden shadow-xl"
+          >
+            {/* Certificate header */}
+            <div className="cert-header bg-green-700 px-8 py-6 text-white">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-200 mb-1">
+                    Republic of Ghana
+                  </p>
+                  <h1 className="text-2xl font-bold leading-tight">
+                    Rider Operating Permit
+                  </h1>
+                  <p className="text-sm text-green-200 mt-1">
+                    This certifies successful registration of a commercial rider
+                  </p>
+                </div>
+                {/* Seal placeholder – swap for a real SVG/image */}
+                <div className="w-16 h-16 rounded-full border-2 border-green-300 flex items-center justify-center opacity-80">
+                  <CheckCircle2 className="w-9 h-9 text-green-200" />
                 </div>
               </div>
+            </div>
 
-              {/* SUCCESS MESSAGE */}
-              <div className="space-y-2">
-                <h2 className="text-4xl font-bold text-green-900">
-                  Registration Successful!
-                </h2>
-                <p className="text-lg text-green-700">
-                  The Operating Permit Number has been generated
-                </p>
+            {/* Certificate body */}
+            <div className="relative px-8 py-8">
+              {/* Watermark */}
+              <div
+                className="cert-watermark pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04] select-none"
+                aria-hidden
+              >
+                <span className="text-[10rem] font-black text-green-800 rotate-[-35deg] leading-none">
+                  OPN
+                </span>
               </div>
 
-              {/* OPN DISPLAY */}
-              <div className="p-6 bg-white border-2 border-green-300 rounded-lg">
-                <p className="text-sm font-semibold text-green-700 uppercase mb-2">
-                  Operating Permit Number
-                </p>
-                <p className="text-4xl font-bold font-mono text-green-900">
-                  {generatedOPN}
-                </p>
-              </div>
+              <div className="relative space-y-8">
+                {/* OPN hero box */}
+                <div className="cert-opn-box border-2 border-green-600 rounded-xl bg-green-50 px-6 py-6 text-center">
+                  <p className="text-xs font-bold uppercase tracking-[0.25em] text-green-700 mb-3">
+                    Operating Permit Number
+                  </p>
+                  <p className="text-5xl font-black font-mono tracking-widest text-green-900 select-all">
+                    {generatedOPN}
+                  </p>
+                  <p className="text-xs text-green-600 mt-3 italic">
+                    Issued {issuedDate} at {issuedTime}
+                  </p>
+                </div>
 
-              {/* ACTIONS */}
-              <div className="flex gap-4 justify-center pt-4">
-                <Button
-                  onClick={() => {
-                    setSuccess(false);
-                    setCurrentStep(1);
-                    setCompletedSteps([]);
-                    setPhotoPreview(null);
-                    form.reset();
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  size="lg"
-                >
-                  Register Another Rider
-                </Button>
-                <Button variant="outline" size="lg" onClick={() => window.print()}>
-                  Print Certificate
-                </Button>
+                {/* Rider details grid */}
+                <div>
+                  <p className="cert-field-label text-xs font-bold uppercase tracking-widest text-green-700 mb-4 pb-2 border-b cert-divider border-green-200">
+                    Permit Holder Details
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <CertField label="Full Name" value={registeredData.fullName} />
+                    <CertField label="Phone Number" value={registeredData.phoneNumber} />
+                    <CertField label="Date of Birth" value={registeredData.dateOfBirth} />
+                    <CertField label="Gender" value={registeredData.gender} />
+                    <CertField label="ID Type" value={registeredData.idType} />
+                    <CertField label="ID Number" value={registeredData.idNumber} />
+                    <CertField label="Region" value={registeredData.region} />
+                    <CertField label="District / Municipality" value={registeredData.districtMunicipality} />
+                    <CertField label="Residential Town" value={registeredData.residentialTown} />
+                  </div>
+                </div>
+
+                {/* Vehicle details grid */}
+                <div>
+                  <p className="cert-field-label text-xs font-bold uppercase tracking-widest text-green-700 mb-4 pb-2 border-b cert-divider border-green-200">
+                    Vehicle Details
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <CertField label="Vehicle Category" value={registeredData.vehicleCategory} />
+                    <CertField label="Plate Number" value={registeredData.plateNumber} />
+                    <CertField label="Chassis Number" value={registeredData.chassisNumber} />
+                    <CertField label="Driver's License No." value={registeredData.driversLicenseNumber} />
+                    <CertField label="License Expiry Date" value={registeredData.licenseExpiryDate} />
+                  </div>
+                </div>
+
+                {/* Next of Kin */}
+                <div>
+                  <p className="cert-field-label text-xs font-bold uppercase tracking-widest text-green-700 mb-4 pb-2 border-b cert-divider border-green-200">
+                    Next of Kin
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <CertField label="Name" value={registeredData.nextOfKinName} />
+                    <CertField label="Contact" value={registeredData.nextOfKinContact} />
+                  </div>
+                </div>
+
+                {/* Signature row */}
+                <div className="grid grid-cols-2 gap-8 pt-6 border-t border-gray-200 text-sm">
+                  <div>
+                    <div className="h-10 border-b border-gray-400 mb-1" />
+                    <p className="text-gray-500 text-xs">Authorized Signature</p>
+                  </div>
+                  <div>
+                    <div className="h-10 border-b border-gray-400 mb-1" />
+                    <p className="text-gray-500 text-xs">Official Stamp</p>
+                  </div>
+                </div>
+
+                {/* Footer note */}
+                <p className="text-xs text-gray-400 text-center">
+                  This document is computer-generated and is valid without a handwritten signature.
+                </p>
               </div>
             </div>
-          </Card>
+          </div>
+
+          {/* Screen-only action buttons */}
+          <div className="print:hidden flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              size="lg"
+              onClick={() => window.print()}
+              className="bg-green-600 hover:bg-green-700 text-white gap-2 shadow"
+            >
+              <Printer className="h-4 w-4" />
+              Print Certificate
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => {
+                setSuccess(false);
+                setCurrentStep(1);
+                setCompletedSteps([]);
+                setPhotoPreview(null);
+                form.reset();
+              }}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Register Another Rider
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  // ========================================================================
-  // REGISTRATION FORM
-  // ========================================================================
-
+  // ─── MULTI-STEP FORM ──────────────────────────────────────────────────────────
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* PROGRESS SIDEBAR */}
-      <div className="lg:col-span-1">
-        <RegistrationProgress
-          steps={STEPS}
-          currentStep={currentStep}
-          completedSteps={completedSteps}
-        />
-      </div>
-
-      {/* MAIN CONTENT */}
       <div className="lg:col-span-3">
         <Card className="p-8">
-          {/* STEP INDICATOR */}
           <StepIndicator steps={STEPS} currentStep={currentStep} />
 
-          {/* ERROR ALERT */}
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          {/* FORM */}
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {/* STEP CONTENT */}
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-8"
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" &&
+                  (e.target as HTMLElement).tagName !== "TEXTAREA"
+                ) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <div>{renderStep()}</div>
 
-              {/* NAVIGATION BUTTONS */}
               <div className="flex justify-between items-center pt-8 border-t border-slate-200">
                 <Button
                   type="button"
@@ -347,7 +432,8 @@ export default function RegistrationPage() {
                   </Button>
                 ) : (
                   <Button
-                    type="submit"
+                    type="button"
+                    onClick={form.handleSubmit(onSubmit)}
                     disabled={isSubmitting}
                     className="bg-green-600 hover:bg-green-700 gap-2"
                   >
@@ -369,6 +455,26 @@ export default function RegistrationPage() {
           </Form>
         </Card>
       </div>
+    </div>
+  );
+}
+
+// ─── Helper sub-component ────────────────────────────────────────────────────
+function CertField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | undefined | null;
+}) {
+  return (
+    <div className="space-y-0.5">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+        {label}
+      </p>
+      <p className="font-semibold text-gray-800 break-words">
+        {value || <span className="font-normal text-gray-400 italic">—</span>}
+      </p>
     </div>
   );
 }

@@ -313,21 +313,7 @@ export default function AdvancedDashboard() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-4xl font-black tracking-tight mb-1">
-            {userProfile?.role === "Super Admin"
-              ? "🚀 National Dashboard"
-              : `📍 ${userProfile?.entity} Operations`}
-          </h1>
-          <p className="text-slate-500 font-medium">
-            Real-time operational performance & insights
-          </p>
-        </div>
-        <Badge className="bg-blue-600 text-white font-bold px-4 py-2 text-base">
-          {userProfile?.role === "Super Admin" ? "🌍 Super Admin" : "🏢 District Admin"}
-        </Badge>
-      </div>
+     
 
       {/* KPI Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">

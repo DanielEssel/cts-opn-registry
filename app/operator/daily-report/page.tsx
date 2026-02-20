@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,8 +12,12 @@ import {
   Calendar,
   Download,
   Filter,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/firebase";
+import { getRidersByOperator, getRidersByStatus, RiderRecord } from "@/lib/rider-service";
+import { format } from "date-fns";
 
 // ============================================================================
 // TYPES
@@ -30,7 +35,7 @@ interface RecentRegistration {
   riderName: string;
   opn: string;
   date: string;
-  status: "Pending" | "Approved" | "Rejected";
+  status: "Pending" | "Active" | "Expired" | "Suspended";
   vehicleType: string;
 }
 
@@ -39,51 +44,111 @@ interface RecentRegistration {
 // ============================================================================
 
 export default function DailyReportPage() {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DailyReportStats>({
+    totalRegistrations: 0,
+    completedToday: 0,
+    pendingApproval: 0,
+    renewalsExpiring: 0,
+  });
+  const [recentRegistrations, setRecentRegistrations] = useState<
+    RecentRegistration[]
+  >([]);
+
   // ========================================================================
-  // MOCK DATA
+  // FETCH DATA
   // ========================================================================
 
-  const stats: DailyReportStats = {
-    totalRegistrations: 1247,
-    completedToday: 24,
-    pendingApproval: 8,
-    renewalsExpiring: 12,
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          console.error("No authenticated user");
+          setLoading(false);
+          return;
+        }
 
-  const recentRegistrations: RecentRegistration[] = [
-    {
-      id: "1",
-      riderName: "John Mensah",
-      opn: "AM-1001-02-26",
-      date: "2024-02-18 10:30 AM",
-      status: "Pending",
-      vehicleType: "Pragya",
-    },
-    {
-      id: "2",
-      riderName: "Ama Owusu",
-      opn: "AM-1002-02-26",
-      date: "2024-02-18 09:15 AM",
-      status: "Approved",
-      vehicleType: "Motorbike",
-    },
-    {
-      id: "3",
-      riderName: "Kwame Asante",
-      opn: "AM-1003-02-26",
-      date: "2024-02-18 08:45 AM",
-      status: "Pending",
-      vehicleType: "Tricycle",
-    },
-    {
-      id: "4",
-      riderName: "Abena Boateng",
-      opn: "AM-1004-02-26",
-      date: "2024-02-17 04:20 PM",
-      status: "Approved",
-      vehicleType: "Pragya",
-    },
-  ];
+        // Fetch all riders registered by this operator
+        const allRiders = await getRidersByOperator(user.uid);
+
+        // Calculate stats
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const completedToday = allRiders.filter((rider: RiderRecord) => {
+          if (!rider.createdAt) return false;
+          const createdDate =
+            typeof rider.createdAt === "object" && "toDate" in rider.createdAt
+              ? (rider.createdAt as any).toDate()
+              : new Date(rider.createdAt);
+          createdDate.setHours(0, 0, 0, 0);
+          return createdDate.getTime() === today.getTime();
+        }).length;
+
+        // Get pending riders
+        const pendingRiders = await getRidersByStatus("Pending");
+        const operatorPendingRiders = pendingRiders.filter(
+          (rider: RiderRecord) => rider.createdBy === user.uid
+        );
+
+        // Calculate expiring renewals (within 30 days)
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+        const renewalsExpiring = allRiders.filter((rider: RiderRecord) => {
+          if (!rider.expiryDate) return false;
+          const expiryDate = new Date(rider.expiryDate);
+          return expiryDate > new Date() && expiryDate <= thirtyDaysFromNow;
+        }).length;
+
+        setStats({
+          totalRegistrations: allRiders.length,
+          completedToday,
+          pendingApproval: operatorPendingRiders.length,
+          renewalsExpiring,
+        });
+
+        // Get recent registrations (last 10)
+        const recent = allRiders
+          .sort((a: RiderRecord, b: RiderRecord) => {
+            const dateA =
+              typeof a.createdAt === "object" && "toDate" in a.createdAt
+                ? (a.createdAt as any).toDate()
+                : new Date(a.createdAt);
+            const dateB =
+              typeof b.createdAt === "object" && "toDate" in b.createdAt
+                ? (b.createdAt as any).toDate()
+                : new Date(b.createdAt);
+            return dateB.getTime() - dateA.getTime();
+          })
+          .slice(0, 10)
+          .map((rider: RiderRecord) => {
+            const createdDate =
+              typeof rider.createdAt === "object" && "toDate" in rider.createdAt
+                ? (rider.createdAt as any).toDate()
+                : new Date(rider.createdAt);
+
+            return {
+              id: rider.id || "",
+              riderName: rider.fullName,
+              opn: rider.opn,
+              date: format(createdDate, "MMM dd, yyyy hh:mm a"),
+              status: rider.status,
+              vehicleType: rider.vehicleCategory,
+            };
+          });
+
+        setRecentRegistrations(recent);
+      } catch (error) {
+        console.error("Error fetching daily report data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // ========================================================================
   // STATUS BADGE COLOR
@@ -93,14 +158,63 @@ export default function DailyReportPage() {
     switch (status) {
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
-      case "Approved":
+      case "Active":
         return "bg-green-100 text-green-800";
-      case "Rejected":
+      case "Expired":
         return "bg-red-100 text-red-800";
+      case "Suspended":
+        return "bg-slate-100 text-slate-800";
       default:
         return "bg-slate-100 text-slate-800";
     }
   };
+
+  // ========================================================================
+  // EXPORT REPORT
+  // ========================================================================
+
+  const handleExportReport = () => {
+    // Create CSV data
+    const headers = ["Rider Name", "OPN", "Vehicle", "Date", "Status"];
+    const rows = recentRegistrations.map((reg) => [
+      reg.riderName,
+      reg.opn,
+      reg.vehicleType,
+      reg.date,
+      reg.status,
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n");
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `daily-report-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  // ========================================================================
+  // LOADING STATE
+  // ========================================================================
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-green-600 mx-auto" />
+          <p className="text-slate-600 font-semibold">Loading report data...</p>
+        </div>
+      </div>
+    );
+  }
 
   // ========================================================================
   // RENDER
@@ -113,7 +227,8 @@ export default function DailyReportPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Daily Report</h1>
           <p className="text-slate-500 mt-1">
-            Today's registration and activity summary
+            {format(new Date(), "EEEE, MMMM dd, yyyy")} • Your registration
+            summary
           </p>
         </div>
         <div className="flex gap-3">
@@ -121,7 +236,11 @@ export default function DailyReportPage() {
             <Filter className="h-4 w-4" />
             Filter
           </Button>
-          <Button className="bg-green-600 hover:bg-green-700 gap-2">
+          <Button
+            onClick={handleExportReport}
+            disabled={recentRegistrations.length === 0}
+            className="bg-green-600 hover:bg-green-700 gap-2"
+          >
             <Download className="h-4 w-4" />
             Export Report
           </Button>
@@ -231,71 +350,81 @@ export default function DailyReportPage() {
           <CardTitle>Recent Registrations</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
-                    Rider Name
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
-                    OPN
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
-                    Vehicle
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
-                    Date & Time
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentRegistrations.map((registration) => (
-                  <tr
-                    key={registration.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
-                  >
-                    <td className="py-4 px-4 text-sm font-semibold text-slate-900">
-                      {registration.riderName}
-                    </td>
-                    <td className="py-4 px-4 text-sm font-mono text-slate-700">
-                      {registration.opn}
-                    </td>
-                    <td className="py-4 px-4 text-sm text-slate-600">
-                      {registration.vehicleType}
-                    </td>
-                    <td className="py-4 px-4 text-sm text-slate-600">
-                      {registration.date}
-                    </td>
-                    <td className="py-4 px-4">
-                      <Badge
-                        className={`text-xs font-semibold ${getStatusColor(
-                          registration.status
-                        )}`}
-                      >
-                        {registration.status}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                      >
-                        View
-                      </Button>
-                    </td>
+          {recentRegistrations.length === 0 ? (
+            <div className="py-12 text-center text-slate-500">
+              <Users className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="font-semibold">No registrations yet</p>
+              <p className="text-sm mt-1">
+                Start registering riders to see them here
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
+                      Rider Name
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
+                      OPN
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
+                      Vehicle
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
+                      Date & Time
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
+                      Action
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {recentRegistrations.map((registration) => (
+                    <tr
+                      key={registration.id}
+                      className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="py-4 px-4 text-sm font-semibold text-slate-900">
+                        {registration.riderName}
+                      </td>
+                      <td className="py-4 px-4 text-sm font-mono text-slate-700">
+                        {registration.opn}
+                      </td>
+                      <td className="py-4 px-4 text-sm text-slate-600">
+                        {registration.vehicleType}
+                      </td>
+                      <td className="py-4 px-4 text-sm text-slate-600">
+                        {registration.date}
+                      </td>
+                      <td className="py-4 px-4">
+                        <Badge
+                          className={`text-xs font-semibold ${getStatusColor(
+                            registration.status
+                          )}`}
+                        >
+                          {registration.status}
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          View
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -312,7 +441,8 @@ export default function DailyReportPage() {
                 Chart visualization coming soon
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                Daily registration trends and statistics
+                Daily registration trends by{" "}
+                {stats.totalRegistrations > 0 ? "you" : "operator"}
               </p>
             </div>
           </div>
