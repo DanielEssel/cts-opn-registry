@@ -61,7 +61,12 @@ interface SystemAlert {
 }
 
 export default function AdvancedDashboard() {
-  const [userProfile, setUserProfile] = useState<{ role: string; entity: string } | null>(null);
+ const [userProfile, setUserProfile] = useState<{
+  uid: string;
+  role: "Super Admin" | "District Admin" | "Operator";
+  entity: string;
+} | null>(null);
+
   const [stats, setStats] = useState({
     totalRevenue: 0,
     riderCount: 0,
@@ -74,84 +79,137 @@ export default function AdvancedDashboard() {
   const [recentActions, setRecentActions] = useState<ActivityLog[]>([]);
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [topPerformers, setTopPerformers] = useState<
     { name: string; count: number }[]
   >([]);
 
+ 
+
   const PERMIT_FEE = 100;
 
-  // 1. FETCH USER PROFILE
+  // 1) FETCH USER PROFILE (role + entity + uid)
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
+      if (!user) {
+        setUserProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
         const docRef = doc(db, "admin_users", user.uid);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setUserProfile(docSnap.data() as any);
-        } else {
-          setUserProfile({ role: "Super Admin", entity: "National HQ" });
+
+        if (!docSnap.exists()) {
+          // Fail closed (recommended). If you want fail-open, keep your fallback.
+          setUserProfile(null);
+          setError?.(
+            "User profile not found. Please contact the Boss (Super Admin).",
+          );
+          await auth.signOut();
+          setLoading(false);
+          return;
         }
+
+        const data = docSnap.data() as any;
+
+        // Optional: block inactive accounts
+        if (data?.status && data.status !== "Active") {
+          setUserProfile(null);
+          setError?.(
+            "Account is not active. Please contact the Boss (Super Admin).",
+          );
+          await auth.signOut();
+          setLoading(false);
+          return;
+        }
+
+        setUserProfile({
+          uid: user.uid,
+          role: data.role,
+          entity: data.entity,
+        });
+      } catch (e) {
+        console.error("Failed to fetch user profile:", e);
+        setUserProfile(null);
+      } finally {
+        setLoading(false);
       }
     });
+
     return () => unsubscribe();
   }, []);
 
-  // 2. FETCH ENHANCED STATS & RECENT ACTIONS
+  // 2) FETCH STATS + RECENT ACTIONS (role-aware)
   useEffect(() => {
     if (!userProfile) return;
 
+    const { role, entity, uid } = userProfile;
     const ridersRef = collection(db, "riders");
 
-    // Filter query based on role
-    const statsQuery =
-      userProfile.role === "Super Admin"
+    // Role-aware base query:
+    // - Super Admin: all riders
+    // - District Admin: riders in their district (districtMunicipality == entity)
+    // - Operator: only riders they created (createdBy == uid)
+    const baseQuery =
+      role === "Super Admin"
         ? query(ridersRef, orderBy("createdAt", "desc"))
-        : query(
-            ridersRef,
-            where("town", "==", userProfile.entity),
-            orderBy("createdAt", "desc")
-          );
+        : role === "District Admin"
+          ? query(
+              ridersRef,
+              where("districtMunicipality", "==", entity),
+              orderBy("createdAt", "desc"),
+            )
+          : query(
+              ridersRef,
+              where("createdBy", "==", uid),
+              orderBy("createdAt", "desc"),
+            );
 
-    // Fetch Comprehensive Stats
     const getStats = async () => {
       try {
-        const snapshot = await getDocs(statsQuery);
-        const riders: Rider[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Rider[];
+        const snapshot = await getDocs(baseQuery);
+
+        const riders: Rider[] = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as any),
+        }));
 
         const today = new Date();
-        const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        today.setHours(0, 0, 0, 0);
+
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const inSevenDays = new Date(today);
+        inSevenDays.setDate(inSevenDays.getDate() + 7);
 
         let activeCount = 0;
         let pendingCount = 0;
         let expiringCount = 0;
         let weeklyRegistrations = 0;
 
-        riders.forEach((rider) => {
-          // Status counts
+        for (const rider of riders) {
           if (rider.status === "Active") activeCount++;
           if (rider.status === "Pending") pendingCount++;
 
-          // Expiring soon (within 7 days)
           if (rider.expiryDate) {
             const expiry = new Date(rider.expiryDate);
-            if (expiry < new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000) && expiry > today) {
-              expiringCount++;
-            }
+            if (expiry > today && expiry <= inSevenDays) expiringCount++;
           }
 
-          // Weekly growth
           if (rider.createdAt) {
-            const createdDate = rider.createdAt.toDate
-              ? rider.createdAt.toDate()
-              : new Date(rider.createdAt);
-            if (createdDate > sevenDaysAgo) {
-              weeklyRegistrations++;
-            }
+            const createdDate =
+              rider.createdAt?.toDate?.() instanceof Date
+                ? rider.createdAt.toDate()
+                : new Date(rider.createdAt);
+
+            if (createdDate > sevenDaysAgo) weeklyRegistrations++;
           }
-        });
+        }
 
         const complianceRate =
           riders.length > 0
@@ -168,7 +226,7 @@ export default function AdvancedDashboard() {
           complianceRate,
         });
 
-        // Generate Alerts
+        // Alerts (role-aware)
         const newAlerts: SystemAlert[] = [];
 
         if (expiringCount > 10) {
@@ -181,7 +239,9 @@ export default function AdvancedDashboard() {
           });
         }
 
-        if (pendingCount > 5) {
+        // Operators typically shouldn’t see “pending approvals” alerts (they can’t approve)
+        const canApprove = role === "Super Admin" || role === "District Admin";
+        if (canApprove && pendingCount > 5) {
           newAlerts.push({
             id: "pending",
             type: "warning",
@@ -201,7 +261,8 @@ export default function AdvancedDashboard() {
           });
         }
 
-        if (userProfile.role === "Super Admin") {
+        // Super Admin-only informational alerts
+        if (role === "Super Admin") {
           newAlerts.push({
             id: "sms",
             type: "info",
@@ -213,55 +274,64 @@ export default function AdvancedDashboard() {
 
         setAlerts(newAlerts);
 
-        // Calculate top performers
-        const townCounts: Record<string, number> = {};
-        riders.forEach((rider) => {
-          const town = rider.town || "Unknown";
-          townCounts[town] = (townCounts[town] || 0) + 1;
-        });
+        // Top performers:
+        // - Super Admin: top districts (districtMunicipality)
+        // - District Admin / Operator: top towns (residentialTown/town)
+        const counts: Record<string, number> = {};
+        for (const rider of riders) {
+          const key =
+            role === "Super Admin"
+              ? ((rider as any).districtMunicipality ?? "Unknown")
+              : (rider.town ?? "Unknown");
 
-        const topTowns = Object.entries(townCounts)
+          counts[key] = (counts[key] || 0) + 1;
+        }
+
+        const top = Object.entries(counts)
           .sort(([, a], [, b]) => b - a)
           .slice(0, 5)
           .map(([name, count]) => ({ name, count }));
 
-        setTopPerformers(topTowns);
+        setTopPerformers(top);
       } catch (error) {
         console.error("Error fetching stats:", error);
       }
     };
 
-    // Activity Feed Listener
+    // Recent activity listener (same scope as baseQuery, but limited)
     const activityQuery =
-      userProfile.role === "Super Admin"
+      role === "Super Admin"
         ? query(ridersRef, orderBy("createdAt", "desc"), limit(8))
-        : query(
-            ridersRef,
-            where("town", "==", userProfile.entity),
-            orderBy("createdAt", "desc"),
-            limit(8)
-          );
+        : role === "District Admin"
+          ? query(
+              ridersRef,
+              where("districtMunicipality", "==", entity),
+              orderBy("createdAt", "desc"),
+              limit(8),
+            )
+          : query(
+              ridersRef,
+              where("createdBy", "==", uid),
+              orderBy("createdAt", "desc"),
+              limit(8),
+            );
 
     const unsubscribe = onSnapshot(
       activityQuery,
       (snapshot) => {
-        if (snapshot.empty) {
-          setRecentActions([]);
-          setLoading(false);
-          return;
-        }
+        const actions: ActivityLog[] = snapshot.docs.map((d) => {
+          const data = d.data() as Rider;
 
-        const actions: ActivityLog[] = snapshot.docs.map((doc) => {
-          const data = doc.data() as Rider;
           return {
-            id: doc.id,
-            target: data.id || "---",
+            id: d.id,
+            target: d.id, // use doc id, not data.id
             action: "New Registration",
             admin: data.fullName || "System",
-            time: data.createdAt?.toDate?.().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }) || "Just now",
+            time:
+              data.createdAt?.toDate?.().toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }) || "Just now",
             status: data.status || "Pending",
           };
         });
@@ -272,7 +342,7 @@ export default function AdvancedDashboard() {
       (error) => {
         console.error("Activity Listener Error:", error);
         setLoading(false);
-      }
+      },
     );
 
     getStats();
@@ -313,7 +383,6 @@ export default function AdvancedDashboard() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-     
 
       {/* KPI Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
@@ -361,7 +430,9 @@ export default function AdvancedDashboard() {
                 <p className="text-green-100 text-xs font-bold uppercase tracking-widest">
                   Active
                 </p>
-                <h3 className="text-3xl font-black mt-2">{stats.activeCount}</h3>
+                <h3 className="text-3xl font-black mt-2">
+                  {stats.activeCount}
+                </h3>
               </div>
               <div className="p-2 bg-green-500/40 rounded-lg">
                 <CheckCircle2 className="h-5 w-5" />
@@ -378,7 +449,9 @@ export default function AdvancedDashboard() {
                 <p className="text-red-100 text-xs font-bold uppercase tracking-widest">
                   Expiring Soon
                 </p>
-                <h3 className="text-3xl font-black mt-2">{stats.expiringCount}</h3>
+                <h3 className="text-3xl font-black mt-2">
+                  {stats.expiringCount}
+                </h3>
               </div>
               <div className="p-2 bg-red-500/40 rounded-lg">
                 <Clock className="h-5 w-5" />
@@ -460,12 +533,17 @@ export default function AdvancedDashboard() {
             <div className="space-y-3">
               {topPerformers.slice(0, 3).map((performer, idx) => (
                 <div key={performer.name} className="flex items-center gap-3">
-                  <span className="font-bold text-lg text-slate-400">#{idx + 1}</span>
+                  <span className="font-bold text-lg text-slate-400">
+                    #{idx + 1}
+                  </span>
                   <div className="flex-1">
                     <p className="font-semibold text-slate-900">
                       {performer.name}
                     </p>
-                    <Progress value={(performer.count / stats.riderCount) * 100} className="h-2 mt-1" />
+                    <Progress
+                      value={(performer.count / stats.riderCount) * 100}
+                      className="h-2 mt-1"
+                    />
                   </div>
                   <Badge className="bg-orange-100 text-orange-700 font-bold">
                     {performer.count}
@@ -503,9 +581,7 @@ export default function AdvancedDashboard() {
                         <p className="text-sm font-semibold text-slate-900 truncate">
                           {item.admin}
                         </p>
-                        <p className="text-xs text-slate-500">
-                          {item.action}
-                        </p>
+                        <p className="text-xs text-slate-500">{item.action}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge
                             variant="secondary"
@@ -554,13 +630,11 @@ export default function AdvancedDashboard() {
                   <div
                     key={alert.id}
                     className={`p-4 rounded-xl border flex justify-between items-start ${getAlertColor(
-                      alert.type
+                      alert.type,
                     )}`}
                   >
                     <div className="flex gap-3 flex-1">
-                      <div className="mt-0.5">
-                        {getAlertIcon(alert.type)}
-                      </div>
+                      <div className="mt-0.5">{getAlertIcon(alert.type)}</div>
                       <div>
                         <p className="font-semibold text-slate-900">
                           {alert.title}
@@ -584,7 +658,9 @@ export default function AdvancedDashboard() {
               ) : (
                 <div className="p-8 text-center">
                   <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                  <p className="text-slate-600 font-medium">All Systems Normal</p>
+                  <p className="text-slate-600 font-medium">
+                    All Systems Normal
+                  </p>
                   <p className="text-xs text-slate-400 mt-1">
                     No alerts at this time
                   </p>

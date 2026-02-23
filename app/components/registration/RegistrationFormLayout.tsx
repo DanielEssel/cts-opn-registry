@@ -57,7 +57,7 @@ export function RegistrationFormLayout() {
       region: "Greater Accra",
       fullName: "",
       phoneNumber: "",
-      ghanaCardNumber: "",
+      idNumber: "",
       dateOfBirth: "",
       gender: undefined,
       districtMunicipality: undefined,

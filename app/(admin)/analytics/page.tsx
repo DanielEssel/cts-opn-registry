@@ -2,15 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  doc,
+  getDoc,
+  orderBy,         // ✅ FIX 1: was missing
+} from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Download,
-  Calendar,
   PieChart,
-  TrendingUp,
   Loader2,
   MapPin,
   AlertTriangle,
@@ -22,6 +28,9 @@ import {
   Activity,
   BarChart3,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+type Role = "Super Admin" | "District Admin" | "Operator";
 
 interface Rider {
   id: string;
@@ -31,6 +40,7 @@ interface Rider {
   phoneNumber?: string;
   phone?: string;
   town: string;
+  districtMunicipality?: string;   // ✅ FIX 3: was missing from type
   status: "Active" | "Pending" | "Expired" | "Suspended";
   vehicleCategory?: string;
   expiryDate?: string;
@@ -39,7 +49,13 @@ interface Rider {
 }
 
 export default function AnalyticsPage() {
-  const [userProfile, setUserProfile] = useState<{ role: string; entity: string } | null>(null);
+  const router = useRouter();
+
+  const [userProfile, setUserProfile] = useState<{
+    uid: string;
+    role: Role;
+    entity: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [riders, setRiders] = useState<Rider[]>([]);
   const [data, setData] = useState({
@@ -54,39 +70,72 @@ export default function AnalyticsPage() {
     revenueEstimate: 0,
   });
 
-  // 1. FETCH USER PROFILE
+  const PERMIT_FEE = 100;
+
+  // 1) Fetch user profile
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const docRef = doc(db, "admin_users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setUserProfile(docSnap.data() as any);
-        } else {
-          setUserProfile({ role: "Super Admin", entity: "National HQ" });
+      try {
+        if (!user) {
+          setUserProfile(null);
+          router.replace("/login");
+          return;
         }
+
+        const snap = await getDoc(doc(db, "admin_users", user.uid));
+        if (!snap.exists()) {
+          await auth.signOut();
+          setUserProfile(null);
+          router.replace("/login");
+          return;
+        }
+
+        const p = snap.data() as any;
+
+        if (p?.status && p.status !== "Active") {
+          await auth.signOut();
+          setUserProfile(null);
+          router.replace("/login");
+          return;
+        }
+
+        setUserProfile({
+          uid: user.uid,
+          role: p.role as Role,
+          entity: (p.entity as string) ?? "",
+        });
+      } catch (e) {
+        console.error("Error fetching user profile:", e);
+        setUserProfile(null);
+        router.replace("/login");
       }
     });
-    return () => unsubscribe();
-  }, []);
 
-  // 2. FETCH ENHANCED ANALYTICS DATA
+    return () => unsubscribe();
+  }, [router]);
+
+  // 2) Fetch + compute analytics
   useEffect(() => {
     if (!userProfile) return;
 
+    setLoading(true);
+
     const ridersRef = collection(db, "riders");
 
-    // Apply Multi-Tenancy Query
     const q =
       userProfile.role === "Super Admin"
-        ? query(ridersRef)
-        : query(ridersRef, where("town", "==", userProfile.entity));
+        ? query(ridersRef, orderBy("createdAt", "desc"))
+        : query(
+            ridersRef,
+            where("districtMunicipality", "==", userProfile.entity),
+            orderBy("createdAt", "desc")
+          );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const statusMap = { Active: 0, Pending: 0, Expired: 0, Suspended: 0, total: 0 };
-        const townMap: Record<string, number> = {};
+        const locationMap: Record<string, number> = {};
         const vehicleMap: Record<string, number> = {};
         const registrationByDate: Record<string, number> = {};
         const riderList: Rider[] = [];
@@ -94,78 +143,75 @@ export default function AnalyticsPage() {
         let expiringCount = 0;
         let renewalCount = 0;
         let totalPermitAge = 0;
-        const today = new Date();
-        const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-        snapshot.docs.forEach((doc) => {
-          const rider = { id: doc.id, ...doc.data() } as Rider;
+        const now = new Date();
+        const startOfToday = new Date(now);
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const in30Days = new Date(startOfToday);
+        in30Days.setDate(in30Days.getDate() + 30);
+
+        snapshot.docs.forEach((d) => {
+          const rider = { id: d.id, ...(d.data() as any) } as Rider;
           riderList.push(rider);
 
-          // Status Count
           const status = rider.status || "Pending";
-          if (statusMap.hasOwnProperty(status)) {
-            statusMap[status as keyof typeof statusMap]++;
-          }
+          if (status in statusMap) statusMap[status as keyof typeof statusMap]++;
           statusMap.total++;
 
-          // Town Data
-          const town = rider.town || "Unknown";
-          townMap[town] = (townMap[town] || 0) + 1;
+          const key =
+            userProfile.role === "Super Admin"
+              ? rider.districtMunicipality || "Unknown"
+              : rider.town || "Unknown";
+          locationMap[key] = (locationMap[key] || 0) + 1;
 
-          // Vehicle Data
           const vehicle = rider.vehicleCategory || "Unknown";
           vehicleMap[vehicle] = (vehicleMap[vehicle] || 0) + 1;
 
-          // Expiry Date Analysis
           if (rider.expiryDate) {
-            const expiryDate = new Date(rider.expiryDate);
-            if (expiryDate.toDateString() === today.toDateString()) {
-              expiringCount++;
-            }
-            if (expiryDate <= thirtyDaysFromNow && expiryDate > today) {
-              renewalCount++;
-            }
+            const expiry = new Date(rider.expiryDate);
+            const expiryDay = new Date(expiry);
+            expiryDay.setHours(0, 0, 0, 0);
+            if (expiryDay.getTime() === startOfToday.getTime()) expiringCount++;
+            if (expiryDay > startOfToday && expiryDay <= in30Days) renewalCount++;
           }
 
-          // Permit Age Calculation
           if (rider.issueDate) {
             const issueDate = new Date(rider.issueDate);
             const ageInDays = Math.floor(
-              (today.getTime() - issueDate.getTime()) / (1000 * 60 * 60 * 24)
+              (startOfToday.getTime() - issueDate.getTime()) / (1000 * 60 * 60 * 24)
             );
-            totalPermitAge += ageInDays;
+            totalPermitAge += Math.max(0, ageInDays);
           }
 
-          // Registration Trend
           if (rider.createdAt) {
-            const registrationDate = rider.createdAt.toDate?.()
-              ? rider.createdAt.toDate()
-              : new Date(rider.createdAt);
-            const dateKey = registrationDate.toISOString().split("T")[0];
+            const created =
+              rider.createdAt?.toDate?.() instanceof Date
+                ? rider.createdAt.toDate()
+                : new Date(rider.createdAt);
+            const dateKey = created.toISOString().split("T")[0];
             registrationByDate[dateKey] = (registrationByDate[dateKey] || 0) + 1;
           }
         });
 
-        const sortedTowns = Object.entries(townMap).sort((a, b) => b[1] - a[1]);
+        const sortedLocations = Object.entries(locationMap).sort((a, b) => b[1] - a[1]);
         const avgPermitAge =
           riderList.length > 0 ? Math.round(totalPermitAge / riderList.length) : 0;
-        const estimatedRevenue = statusMap.Active * 50; // Assuming 50 per permit
-
-        // Sort registration trend by date
+        const estimatedRevenue = statusMap.Active * PERMIT_FEE;
         const sortedTrend = Object.entries(registrationByDate)
-          .sort()
+          .sort(([a], [b]) => (a < b ? -1 : 1))
           .slice(-7)
           .map(([date, count]) => ({ date, count }));
 
         setRiders(riderList);
         setData({
           statusCounts: statusMap,
-          townData: townMap,
+          townData: locationMap,
           vehicleData: vehicleMap,
           expiringTodayCount: expiringCount,
           renewalsNeeded: renewalCount,
           avgPermitAge,
-          mostActiveTown: sortedTowns[0]?.[0] || "None",
+          mostActiveTown: sortedLocations[0]?.[0] || "None",
           registrationTrend: sortedTrend,
           revenueEstimate: estimatedRevenue,
         });
@@ -181,8 +227,11 @@ export default function AnalyticsPage() {
     return () => unsubscribe();
   }, [userProfile]);
 
+  // ✅ FIX 2: these were outside the function — moved inside
   const getPercentage = (count: number) =>
-    data.statusCounts.total > 0 ? Math.round((count / data.statusCounts.total) * 100) : 0;
+    data.statusCounts.total > 0
+      ? Math.round((count / data.statusCounts.total) * 100)
+      : 0;
 
   if (loading)
     return (
@@ -242,7 +291,9 @@ export default function AnalyticsPage() {
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-black tracking-tight mb-2">
-            {userProfile?.role === "Super Admin" ? "🌍 System Analytics" : `📊 ${userProfile?.entity} Reports`}
+            {userProfile?.role === "Super Admin"
+              ? "🌍 System Analytics"
+              : `📊 ${userProfile?.entity} Reports`}
           </h1>
           <p className="text-slate-500 font-medium">
             {userProfile?.role === "Super Admin"
@@ -260,9 +311,8 @@ export default function AnalyticsPage() {
         </Button>
       </div>
 
-      {/* KPI Cards - Top Row */}
+      {/* KPI Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-        {/* Total Permits */}
         <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
@@ -276,7 +326,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Active Permits */}
         <Card className="border-green-200 bg-green-50/50 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-bold text-green-600 uppercase tracking-wider flex items-center gap-2">
@@ -290,7 +339,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Expiring Today */}
         <Card className="border-orange-200 bg-orange-50/50 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-bold text-orange-600 uppercase tracking-wider flex items-center gap-2">
@@ -304,7 +352,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Needs Renewal */}
         <Card className="border-yellow-200 bg-yellow-50/50 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-bold text-yellow-600 uppercase tracking-wider flex items-center gap-2">
@@ -318,7 +365,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Estimated Revenue */}
         <Card className="border-purple-200 bg-purple-50/50 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-bold text-purple-600 uppercase tracking-wider flex items-center gap-2">
@@ -335,7 +381,6 @@ export default function AnalyticsPage() {
 
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Permit Status Breakdown */}
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -369,7 +414,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Vehicle Type Distribution */}
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -389,12 +433,11 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Top Districts */}
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
               <MapPin className="h-5 w-5 text-green-600" />
-              Top {userProfile?.role === "Super Admin" ? "Districts" : "Location"}
+              Top {userProfile?.role === "Super Admin" ? "Districts" : "Locations"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -411,9 +454,8 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* Bottom Row - Insights */}
+      {/* Bottom Row */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Registration Trend */}
         <Card className="lg:col-span-2 shadow-sm border-slate-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -435,19 +477,21 @@ export default function AnalyticsPage() {
                         style={{ height: `${Math.max(height, 10)}%` }}
                       />
                       <span className="text-xs text-slate-500 mt-2">
-                        {new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        {new Date(date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </span>
                     </div>
                   );
                 })
               ) : (
-                <p className="text-slate-400 text-center w-full">No data available</p>
+                <p className="text-slate-400 text-center w-full self-center">No data available</p>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Key Metrics */}
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -477,4 +521,4 @@ export default function AnalyticsPage() {
       </div>
     </div>
   );
-}
+}  

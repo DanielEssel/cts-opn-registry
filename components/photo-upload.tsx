@@ -7,8 +7,8 @@ import { Upload, Camera, X, Check } from "lucide-react";
 
 interface PhotoUploadProps {
   value?: File | string;
-  onChange: (file?: File) => void; // allow undefined for remove
-  error?: string;
+  onChange: (file?: File) => void; 
+  error?: string; 
 }
 
 export function PhotoUpload({ value, onChange, error }: PhotoUploadProps) {

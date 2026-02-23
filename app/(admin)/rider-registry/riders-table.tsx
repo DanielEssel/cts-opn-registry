@@ -1,7 +1,6 @@
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -15,9 +14,18 @@ interface RidersTableProps {
   loading: boolean;
   selected: string[];
   approvingId: string | null;
+
+  // Columns
   showTownColumn: boolean;
-  showDeleteOption: boolean;
+
+  // Role/capability flags
+  canApprove: boolean;
+  canDelete: boolean;
+  canEdit?: boolean;
+  canRenew?: boolean;
+
   baseUrl: string;
+
   onToggleAll: () => void;
   onToggleOne: (id: string) => void;
   onViewRider: (rider: any) => void;
@@ -33,7 +41,12 @@ export function RidersTable({
   selected,
   approvingId,
   showTownColumn,
-  showDeleteOption,
+
+  canApprove,
+  canDelete,
+  canEdit = true,
+  canRenew = true,
+
   baseUrl,
   onToggleAll,
   onToggleOne,
@@ -71,36 +84,42 @@ export function RidersTable({
     );
   }
 
+  const allChecked = selected.length === riders.length && riders.length > 0;
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
       <Table>
         <TableHeader className="bg-slate-50/50 border-b">
           <TableRow>
             <TableHead className="w-12 px-6">
-              <Checkbox
-                checked={selected.length === riders.length && riders.length > 0}
-                onCheckedChange={onToggleAll}
-              />
+              <Checkbox checked={allChecked} onCheckedChange={onToggleAll} />
             </TableHead>
+
             <TableHead className="font-bold text-slate-700">
               Rider / Contact
             </TableHead>
-            <TableHead className="font-bold text-slate-700">OPN Number</TableHead>
+            <TableHead className="font-bold text-slate-700">
+              OPN Number
+            </TableHead>
             <TableHead className="font-bold text-center text-slate-700">
               Quick Scan
             </TableHead>
+
             {showTownColumn && (
               <TableHead className="font-bold text-slate-700">Town</TableHead>
             )}
+
             <TableHead className="font-bold text-slate-700">Vehicle</TableHead>
             <TableHead className="font-bold text-slate-700">Issued</TableHead>
             <TableHead className="font-bold text-slate-700">Expires</TableHead>
             <TableHead className="font-bold text-slate-700">Status</TableHead>
+
             <TableHead className="text-right px-8 font-bold text-slate-700">
               Actions
             </TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {riders.map((rider) => (
             <RiderTableRow
@@ -109,13 +128,14 @@ export function RidersTable({
               selected={selected.includes(rider.id)}
               onToggle={() => onToggleOne(rider.id)}
               onView={() => onViewRider(rider)}
-              onEdit={() => onEditRider(rider)}
-              onApprove={() => onApproveRider(rider.id)}
-              onRenew={() => onRenewRider(rider)}
-              onDelete={() => onDeleteRider(rider)}
+              onEdit={canEdit ? () => onEditRider(rider) : undefined}
+              onApprove={
+                canApprove ? () => onApproveRider(rider.id) : undefined
+              }
+              onRenew={canRenew ? () => onRenewRider(rider) : undefined}
+              onDelete={canDelete ? () => onDeleteRider(rider) : undefined}
               isApproving={approvingId === rider.id}
               showTownColumn={showTownColumn}
-              showDeleteOption={showDeleteOption}
               baseUrl={baseUrl}
             />
           ))}

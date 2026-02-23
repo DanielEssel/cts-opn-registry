@@ -42,7 +42,7 @@ const DL_VALIDATION_RULES = {
  * Frontend validation for Driver's License format
  */
 const validateDLFormat = (
-  dlNumber: string
+  dlNumber: string,
 ): { valid: boolean; message: string } => {
   if (!dlNumber) {
     return { valid: false, message: "Enter Driver's License number" };
@@ -111,8 +111,8 @@ export function ComplianceStep({ form }: ComplianceStepProps) {
                       dlNumber && !isDLValid
                         ? "border-red-500 focus:ring-red-500"
                         : dlNumber && isDLValid
-                        ? "border-green-500 focus:ring-green-500"
-                        : ""
+                          ? "border-green-500 focus:ring-green-500"
+                          : ""
                     }`}
                     maxLength={DL_VALIDATION_RULES.totalChars}
                     onChange={(e) => {
@@ -122,7 +122,9 @@ export function ComplianceStep({ form }: ComplianceStepProps) {
                       const cleanedInput = value.replace(/[^A-Z0-9]/g, "");
 
                       // Limit to actual digits/letters only (14 chars)
-                      if (cleanedInput.length > DL_VALIDATION_RULES.actualDigits) {
+                      if (
+                        cleanedInput.length > DL_VALIDATION_RULES.actualDigits
+                      ) {
                         // Don't add more characters
                         return;
                       }
@@ -240,7 +242,12 @@ export function ComplianceStep({ form }: ComplianceStepProps) {
                 <PhotoUpload
                   value={field.value}
                   onChange={field.onChange}
-                  error={form.formState.errors.passportPhoto?.message}
+                  error={
+                    typeof form.formState.errors.passportPhoto?.message ===
+                    "string"
+                      ? form.formState.errors.passportPhoto?.message
+                      : undefined
+                  }
                 />
               </FormControl>
               <FormMessage />
@@ -249,7 +256,6 @@ export function ComplianceStep({ form }: ComplianceStepProps) {
         />
       </div>
 
-            
       {/* ========================================================================
           NEXT OF KIN INFO BOX
           ======================================================================== */}

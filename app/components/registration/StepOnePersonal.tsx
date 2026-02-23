@@ -42,7 +42,7 @@ export default function StepOnePersonal({ form, onNext }: StepOneProps) {
           {/* Phone Number Field */}
           <FormField
             control={form.control}
-            name="phone"
+            name="fullName"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-slate-700 font-semibold">Phone Number</FormLabel>

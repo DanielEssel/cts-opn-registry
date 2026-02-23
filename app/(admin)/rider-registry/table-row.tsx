@@ -23,14 +23,17 @@ interface RiderRowProps {
   rider: any;
   selected: boolean;
   onToggle: () => void;
+
   onView: () => void;
-  onEdit: () => void;
-  onApprove: () => void;
-  onRenew: () => void;
-  onDelete: () => void;
+
+  // Optional actions (role-based)
+  onEdit?: () => void;
+  onApprove?: () => void;
+  onRenew?: () => void;
+  onDelete?: () => void;
+
   isApproving: boolean;
   showTownColumn: boolean;
-  showDeleteOption: boolean;
   baseUrl: string;
 }
 
@@ -45,9 +48,15 @@ export function RiderTableRow({
   onDelete,
   isApproving,
   showTownColumn,
-  showDeleteOption,
   baseUrl,
 }: RiderRowProps) {
+  const canEdit = typeof onEdit === "function";
+  const canApprove = typeof onApprove === "function";
+  const canRenew = typeof onRenew === "function";
+  const canDelete = typeof onDelete === "function";
+
+  const showApprove = canApprove && rider.status === "Pending";
+
   return (
     <TableRow className="group hover:bg-blue-50/30 transition-all border-b last:border-0">
       <TableCell className="px-6">
@@ -76,11 +85,7 @@ export function RiderTableRow({
       <TableCell>
         <div className="flex justify-center items-center">
           <div className="p-1.5 bg-white border border-slate-100 rounded-xl shadow-sm group-hover:border-blue-200 transition-colors">
-            <QRCodeSVG
-              value={`${baseUrl}/verify/${rider.opn}`}
-              size={32}
-              level="M"
-            />
+            <QRCodeSVG value={`${baseUrl}/verify/${rider.opn}`} size={32} level="M" />
           </div>
         </div>
       </TableCell>
@@ -101,20 +106,24 @@ export function RiderTableRow({
 
       {/* Issued Date */}
       <TableCell className="text-sm text-slate-600">
-        {new Date(rider.issueDate).toLocaleDateString()}
+        {rider.issueDate ? new Date(rider.issueDate).toLocaleDateString() : "—"}
       </TableCell>
 
       {/* Expiry Date */}
       <TableCell className="text-sm">
-        <span
-          className={
-            new Date(rider.expiryDate) < new Date()
-              ? "text-red-600 font-semibold"
-              : "text-slate-600"
-          }
-        >
-          {new Date(rider.expiryDate).toLocaleDateString()}
-        </span>
+        {rider.expiryDate ? (
+          <span
+            className={
+              new Date(rider.expiryDate) < new Date()
+                ? "text-red-600 font-semibold"
+                : "text-slate-600"
+            }
+          >
+            {new Date(rider.expiryDate).toLocaleDateString()}
+          </span>
+        ) : (
+          <span className="text-slate-400">—</span>
+        )}
       </TableCell>
 
       {/* Status */}
@@ -130,7 +139,11 @@ export function RiderTableRow({
         >
           <span
             className={`h-1.5 w-1.5 rounded-full mr-2 ${
-              rider.status === "Active" ? "bg-green-500" : "bg-blue-500"
+              rider.status === "Active"
+                ? "bg-green-500"
+                : rider.status === "Pending"
+                  ? "bg-blue-500"
+                  : "bg-red-500"
             }`}
           />
           {rider.status}
@@ -149,31 +162,36 @@ export function RiderTableRow({
               <MoreHorizontal className="h-5 w-5 text-slate-400" />
             </Button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl shadow-xl">
             <DropdownMenuItem onClick={onView} className="rounded-lg">
-              <ChevronRight className="mr-2 h-4 w-4 text-slate-400" /> View
-              Full Profile
+              <ChevronRight className="mr-2 h-4 w-4 text-slate-400" /> View Full Profile
             </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={onEdit} className="rounded-lg">
-              <Edit3 className="mr-2 h-4 w-4 text-slate-400" /> Edit Details
-            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem onClick={onEdit} className="rounded-lg">
+                <Edit3 className="mr-2 h-4 w-4 text-slate-400" /> Edit Details
+              </DropdownMenuItem>
+            )}
 
-            {rider.status === "Pending" && (
+            {showApprove && (
               <DropdownMenuItem
                 onClick={onApprove}
                 className="text-green-600 font-bold rounded-lg focus:bg-green-50"
+                disabled={isApproving}
               >
                 <CheckCircle className="mr-2 h-4 w-4" />
                 {isApproving ? "Approving..." : "Approve Rider"}
               </DropdownMenuItem>
             )}
 
-            <DropdownMenuItem onClick={onRenew} className="text-blue-600 rounded-lg">
-              <RefreshCw className="mr-2 h-4 w-4" /> Renew Permit
-            </DropdownMenuItem>
+            {canRenew && (
+              <DropdownMenuItem onClick={onRenew} className="text-blue-600 rounded-lg">
+                <RefreshCw className="mr-2 h-4 w-4" /> Renew Permit
+              </DropdownMenuItem>
+            )}
 
-            {showDeleteOption && (
+            {canDelete && (
               <>
                 <DropdownMenuSeparator className="my-2" />
                 <DropdownMenuItem

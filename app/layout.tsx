@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PermitTrack | Official Motor Rider Registry",
-  description: "Secure registration and OPN issuance for motor riders.",
+  title: "OPN Registry | Ghana Riders Registration",
+  description: "Official platform for the secure registration of motor riders and the issuance of Operating Permit Numbers (OPN) in Ghana.",
 };
 
 export default function RootLayout({

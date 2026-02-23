@@ -62,7 +62,7 @@ export default function NewRiderForm() {
                 <FormField name="phoneNumber" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="024XXXXXXX" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <FormField name="ghanaCardNumber" control={form.control} render={({ field }) => (
+                  <FormField name="idNumber" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>Ghana Card ID</FormLabel><FormControl><Input placeholder="GHA-000000000-0" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
               </div>

@@ -104,7 +104,7 @@ export function PreviewStep({ data, photoPreview }: PreviewStepProps) {
           <InfoField label="Phone" value={data.phoneNumber} icon={<Phone className="h-4 w-4" />} />
         </div>
         <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-200/50">
-          <InfoField label="Ghana Card" value={data.ghanaCardNumber} icon={<CreditCard className="h-4 w-4" />} />
+          <InfoField label="Ghana Card" value={data.idNumber} icon={<CreditCard className="h-4 w-4" />} />
         </div>
       </div>
 

@@ -25,7 +25,6 @@ import {
   complianceSchema,
 } from "@/app/lib/validations";
 import { saveRiderRegistration } from "@/lib/rider-service";
-import { RegistrationProgress } from "@/components/operator/RegistrationProgress";
 import { StepIndicator } from "@/components/operator/StepIndicator";
 import { BioDataStep } from "@/app/components/registration/steps/bio-data-step";
 import { LocationStep } from "@/app/components/registration/steps/location-step";

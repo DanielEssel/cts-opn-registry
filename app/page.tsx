@@ -25,29 +25,36 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-3 group">
-              <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center transform group-hover:scale-105 transition shadow-lg">
-                <Shield className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="font-bold text-xl text-gray-900 tracking-tight">Ghana OPN</h1>
-                <p className="text-xs text-gray-500 font-medium">Operating Permit System</p>
-              </div>
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex h-20 items-center justify-between">
+            {/* Logo Section */}
+            <Link href="/" className="flex items-center gap-3 ">
+              <Image
+                src="/logo/opnlogo1.png"
+                alt="OPN Registry"
+                width={200}
+                height={200}
+                className="object-contain transition duration-300 group-hover:scale-105"
+                priority
+              />
             </Link>
 
-            <nav className="flex items-center space-x-3">
+            {/* Navigation */}
+            <nav className="flex items-center gap-4">
               <Link href="/retrieve">
-                <Button variant="ghost" className="hidden sm:flex group">
-                  <Search className="w-4 h-4 mr-2 group-hover:scale-110 transition" />
-                  Find My OPN
+                <Button
+                  variant="ghost"
+                  className="hidden sm:flex items-center text-gray-600 hover:text-gray-900"
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  Find OPN
                 </Button>
               </Link>
+
               <Link href="/login">
-                <Button className="bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/30">
-                  <Lock className="w-4 h-4 mr-2" />
+                <Button className="bg-green-600 hover:bg-green-700 text-white px-5 shadow-sm">
+                  <Lock className="mr-2 h-4 w-4" />
                   Operator Login
                 </Button>
               </Link>
@@ -60,7 +67,7 @@ export default function HomePage() {
       <section className="relative bg-gradient-to-b from-green-50 to-white py-20 md:py-32 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
@@ -75,19 +82,18 @@ export default function HomePage() {
                 <span className="block mt-2 text-green-600">
                   Operating Permit
                 </span>
-                <span className="block text-yellow-500">
-                  System
-                </span>
+                <span className="block text-yellow-500">System</span>
               </h1>
 
               <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
-                Official digital platform for commercial transport rider permits in Ghana.
+                Official digital platform for commercial transport rider permits
+                in Ghana.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
                 <Link href="/retrieve">
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     className="w-full sm:w-auto text-lg px-8 py-6 bg-green-600 hover:bg-green-700 shadow-xl hover:shadow-2xl transition-all group"
                   >
                     <Search className="mr-2 w-6 h-6 group-hover:scale-110 transition" />
@@ -110,8 +116,12 @@ export default function HomePage() {
                     className="bg-white rounded-xl p-4 border border-gray-200 hover:shadow-lg transition group"
                   >
                     <stat.icon className="w-5 h-5 text-green-600 mx-auto lg:mx-0 mb-2 group-hover:scale-110 transition" />
-                    <div className="font-bold text-xl text-gray-900">{stat.value}</div>
-                    <div className="text-xs text-gray-600 font-medium">{stat.label}</div>
+                    <div className="font-bold text-xl text-gray-900">
+                      {stat.value}
+                    </div>
+                    <div className="text-xs text-gray-600 font-medium">
+                      {stat.label}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -130,7 +140,8 @@ export default function HomePage() {
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => {
                         // Fallback to placeholder
-                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%2316a34a' width='400' height='300'/%3E%3Ctext fill='white' font-size='24' font-family='Arial' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EPragya%3C/text%3E%3C/svg%3E";
+                        e.currentTarget.src =
+                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%2316a34a' width='400' height='300'/%3E%3Ctext fill='white' font-size='24' font-family='Arial' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EPragya%3C/text%3E%3C/svg%3E";
                       }}
                     />
                   </div>
@@ -149,7 +160,8 @@ export default function HomePage() {
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => {
-                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23eab308' width='400' height='300'/%3E%3Ctext fill='white' font-size='24' font-family='Arial' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EOkada%3C/text%3E%3C/svg%3E";
+                        e.currentTarget.src =
+                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23eab308' width='400' height='300'/%3E%3Ctext fill='white' font-size='24' font-family='Arial' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EOkada%3C/text%3E%3C/svg%3E";
                       }}
                     />
                   </div>
@@ -168,7 +180,8 @@ export default function HomePage() {
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => {
-                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='300'%3E%3Crect fill='%233b82f6' width='800' height='300'/%3E%3Ctext fill='white' font-size='24' font-family='Arial' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EAboboyaa%3C/text%3E%3C/svg%3E";
+                        e.currentTarget.src =
+                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='300'%3E%3Crect fill='%233b82f6' width='800' height='300'/%3E%3Ctext fill='white' font-size='24' font-family='Arial' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EAboboyaa%3C/text%3E%3C/svg%3E";
                       }}
                     />
                   </div>
@@ -229,7 +242,9 @@ export default function HomePage() {
                 className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-green-200"
               >
                 <CardContent className="pt-8 pb-6">
-                  <div className={`w-14 h-14 bg-${feature.bgColor} rounded-2xl flex items-center justify-center mb-5 shadow-lg transform group-hover:scale-110 transition`}>
+                  <div
+                    className={`w-14 h-14 bg-${feature.bgColor} rounded-2xl flex items-center justify-center mb-5 shadow-lg transform group-hover:scale-110 transition`}
+                  >
                     <feature.icon className={`w-7 h-7 text-${feature.color}`} />
                   </div>
                   <h3 className="font-bold text-xl text-gray-900 mb-3">
@@ -249,7 +264,10 @@ export default function HomePage() {
       <section className="bg-gray-50 py-20 md:py-32">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <Badge variant="outline" className="mb-4 px-4 py-1 text-sm font-semibold border-green-600 text-green-700">
+            <Badge
+              variant="outline"
+              className="mb-4 px-4 py-1 text-sm font-semibold border-green-600 text-green-700"
+            >
               Simple Process
             </Badge>
             <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6">
@@ -360,7 +378,8 @@ export default function HomePage() {
             Already Registered?
           </h2>
           <p className="text-white/95 text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            Retrieve your Operating Permit Number and check your permit status online
+            Retrieve your Operating Permit Number and check your permit status
+            online
           </p>
           <Link href="/retrieve">
             <Button
@@ -388,8 +407,9 @@ export default function HomePage() {
                 <span className="font-bold text-xl text-white">Ghana OPN</span>
               </div>
               <p className="text-gray-400 leading-relaxed max-w-md">
-                Official Operating Permit System for Ghana. Ensuring safe, legal, and 
-                regulated commercial transport operations across Greater Accra.
+                Official Operating Permit System for Ghana. Ensuring safe,
+                legal, and regulated commercial transport operations across
+                Greater Accra.
               </p>
             </div>
 
@@ -397,13 +417,19 @@ export default function HomePage() {
               <h4 className="font-bold text-white mb-4 text-lg">For Riders</h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <Link href="/retrieve" className="hover:text-white transition flex items-center gap-2">
+                  <Link
+                    href="/retrieve"
+                    className="hover:text-white transition flex items-center gap-2"
+                  >
                     <ArrowRight className="w-4 h-4" />
                     Check Permit Status
                   </Link>
                 </li>
                 <li>
-                  <Link href="/retrieve" className="hover:text-white transition flex items-center gap-2">
+                  <Link
+                    href="/retrieve"
+                    className="hover:text-white transition flex items-center gap-2"
+                  >
                     <ArrowRight className="w-4 h-4" />
                     Find My OPN
                   </Link>
@@ -412,16 +438,24 @@ export default function HomePage() {
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4 text-lg">For Operators</h4>
+              <h4 className="font-bold text-white mb-4 text-lg">
+                For Operators
+              </h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <Link href="/login" className="hover:text-white transition flex items-center gap-2">
+                  <Link
+                    href="/login"
+                    className="hover:text-white transition flex items-center gap-2"
+                  >
                     <ArrowRight className="w-4 h-4" />
                     Operator Login
                   </Link>
                 </li>
                 <li>
-                  <Link href="/login" className="hover:text-white transition flex items-center gap-2">
+                  <Link
+                    href="/login"
+                    className="hover:text-white transition flex items-center gap-2"
+                  >
                     <ArrowRight className="w-4 h-4" />
                     Register Riders
                   </Link>
@@ -432,12 +466,19 @@ export default function HomePage() {
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm">
             <p>
-              © {new Date().getFullYear()} Ghana Operating Permit System. All rights reserved.
+              © {new Date().getFullYear()} Ghana Operating Permit System. All
+              rights reserved.
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              <Link href="#" className="hover:text-white transition">Privacy</Link>
-              <Link href="#" className="hover:text-white transition">Terms</Link>
-              <Link href="#" className="hover:text-white transition">Contact</Link>
+              <Link href="#" className="hover:text-white transition">
+                Privacy
+              </Link>
+              <Link href="#" className="hover:text-white transition">
+                Terms
+              </Link>
+              <Link href="#" className="hover:text-white transition">
+                Contact
+              </Link>
             </div>
           </div>
         </div>
