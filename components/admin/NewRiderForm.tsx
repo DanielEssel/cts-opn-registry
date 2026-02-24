@@ -13,7 +13,13 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, User, MapPin, Bike, ShieldCheck } from "lucide-react";
 
-export default function NewRiderForm() {
+// ✅ Declared outside the component, at module level
+type NewRiderFormProps = {
+  onSuccess?: () => void;
+};
+
+// ✅ Destructured from props
+export default function NewRiderForm({ onSuccess }: NewRiderFormProps) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -30,7 +36,9 @@ export default function NewRiderForm() {
     try {
       const opn = await createRider(values);
       toast.success(`Registration Successful! OPN: ${opn}`);
-      // Redirect or Reset here
+      form.reset();
+      setStep(1);
+      onSuccess?.(); // ✅ Called on success
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -51,7 +59,7 @@ export default function NewRiderForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          
+
           {step === 1 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
               <h2 className="text-xl font-bold flex items-center gap-2"><User className="text-blue-600"/> Bio Data</h2>
@@ -60,11 +68,11 @@ export default function NewRiderForm() {
               )} />
               <div className="grid grid-cols-2 gap-4">
                 <FormField name="phoneNumber" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="024XXXXXXX" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField name="idNumber" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Ghana Card ID</FormLabel><FormControl><Input placeholder="GHA-000000000-0" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
+                  <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="024XXXXXXX" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="idNumber" control={form.control} render={({ field }) => (
+                  <FormItem><FormLabel>Ghana Card ID</FormLabel><FormControl><Input placeholder="GHA-000000000-0" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
               </div>
               <Button type="button" onClick={nextStep} className="w-full">Next: Location Info</Button>
             </div>

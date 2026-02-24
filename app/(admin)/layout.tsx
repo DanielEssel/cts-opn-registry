@@ -28,6 +28,8 @@ import { useAdminProfile } from "@/app/hooks/useAdminProfile";
 
 type AdminRole = "Super Admin" | "District Admin";
 
+
+
 type NavItem = {
   name: string;
   href: string;
@@ -37,11 +39,11 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["Super Admin", "District Admin"] },
-  { name: "Register Rider", href: "/register", icon: UserPlus, roles: ["Super Admin", "District Admin"] }, // if district can register
+  { name: "Register Rider", href: "/register", icon: UserPlus, roles: ["Super Admin"] }, // if district can register
   { name: "All Riders", href: "/rider-registry", icon: Users, roles: ["Super Admin", "District Admin"] },
-  { name: "Renewals", href: "/renew-permit", icon: RefreshCw, roles: ["Super Admin", "District Admin"] },
+  { name: "Renewals", href: "/renew-permit", icon: RefreshCw, roles: ["Super Admin"] },
   { name: "Analytics", href: "/analytics", icon: BarChart3, roles: ["Super Admin"] },
-  { name: "Audit Log", href: "/audit", icon: FileText, roles: ["Super Admin"] },
+  { name: "Audit Log", href: "/audit", icon: FileText, roles: ["Super Admin", "District Admin"] },
   { name: "Settings", href: "/settings", icon: Settings, roles: ["Super Admin", "District Admin"] },
 ];
 
@@ -52,8 +54,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const { profile, loading, error } = useAdminProfile();
 
+  type AdminRole = "Super Admin" | "District Admin";
+  const isAdminRole = (role: string): role is AdminRole =>
+    role === "Super Admin" || role === "District Admin";
+
   const navigation = useMemo(() => {
     if (!profile) return [];
+    if (!isAdminRole(profile.role)) return [];
     return NAV_ITEMS.filter((i) => i.roles.includes(profile.role));
   }, [profile]);
 

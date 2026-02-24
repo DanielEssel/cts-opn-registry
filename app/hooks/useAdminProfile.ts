@@ -5,14 +5,14 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-export type AdminRole = "Super Admin" | "District Admin" | "Operator";
+export type AdminRole = "Super Admin" | "District Admin";
 
 export type AdminProfile = {
   uid: string;
   name?: string;
   email?: string;
   role: AdminRole;
-  entity?: string; // district/jurisdiction
+  entity?: string;
   status?: "Active" | "Inactive" | string;
 };
 
@@ -60,5 +60,6 @@ export function useAdminProfile() {
     return () => unsub();
   }, []);
 
+  // { profile, loading, error }
   return { profile, loading, error };
 }
