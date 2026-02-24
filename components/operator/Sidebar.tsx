@@ -58,7 +58,7 @@ const REGISTRATION_STEPS = [
 
 const MAIN_MENU = [
   {
-    title: "Dashboard",
+    title: "Registration Form",
     icon: Home,
     href: "/operator/register",
   },
