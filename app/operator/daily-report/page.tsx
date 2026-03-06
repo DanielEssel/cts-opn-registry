@@ -33,7 +33,7 @@ interface DailyReportStats {
 interface RecentRegistration {
   id: string;
   riderName: string;
-  opn: string;
+  RIN: string;
   date: string;
   status: "Pending" | "Active" | "Expired" | "Suspended";
   vehicleType: string;
@@ -132,7 +132,7 @@ export default function DailyReportPage() {
             return {
               id: rider.id || "",
               riderName: rider.fullName,
-              opn: rider.opn,
+              RIN: rider.RIN,
               date: format(createdDate, "MMM dd, yyyy hh:mm a"),
               status: rider.status,
               vehicleType: rider.vehicleCategory,
@@ -175,10 +175,10 @@ export default function DailyReportPage() {
 
   const handleExportReport = () => {
     // Create CSV data
-    const headers = ["Rider Name", "OPN", "Vehicle", "Date", "Status"];
+    const headers = ["Rider Name", "RIN", "Vehicle", "Date", "Status"];
     const rows = recentRegistrations.map((reg) => [
       reg.riderName,
-      reg.opn,
+      reg.RIN,
       reg.vehicleType,
       reg.date,
       reg.status,
@@ -367,7 +367,7 @@ export default function DailyReportPage() {
                       Rider Name
                     </th>
                     <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
-                      OPN
+                      RIN
                     </th>
                     <th className="text-left py-3 px-4 font-semibold text-slate-700 text-sm">
                       Vehicle
@@ -393,7 +393,7 @@ export default function DailyReportPage() {
                         {registration.riderName}
                       </td>
                       <td className="py-4 px-4 text-sm font-mono text-slate-700">
-                        {registration.opn}
+                        {registration.RIN}
                       </td>
                       <td className="py-4 px-4 text-sm text-slate-600">
                         {registration.vehicleType}

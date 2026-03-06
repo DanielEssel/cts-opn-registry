@@ -25,14 +25,14 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-md">
+      <header className=" z-20 border-b border-gray-200 bg-white/90 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex h-20 items-center justify-between">
             {/* Logo Section */}
             <Link href="/" className="flex items-center gap-3 ">
               <Image
-                src="/logo/opnlogo1.png"
-                alt="OPN Registry"
+                src="/logo/RINlogo1.png"
+                alt="RIN Registry"
                 width={200}
                 height={200}
                 className="object-contain transition duration-300 group-hover:scale-105"
@@ -48,7 +48,7 @@ export default function HomePage() {
                   className="hidden sm:flex items-center text-gray-600 hover:text-gray-900"
                 >
                   <Search className="mr-2 h-4 w-4" />
-                  Find OPN
+                  Find RIN
                 </Button>
               </Link>
 
@@ -64,7 +64,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section with Vehicle Images */}
-      <section className="relative bg-gradient-to-b from-green-50 to-white py-20 md:py-32 overflow-hidden">
+      <section className="relative bg-gradient-to-b from-green-50 to-white  md:py-10 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
 
@@ -78,9 +78,9 @@ export default function HomePage() {
               </Badge>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
-                Ghana Rider
+                 Rider
                 <span className="block mt-2 text-green-600">
-                  Operating Permit
+                  Identification Number
                 </span>
                 <span className="block text-yellow-500">System</span>
               </h1>
@@ -97,7 +97,7 @@ export default function HomePage() {
                     className="w-full sm:w-auto text-lg px-8 py-6 bg-green-600 hover:bg-green-700 shadow-xl hover:shadow-2xl transition-all group"
                   >
                     <Search className="mr-2 w-6 h-6 group-hover:scale-110 transition" />
-                    Check My Permit Status
+                    Check My Rider Status
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition" />
                   </Button>
                 </Link>
@@ -225,14 +225,14 @@ export default function HomePage() {
               {
                 icon: Zap,
                 title: "Instant Verification",
-                description: "Check your permit status anytime online",
+                description: "Check your registration status anytime online",
                 color: "green-600",
                 bgColor: "green-50",
               },
               {
                 icon: CheckCircle,
                 title: "6 Months Valid",
-                description: "Each permit is valid for 6 months from issue",
+                description: "Each registration is valid for 6 months from issue",
                 color: "yellow-600",
                 bgColor: "yellow-50",
               },
@@ -271,7 +271,7 @@ export default function HomePage() {
               Simple Process
             </Badge>
             <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6">
-              How to Get Your Operating Permit
+              How to Get Your Rider Registration
             </h2>
             <p className="text-xl text-gray-600">
               Registration is done through authorized operators only
@@ -303,9 +303,9 @@ export default function HomePage() {
               },
               {
                 step: "04",
-                title: "Receive Your OPN",
+                title: "Receive Your RIN",
                 description:
-                  "Get your Operating Permit Number (OPN) instantly and keep it safe",
+                  "Get your Rider Registration Number (RIN) instantly and keep it safe",
                 icon: CheckCircle,
               },
             ].map((item, index) => (
@@ -355,8 +355,8 @@ export default function HomePage() {
                       "Registration is FREE of charge",
                       "Only register through authorized government operators",
                       "Beware of fraudulent agents charging illegal fees",
-                      "Keep your OPN safe and present it during checks",
-                      "Renew your permit before the 6-month expiry date",
+                      "Keep your RIN safe and present it during checks",
+                      "Renew your registration before the 6-month expiry date",
                     ].map((item, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -378,7 +378,7 @@ export default function HomePage() {
             Already Registered?
           </h2>
           <p className="text-white/95 text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            Retrieve your Operating Permit Number and check your permit status
+            Retrieve your Rider Registration Number and check your RIN status
             online
           </p>
           <Link href="/retrieve">
@@ -388,7 +388,7 @@ export default function HomePage() {
               className="text-lg px-10 py-6 bg-white hover:bg-gray-50 text-gray-900 shadow-2xl group"
             >
               <Search className="mr-3 w-6 h-6 group-hover:scale-110 transition" />
-              Find My OPN
+              Find My RIN
               <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-1 transition" />
             </Button>
           </Link>
@@ -404,10 +404,10 @@ export default function HomePage() {
                 <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
-                <span className="font-bold text-xl text-white">Ghana OPN</span>
+                <span className="font-bold text-xl text-white">Ghana RIN</span>
               </div>
               <p className="text-gray-400 leading-relaxed max-w-md">
-                Official Operating Permit System for Ghana. Ensuring safe,
+                Official Rider Registration System for Ghana. Ensuring safe,
                 legal, and regulated commercial transport operations across
                 Greater Accra.
               </p>
@@ -422,7 +422,7 @@ export default function HomePage() {
                     className="hover:text-white transition flex items-center gap-2"
                   >
                     <ArrowRight className="w-4 h-4" />
-                    Check Permit Status
+                    Check Registration Status
                   </Link>
                 </li>
                 <li>
@@ -431,7 +431,7 @@ export default function HomePage() {
                     className="hover:text-white transition flex items-center gap-2"
                   >
                     <ArrowRight className="w-4 h-4" />
-                    Find My OPN
+                    Find My RIN
                   </Link>
                 </li>
               </ul>
@@ -466,7 +466,7 @@ export default function HomePage() {
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm">
             <p>
-              © {new Date().getFullYear()} Ghana Operating Permit System. All
+              © {new Date().getFullYear()} Ghana Rider Registration System. All
               rights reserved.
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">

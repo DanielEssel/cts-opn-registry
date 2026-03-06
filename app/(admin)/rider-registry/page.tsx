@@ -191,7 +191,7 @@ export default function RiderRegistry() {
     const matchesSearch =
       !term ||
       rider.fullName?.toLowerCase().includes(term) ||
-      rider.opn?.toLowerCase().includes(term) ||
+      rider.RIN?.toLowerCase().includes(term) ||
       rider.phoneNumber?.includes(term);
 
     const matchesStatus =
@@ -317,9 +317,9 @@ export default function RiderRegistry() {
     try {
       const batch = writeBatch(db);
       batch.delete(doc(db, "riders", deletingRider.id));
-      if (deletingRider.opn) {
+      if (deletingRider.RIN) {
         batch.delete(
-          doc(db, "opn_registry", String(deletingRider.opn).toUpperCase()),
+          doc(db, "RIN_registry", String(deletingRider.RIN).toUpperCase()),
         );
       }
       await batch.commit();

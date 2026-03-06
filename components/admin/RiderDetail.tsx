@@ -10,7 +10,7 @@ import {
 interface RiderDetailProps {
   rider: {
     name: string;
-    opn: string;
+    RIN: string;
     town: string;
     status: string;
     phone: string;
@@ -34,7 +34,7 @@ export default function RiderDetail({ rider }: RiderDetailProps) {
         </div>
         <div>
           <h3 className="text-xl font-bold text-slate-900">{rider.name}</h3>
-          <p className="text-sm text-slate-500 font-mono">{rider.opn}</p>
+          <p className="text-sm text-slate-500 font-mono">{rider.RIN}</p>
         </div>
         <Badge className={
           rider.status === "Active" ? "bg-green-100 text-green-700 border-none" : "bg-red-100 text-red-700 border-none"
@@ -104,7 +104,7 @@ export default function RiderDetail({ rider }: RiderDetailProps) {
       <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex gap-3">
         <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
         <p className="text-xs text-amber-800 leading-relaxed">
-          This permit will expire on <strong>{rider.expiry}</strong>. The rider will receive an automated SMS notification 7 days prior.
+          This permi will expire on <strong>{rider.expiry}</strong>. The rider will receive an automated SMS notification 7 days prior.
         </p>
       </div>
     </div>

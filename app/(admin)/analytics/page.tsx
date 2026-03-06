@@ -36,7 +36,7 @@ interface Rider {
   id: string;
   fullName?: string;
   name?: string;
-  opn: string;
+  RIN: string;
   phoneNumber?: string;
   phone?: string;
   town: string;
@@ -250,7 +250,7 @@ export default function AnalyticsPage() {
 
     const headers = [
       "Full Name",
-      "OPN",
+      "RIN",
       "Phone",
       "Town",
       "Vehicle",
@@ -261,7 +261,7 @@ export default function AnalyticsPage() {
     ];
     const rows = riders.map((r) => [
       `"${r.fullName || r.name}"`,
-      `"${r.opn}"`,
+      `"${r.RIN}"`,
       `"${r.phoneNumber || r.phone}"`,
       `"${r.town}"`,
       `"${r.vehicleCategory || "N/A"}"`,
@@ -501,7 +501,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 uppercase font-bold mb-1">Avg. Permit Age</p>
+              <p className="text-xs text-slate-500 uppercase font-bold mb-1">Avg. Permi Age</p>
               <p className="text-2xl font-black text-slate-900">{data.avgPermitAge} days</p>
             </div>
             <div className="p-3 bg-slate-50 rounded-lg">

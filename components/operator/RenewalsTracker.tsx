@@ -18,7 +18,7 @@ type Rider = {
   id: string;
   fullName?: string;
   phoneNumber?: string;
-  opn?: string;
+  RIN?: string;
   town?: string;
   expiryDate?: any; // Firestore Timestamp or string depending on your data
   status?: string;
@@ -105,7 +105,7 @@ export default function RenewalsTracker() {
     return base.filter((r) => {
       return (
         r.fullName?.toLowerCase().includes(t) ||
-        r.opn?.toLowerCase().includes(t) ||
+        r.RIN?.toLowerCase().includes(t) ||
         r.phoneNumber?.includes(term)
       );
     });
@@ -162,7 +162,7 @@ export default function RenewalsTracker() {
           <Input
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search by name, OPN, phone..."
+            placeholder="Search by name, RIN, phone..."
             className="md:max-w-md"
           />
           <div className="text-sm text-gray-600">
@@ -174,7 +174,7 @@ export default function RenewalsTracker() {
       <Card className="p-0 overflow-hidden">
         <div className="grid grid-cols-12 gap-0 border-b bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600">
           <div className="col-span-4">Rider</div>
-          <div className="col-span-3">OPN</div>
+          <div className="col-span-3">RIN</div>
           <div className="col-span-2">Phone</div>
           <div className="col-span-3">Expiry</div>
         </div>
@@ -202,7 +202,7 @@ export default function RenewalsTracker() {
                   </div>
 
                   <div className="col-span-3 font-mono text-xs text-gray-700 break-all">
-                    {r.opn || "—"}
+                    {r.RIN || "—"}
                   </div>
 
                   <div className="col-span-2 text-gray-700">

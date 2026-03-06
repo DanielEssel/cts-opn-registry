@@ -166,7 +166,7 @@ export function PreviewStep({ data, photoPreview }: PreviewStepProps) {
           <div>
             <h3 className="font-bold text-gray-900 mb-2">Ready to Submit?</h3>
             <p className="text-sm text-gray-700 leading-relaxed">
-              Your OPN will be generated instantly after submission. Your permit is valid for 6 months from today.
+              Your RIN will be generated instantly after submission. Your permi is valid for 6 months from today.
             </p>
           </div>
         </div>

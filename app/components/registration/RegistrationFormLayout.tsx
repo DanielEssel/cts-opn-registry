@@ -44,7 +44,7 @@ export function RegistrationFormLayout() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [generatedOPN, setGeneratedOPN] = useState("");
+  const [generatedRIN, setGeneratedRIN] = useState("");
   const [riderName, setRiderName] = useState("");
   const [riderTown, setRiderTown] = useState("");
   const [error, setError] = useState("");
@@ -135,7 +135,7 @@ export function RegistrationFormLayout() {
       const result = await saveRiderRegistration(data);
       
       if (result.success) {
-        setGeneratedOPN(result.opn);
+        setGeneratedRIN(result.RIN);
         setRiderName(data.fullName);
         setRiderTown(data.residentialTown);
         setSubmitSuccess(true);
@@ -186,7 +186,7 @@ export function RegistrationFormLayout() {
   if (submitSuccess) {
     return (
       <SuccessPage 
-        opn={generatedOPN}
+        RIN={generatedRIN}
         name={riderName}
         town={riderTown}
       />

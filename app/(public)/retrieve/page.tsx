@@ -20,12 +20,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function RetrieveOPN() {
+export default function RetrieveRIN() {
   const [phone, setPhone] = useState("");
   const [id, setId] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<null | { 
-    opn: string; 
+    RIN: string; 
     expiry: string;
     status: "Active" | "Expired" | "Pending";
     name: string;
@@ -39,7 +39,7 @@ export default function RetrieveOPN() {
     // Simulate API Call
     setTimeout(() => {
       setResult({
-        opn: "KS-1001-02-2026",
+        RIN: "KS-1001-02-2026",
         expiry: "August 10, 2026",
         status: "Active",
         name: "John Doe",
@@ -49,9 +49,9 @@ export default function RetrieveOPN() {
     }, 1500);
   };
 
-  const handleCopyOPN = () => {
-    if (result?.opn) {
-      navigator.clipboard.writeText(result.opn);
+  const handleCopyRIN = () => {
+    if (result?.RIN) {
+      navigator.clipboard.writeText(result.RIN);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -66,7 +66,7 @@ export default function RetrieveOPN() {
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center">
               <BadgeIcon className="h-5 w-5 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-gray-900">OPN Registry</h1>
+            <h1 className="text-lg font-bold text-gray-900">RIN Registry</h1>
           </Link>
         </div>
       </nav>
@@ -98,10 +98,10 @@ export default function RetrieveOPN() {
                 </div>
               </div>
               <h2 className="text-3xl font-black text-gray-900 mb-2">
-                Find Your OPN
+                Find Your RIN
               </h2>
               <p className="text-gray-600">
-                Look up your Operating Permit Number instantly
+                Look up your Rider Registration Number instantly
               </p>
             </div>
           )}
@@ -116,7 +116,7 @@ export default function RetrieveOPN() {
                     Retrieve Your Permit
                   </CardTitle>
                   <CardDescription className="text-gray-600 mt-2">
-                    Provide your phone number and ID to find your OPN
+                    Provide your phone number and ID to find your RIN
                   </CardDescription>
                 </CardHeader>
 
@@ -174,7 +174,7 @@ export default function RetrieveOPN() {
                       ) : (
                         <>
                           <Search className="h-5 w-5 mr-2" />
-                          Find My OPN
+                          Find My RIN
                         </>
                       )}
                     </Button>
@@ -190,30 +190,30 @@ export default function RetrieveOPN() {
                       <CheckCircle2 className="h-5 w-5 text-green-600" />
                     </div>
                     <CardTitle className="text-xl font-bold text-gray-900">
-                      Permit Found
+                      RIN Found
                     </CardTitle>
                   </div>
                   <CardDescription>
-                    Here are your permit details
+                    Here are your permi details
                   </CardDescription>
                 </CardHeader>
 
                 {/* RESULT CONTENT */}
                 <CardContent className="p-8 space-y-6">
-                  {/* OPN DISPLAY */}
+                  {/* RIN DISPLAY */}
                   <div className="animate-in fade-in zoom-in duration-500">
                     <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl text-center group">
                       <p className="text-xs font-bold text-green-700 uppercase tracking-widest mb-3">
-                        Operating Permit Number
+                        Rider Registration Number
                       </p>
                       <div className="flex items-center justify-center gap-3">
                         <p className="text-3xl font-mono font-black text-gray-900">
-                          {result.opn}
+                          {result.RIN}
                         </p>
                         <button
-                          onClick={handleCopyOPN}
+                          onClick={handleCopyRIN}
                           className="p-2 hover:bg-green-100 rounded-lg transition-colors"
-                          title="Copy OPN"
+                          title="Copy RIN"
                         >
                           <Copy className={`h-5 w-5 transition-colors ${
                             copied ? "text-green-600" : "text-gray-400"
@@ -287,7 +287,7 @@ export default function RetrieveOPN() {
                   <Alert className="bg-blue-50 border-blue-200 rounded-xl">
                     <CheckCircle2 className="h-5 w-5 text-blue-600" />
                     <AlertDescription className="text-blue-700 font-medium ml-3">
-                      Your permit is valid and active. Always carry your OPN during operations.
+                      Your Rider Identification Number is valid and active. Always carry your RIN during operations.
                     </AlertDescription>
                   </Alert>
 
@@ -317,7 +317,7 @@ export default function RetrieveOPN() {
       {/* FOOTER */}
       <footer className="border-t border-green-200/30 bg-white/40 backdrop-blur-lg mt-auto">
         <div className="max-w-7xl mx-auto px-6 py-6 text-center text-sm text-gray-600">
-          <p>&copy; 2024 Operating Permit Number Registry. All rights reserved.</p>
+          <p>&copy; 2024 Rider Registration Number Registry. All rights reserved.</p>
         </div>
       </footer>
     </div>

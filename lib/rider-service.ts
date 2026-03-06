@@ -21,8 +21,8 @@ import { RiderRegistrationData, DISTRICT_CODES, CATEGORY_CODES } from "@/app/lib
 
 export interface RiderRecord extends Omit<RiderRegistrationData, "passportPhoto"> {
   id?: string;
-  opn: string;
-  opnPrefix: string;
+  RIN: string;
+  RINPrefix: string;
   sequence: number;
   issueDate: string;
   expiryDate: string;
@@ -41,15 +41,15 @@ export interface RiderLookupResult {
 }
 
 // ============================================================================
-// GENERATE OPN
+// GENERATE RIN
 // ============================================================================
 
 /**
- * Generate Operating Permit Number (OPN)
+ * Generate Rider Registration Number (RIN)
  * Format: [DistrictCode]-[Sequence]-[Month]-[Year]
  * Example: AM-1001-02-26
  */
-export async function generateOPN(
+export async function generateRIN(
   districtMunicipality: string,
   vehicleCategory: string
 ): Promise<string> {
@@ -66,7 +66,7 @@ export async function generateOPN(
     const ridersRef = collection(db, "riders");
     const q = query(
       ridersRef,
-      where("opnPrefix", "==", prefix),
+      where("RINPrefix", "==", prefix),
       orderBy("sequence", "desc"),
       limit(1)
     );
@@ -89,7 +89,7 @@ export async function generateOPN(
 
     return `${prefix}-${sequence}-${month}-${year}`;
   } catch (error) {
-    console.error("❌ Error generating OPN:", error);
+    console.error("❌ Error generating RIN:", error);
     // Fallback: Generate without database query
     const today = new Date();
     const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -100,11 +100,11 @@ export async function generateOPN(
 }
 
 // ============================================================================
-// CALCULATE PERMIT DATES
+// CALCULATE IDENTIFICATION DATES
 // ============================================================================
 
 /**
- * Calculate permit dates (issue date + 6 months expiry)
+ * Calculate identification dates (issue date + 6 months expiry)
  */
 export function calculatePermitDates() {
   const issueDate = new Date();
@@ -154,7 +154,7 @@ async function uploadPassportPhoto(
  */
 export async function saveRiderRegistration(
   data: RiderRegistrationData
-): Promise<{ success: boolean; opn: string; riderId: string; error?: string }> {
+): Promise<{ success: boolean; RIN: string; riderId: string; error?: string }> {
   try {
     const user = auth.currentUser;
     if (!user) {
@@ -163,13 +163,13 @@ export async function saveRiderRegistration(
 
     console.log("👤 Current user:", user.uid);
 
-    // 1. Generate OPN
-    const opn = await generateOPN(data.districtMunicipality, data.vehicleCategory);
-    console.log("✅ OPN Generated:", opn);
+    // 1. Generate RIN
+    const RIN = await generateRIN(data.districtMunicipality, data.vehicleCategory);
+    console.log("✅ RIN Generated:", RIN);
 
-    const opnParts = opn.split("-");
-    const sequence = parseInt(opnParts[1]);
-    const opnPrefix = opnParts[0];
+    const RINParts = RIN.split("-");
+    const sequence = parseInt(RINParts[1]);
+    const RINPrefix = RINParts[0];
 
     const { issueDate, expiryDate } = calculatePermitDates();
 
@@ -216,10 +216,10 @@ export async function saveRiderRegistration(
       passportPhotoUrl,
 
       // ====================================================================
-      // OPN & STATUS
+      // RIN & STATUS
       // ====================================================================
-      opn,
-      opnPrefix,
+      RIN,
+      RINPrefix,
       sequence,
       issueDate,
       expiryDate,
@@ -251,7 +251,7 @@ export async function saveRiderRegistration(
     console.log("🎉 Registration complete!");
     return {
       success: true,
-      opn,
+      RIN,
       riderId: docRef.id,
     };
   } catch (error) {
@@ -261,7 +261,7 @@ export async function saveRiderRegistration(
 
     return {
       success: false,
-      opn: "",
+      RIN: "",
       riderId: "",
       error: error instanceof Error ? error.message : "Failed to register rider. Check console for details.",
     };
@@ -432,12 +432,12 @@ export async function lookupByPhoneNumber(
 }
 
 /**
- * Look up rider by OPN
+ * Look up rider by RIN
  */
-export async function lookupByOPN(opn: string): Promise<RiderLookupResult> {
+export async function lookupByRIN(RIN: string): Promise<RiderLookupResult> {
   try {
     const ridersRef = collection(db, "riders");
-    const q = query(ridersRef, where("opn", "==", opn), limit(1));
+    const q = query(ridersRef, where("RIN", "==", RIN), limit(1));
 
     const snapshot = await getDocs(q);
 
@@ -456,7 +456,7 @@ export async function lookupByOPN(opn: string): Promise<RiderLookupResult> {
       },
     };
   } catch (error) {
-    console.error("❌ Error looking up rider by OPN:", error);
+    console.error("❌ Error looking up rider by RIN:", error);
     return {
       found: false,
       error: "An error occurred while searching.",
@@ -502,7 +502,7 @@ export async function lookupByIdNumber(idNumber: string): Promise<RiderLookupRes
 // ============================================================================
 
 /**
- * Check if permit is expired
+ * Check if p is expired
  */
 export function isPermitExpired(expiryDate: string): boolean {
   const expiry = new Date(expiryDate);

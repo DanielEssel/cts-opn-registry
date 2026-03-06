@@ -107,7 +107,7 @@ export function OperatorSidebar() {
               <BadgeIcon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">OPN Registry</h2>
+              <h2 className="text-lg font-bold text-slate-900">RIN Registry</h2>
               <p className="text-xs text-slate-500">Operator Portal</p>
             </div>
           </div>
@@ -197,7 +197,7 @@ export function OperatorSidebar() {
         {/* FOOTER INFO */}
         <div className="p-4 border-t border-slate-200 bg-slate-50">
           <p className="text-xs text-slate-500 text-center">
-            v2.0 • OPN Registry System
+            v2.0 • RIN Registry System
           </p>
         </div>
       </aside>

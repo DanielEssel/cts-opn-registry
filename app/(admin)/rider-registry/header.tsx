@@ -79,7 +79,7 @@ export function RegistryHeader({
                 Register New Rider
               </SheetTitle>
               <SheetDescription>
-                This will generate a unique OPN in the national registry.
+                This will generate a unique RIN in the national registry.
               </SheetDescription>
             </SheetHeader>
             <NewRiderForm onSuccess={() => setOpen(false)} />

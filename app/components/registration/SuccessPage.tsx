@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { toPng } from "html-to-image";
+import { tRINg } from "html-to-image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,12 +20,12 @@ import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 
 interface SuccessPageProps {
-  opn: string;
+  RIN: string;
   name: string;
   town: string;
 }
 
-export function SuccessPage({ opn, name, town }: SuccessPageProps) {
+export function SuccessPage({ RIN, name, town }: SuccessPageProps) {
   const permitRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
@@ -33,7 +33,7 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
     typeof window !== "undefined"
       ? window.location.origin
       : "https://permittrack.gov.gh";
-  const verificationUrl = `${baseUrl}/verify/${opn}`;
+  const verificationUrl = `${baseUrl}/verify/${RIN}`;
 
   const issueDate = new Date();
   const expiryDate = new Date();
@@ -43,14 +43,14 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
     if (!permitRef.current) return;
 
     try {
-      const dataUrl = await toPng(permitRef.current, {
+      const dataUrl = await tRINg(permitRef.current, {
         cacheBust: true,
         backgroundColor: "#ffffff",
         pixelRatio: 2,
       });
 
       const link = document.createElement("a");
-      link.download = `OPN-${opn}.png`;
+      link.download = `RIN-${RIN}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -59,8 +59,8 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
     }
   };
 
-  const copyOPN = () => {
-    navigator.clipboard.writeText(opn);
+  const copyRIN = () => {
+    navigator.clipboard.writeText(RIN);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -88,12 +88,12 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
               Successfully Registered!
             </h1>
             <p className="text-lg text-gray-600">
-              Your Operating Permit Number is now active
+              Your Rider Registration Number is now active
             </p>
           </div>
         </div>
 
-        {/* THE PREMIUM PERMIT CARD */}
+        {/* THE PREMIUM RIDER IDENTIFICATION NUMBER CARD */}
         <Card
           ref={permitRef}
           className="border-none bg-white overflow-hidden shadow-2xl rounded-3xl print-card"
@@ -111,7 +111,7 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
                 </div>
                 <div>
                   <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-green-400">
-                    Operating Permit
+                    Rider Registration
                   </p>
                   <p className="text-[9px] tracking-[0.2em] uppercase text-slate-400 font-semibold">
                     Active Status
@@ -131,15 +131,15 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
           </div>
 
           <CardContent className="p-8 space-y-8">
-            {/* OPN Section */}
+            {/* RIN Section */}
             <div className="space-y-3">
               <p className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.2em]">
-                Your Permit Number
+                Your RIN Number
               </p>
               <div className="flex items-center gap-3">
                 <div className="flex-1">
                   <p className="text-4xl font-mono font-black text-green-600 tracking-wider">
-                    {opn}
+                    {RIN}
                   </p>
                   <p className="text-xs text-slate-400 mt-1">
                     Valid for 6 months from issuance
@@ -236,7 +236,7 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
                 code to verify authenticity.
               </p>
               <p className="text-[8px] text-slate-300 font-medium">
-                OPN Registry System © 2024 | Republic of Ghana
+                RIN Registry System © 2024 | Republic of Ghana
               </p>
             </div>
           </CardContent>
@@ -266,10 +266,10 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
                 ? "border-green-300 bg-green-50 text-green-700"
                 : "border-slate-200 hover:bg-slate-50"
             }`}
-            onClick={copyOPN}
+            onClick={copyRIN}
           >
             <Copy className="mr-2 h-4 w-4" />
-            {copied ? "Copied" : "Copy OPN"}
+            {copied ? "Copied" : "Copy RIN"}
           </Button>
         </div>
 
@@ -279,15 +279,15 @@ export function SuccessPage({ opn, name, town }: SuccessPageProps) {
           <ul className="space-y-2 text-sm text-gray-700">
             <li className="flex items-start gap-3">
               <span className="text-blue-600 font-bold">1.</span>
-              <span>Save or print your permit for your records</span>
+              <span>Save or print your RIN for your records</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-blue-600 font-bold">2.</span>
-              <span>Present your OPN during verification checks</span>
+              <span>Present your RIN during verification checks</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-blue-600 font-bold">3.</span>
-              <span>Renew your permit before expiry date</span>
+              <span>Renew your RIN before expiry date</span>
             </li>
           </ul>
         </div>

@@ -72,7 +72,7 @@ export default function StepOnePersonal({ form, onNext }: StepOneProps) {
             Next: Location Details
           </Button>
           <p className="text-center text-xs text-slate-400 mt-4">
-            Your data is secured and will only be used for permit issuance.
+            Your data is secured and will only be used for RIN issuance.
           </p>
         </div>
       </div>

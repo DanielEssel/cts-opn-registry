@@ -14,7 +14,7 @@ import { Calendar, CreditCard, RefreshCw, AlertCircle } from "lucide-react"
 interface RenewProps {
   rider: {
     name: string;
-    opn: string;
+    RIN: string;
     expiry: string;
   }
   onConfirm: () => void
@@ -30,9 +30,9 @@ export default function RenewPermitDialog({ rider, onConfirm }: RenewProps) {
         <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center mb-4">
           <RefreshCw className="h-6 w-6 text-blue-600" />
         </div>
-        <DialogTitle className="text-xl">Renew Operating Permit</DialogTitle>
+        <DialogTitle className="text-xl">Renew Rider Registration</DialogTitle>
         <DialogDescription>
-          You are about to extend the permit for <span className="font-bold text-slate-900">{rider.name}</span>.
+          You are about to extend the RIN for <span className="font-bold text-slate-900">{rider.name}</span>.
         </DialogDescription>
       </DialogHeader>
 

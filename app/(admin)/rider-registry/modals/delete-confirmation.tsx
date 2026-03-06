@@ -32,8 +32,8 @@ export function DeleteConfirmation({
           <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogDescription className="text-center">
             Are you sure you want to delete{" "}
-            <strong>{rider?.fullName}</strong>? This will permanently revoke OPN{" "}
-            <strong>{rider?.opn}</strong>.
+            <strong>{rider?.fullName}</strong>? This will permanently revoke RIN{" "}
+            <strong>{rider?.RIN}</strong>.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex gap-2">

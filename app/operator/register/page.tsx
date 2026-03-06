@@ -57,7 +57,7 @@ export default function RegistrationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [generatedOPN, setGeneratedOPN] = useState("");
+  const [generatedRIN, setGeneratedRIN] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const form = useForm<RiderRegistrationData>({
@@ -147,7 +147,7 @@ export default function RegistrationPage() {
       const result = await saveRiderRegistration(data);
 
       if (result.success) {
-        setGeneratedOPN(result.opn);
+        setGeneratedRIN(result.RIN);
         setSuccess(true);
         setCompletedSteps((prev) => [...new Set([...prev, currentStep])]);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -201,8 +201,8 @@ export default function RegistrationPage() {
           @media print {
             /* Hide everything except the certificate */
             body * { visibility: hidden; }
-            #opn-certificate, #opn-certificate * { visibility: visible; }
-            #opn-certificate {
+            #RIN-certificate, #RIN-certificate * { visibility: visible; }
+            #RIN-certificate {
               position: fixed;
               inset: 0;
               margin: 0;
@@ -213,7 +213,7 @@ export default function RegistrationPage() {
             }
             /* Ensure borders and bg colours print */
             .cert-header { background-color: #15803d !important; color: #fff !important; }
-            .cert-opn-box { border: 3px solid #15803d !important; background-color: #f0fdf4 !important; }
+            .cert-RIN-box { border: 3px solid #15803d !important; background-color: #f0fdf4 !important; }
             .cert-divider { border-color: #166534 !important; }
             .cert-field-label { color: #166534 !important; }
             .cert-watermark { opacity: 0.06 !important; }
@@ -228,14 +228,14 @@ export default function RegistrationPage() {
             <div>
               <p className="font-semibold text-green-800">Registration Successful</p>
               <p className="text-sm text-green-700">
-                A permit number has been generated. Print or save it for your records.
+                A rider identification number has been generated. Print or save it for your records.
               </p>
             </div>
           </div>
 
           {/* ── Certificate card (shown on screen + printed) ────────────── */}
           <div
-            id="opn-certificate"
+            id="RIN-certificate"
             className="bg-white border-2 border-gray-300 rounded-2xl overflow-hidden shadow-xl"
           >
             {/* Certificate header */}
@@ -246,7 +246,7 @@ export default function RegistrationPage() {
                     Republic of Ghana
                   </p>
                   <h1 className="text-2xl font-bold leading-tight">
-                    Rider Operating Permit
+                    Rider Registration Number
                   </h1>
                   <p className="text-sm text-green-200 mt-1">
                     This certifies successful registration of a commercial rider
@@ -267,18 +267,18 @@ export default function RegistrationPage() {
                 aria-hidden
               >
                 <span className="text-[10rem] font-black text-green-800 rotate-[-35deg] leading-none">
-                  OPN
+                  RIN
                 </span>
               </div>
 
               <div className="relative space-y-8">
-                {/* OPN hero box */}
-                <div className="cert-opn-box border-2 border-green-600 rounded-xl bg-green-50 px-6 py-6 text-center">
+                {/* RIN hero box */}
+                <div className="cert-RIN-box border-2 border-green-600 rounded-xl bg-green-50 px-6 py-6 text-center">
                   <p className="text-xs font-bold uppercase tracking-[0.25em] text-green-700 mb-3">
-                    Operating Permit Number
+                    Rider Registration Number
                   </p>
                   <p className="text-5xl font-black font-mono tracking-widest text-green-900 select-all">
-                    {generatedOPN}
+                    {generatedRIN}
                   </p>
                   <p className="text-xs text-green-600 mt-3 italic">
                     Issued {issuedDate} at {issuedTime}
@@ -288,7 +288,7 @@ export default function RegistrationPage() {
                 {/* Rider details grid */}
                 <div>
                   <p className="cert-field-label text-xs font-bold uppercase tracking-widest text-green-700 mb-4 pb-2 border-b cert-divider border-green-200">
-                    Permit Holder Details
+                    Rider Registration Details
                   </p>
                   <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
                     <CertField label="Full Name" value={registeredData.fullName} />

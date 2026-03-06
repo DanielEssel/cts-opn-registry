@@ -47,7 +47,7 @@ export function ViewRiderModal({
   // ========================================================================
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const verificationUrl = `${baseUrl}/verify/${rider.opn}`;
+  const verificationUrl = `${baseUrl}/verify/${rider.RIN}`;
 
   const issueDate = new Date(rider.issueDate);
   const expiryDate = new Date(rider.expiryDate);
@@ -116,7 +116,7 @@ export function ViewRiderModal({
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       <Badge className="font-mono text-sm bg-slate-900 text-white">
-                        {rider.opn}
+                        {rider.RIN}
                       </Badge>
                       <Badge className={`${getStatusColor(rider.status)}`}>
                         {rider.status}

@@ -92,7 +92,7 @@ export default function AdminLayout({
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="font-bold text-gray-900 text-sm">Ghana OPN</h1>
+                  <h1 className="font-bold text-gray-900 text-sm">Ghana RIN</h1>
                   <p className="text-xs text-gray-500">Operator Portal</p>
                 </div>
               </Link>

@@ -53,7 +53,7 @@ export function RegistrationForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [generatedOPN, setGeneratedOPN] = useState("");
+  const [generatedRIN, setGeneratedRIN] = useState("");
   const [generatedRiderId, setGeneratedRiderId] = useState("");
   const [error, setError] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -180,7 +180,7 @@ export function RegistrationForm() {
       const result = await saveRiderRegistration(data);
 
       if (result.success) {
-        setGeneratedOPN(result.opn);
+        setGeneratedRIN(result.RIN);
         setGeneratedRiderId(result.riderId);
         setSubmitSuccess(true);
         form.reset();
@@ -252,17 +252,17 @@ export function RegistrationForm() {
                 Successfully Registered!
               </h2>
               <p className="text-lg text-gray-600">
-                The Operating Permit Number has been generated
+                The Rider Registration Number has been generated
               </p>
             </div>
 
-            {/* OPN Display */}
+            {/* RIN Display */}
             <div className="w-full bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8 shadow-lg">
               <p className="text-sm font-semibold text-green-700 mb-3 uppercase tracking-wide">
-                Operating Permit Number
+                Rider Registration Number
               </p>
               <p className="text-4xl md:text-5xl font-bold text-green-700 font-mono tracking-wider break-all">
-                {generatedOPN}
+                {generatedRIN}
               </p>
               {generatedRiderId && (
                 <div className="mt-4 pt-4 border-t border-green-200">
@@ -300,7 +300,7 @@ export function RegistrationForm() {
               <Button
                 onClick={() => {
                   setSubmitSuccess(false);
-                  setGeneratedOPN("");
+                  setGeneratedRIN("");
                   setGeneratedRiderId("");
                   setCurrentStep(1);
                 }}
@@ -345,7 +345,7 @@ export function RegistrationForm() {
               >
                 Greater Accra Region
               </Badge>
-              Operating Permit System
+              Rider Registration System
             </p>
           </div>
           <div className="hidden md:block">

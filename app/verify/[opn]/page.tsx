@@ -12,7 +12,7 @@ import {
 
 export default function RegistryLookupPage() {
   const params = useParams()
-  const opn = params.opn as string
+  const RIN = params.RIN as string
   
   const [rider, setRider] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -24,10 +24,10 @@ export default function RegistryLookupPage() {
     
     async function fetchRider() {
   try {
-    const normalizedOpn = opn.toUpperCase().trim();
+    const normalizedRIN = RIN.toUpperCase().trim();
 
     // STEP 1: Direct hit on the registry (Fastest)
-    const registryRef = doc(db, "opn_registry", normalizedOpn);
+    const registryRef = doc(db, "RIN_registry", normalizedRIN);
     const registrySnap = await getDoc(registryRef);
 
     if (registrySnap.exists()) {
@@ -41,7 +41,7 @@ export default function RegistryLookupPage() {
         setRider(riderSnap.data());
       }
     } else {
-      setRider(null); // OPN doesn't exist in registry
+      setRider(null); // RIN doesn't exist in registry
     }
   } catch (error) {
     console.error("Registry lookup error:", error);
@@ -50,14 +50,14 @@ export default function RegistryLookupPage() {
   }
 }
 
-    if (opn) fetchRider();
-  }, [opn]);
+    if (RIN) fetchRider();
+  }, [RIN]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100">
         <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-        <p className="text-sm font-bold text-slate-500 mt-4 uppercase tracking-widest">Verifying OPN...</p>
+        <p className="text-sm font-bold text-slate-500 mt-4 uppercase tracking-widest">Verifying RIN...</p>
       </div>
     )
   }
@@ -67,7 +67,7 @@ export default function RegistryLookupPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-red-50 p-6 text-center">
         <AlertTriangle className="h-16 w-16 text-red-600 mb-4" />
         <h1 className="text-2xl font-black text-red-900">INVALID PERMIT</h1>
-        <p className="text-red-700 mt-2 max-w-xs">This OPN was not found in the National Registry. Proceed with caution.</p>
+        <p className="text-red-700 mt-2 max-w-xs">This RIN was not found in the National Registry. Proceed with caution.</p>
         <button onClick={() => window.location.reload()} className="mt-6 text-sm font-bold underline text-red-900">RETRY SCAN</button>
       </div>
     )
@@ -96,9 +96,9 @@ export default function RegistryLookupPage() {
         <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 border-b p-4 flex justify-between items-center">
              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-               <Hash className="h-3 w-3" /> Permit Identifier
+               <Hash className="h-3 w-3" /> Permi Identifier
              </span>
-             <span className="font-mono font-bold text-blue-600">{opn}</span>
+             <span className="font-mono font-bold text-blue-600">{RIN}</span>
           </div>
 
           <div className="p-6 space-y-6">
@@ -145,7 +145,7 @@ export default function RegistryLookupPage() {
           <div className="bg-blue-50/50 p-4 border-t border-blue-100 flex items-center gap-3">
             <BadgeCheck className="h-5 w-5 text-blue-600 shrink-0" />
             <p className="text-[10px] text-blue-700 leading-tight font-medium">
-              Verified record. This OPN is authenticated by the Permit-Track Digital Signature.
+              Verified record. This RIN is authenticated by the Permit-Track Digital Signature.
             </p>
           </div>
         </div>

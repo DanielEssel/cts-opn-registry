@@ -87,7 +87,7 @@ export async function lookupByPhoneNumber(
 }
 
 /**
- * Check if permit is expired
+ * Check if Identification is expired
  */
 export function isPermitExpired(expiryDate: string): boolean {
   const expiry = new Date(expiryDate);

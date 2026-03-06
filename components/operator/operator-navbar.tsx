@@ -42,7 +42,7 @@ const navItems = [
     label: "Register Driver",
     href: "/operator/register",
     icon: FileText,
-    description: "Register new riders for OPN permits",
+    description: "Register new riders for RIN permits",
   },
   {
     label: "Daily Report",
@@ -194,7 +194,7 @@ export default function OperatorNavbar() {
                 <BadgeIcon className="h-5 w-5 text-white" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-base font-bold text-slate-900">OPN Registry</h1>
+                <h1 className="text-base font-bold text-slate-900">RIN Registry</h1>
                 <p className="text-xs text-slate-500 font-medium">Operator</p>
               </div>
             </Link>

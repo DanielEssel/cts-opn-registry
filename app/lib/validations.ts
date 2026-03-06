@@ -65,6 +65,7 @@ export const CATEGORY_CODES: Record<string, string> = {
   "Pragya": "P",
   "Motorbike/Okada": "M",
   "Tricycle/Aboboyaa": "T",
+  "Quadricycle" : "Q",
 };
 
 // ============================================================================
@@ -165,7 +166,7 @@ export const locationSchema = z.object({
     .string()
     .min(2, "Town name must be at least 2 characters")
     .max(50, "Town name is too long")
-    .regex(/^[a-zA-Z\s\-]+$/i, "Town name must contain only letters and hyphens"),
+    .regex(/^[a-zA-Z\s\-]+$/i, "Town name must contain only letters and hyphens"), 
 });
 
 // ============================================================================
@@ -174,7 +175,7 @@ export const locationSchema = z.object({
 
 export const vehicleInfoSchema = z.object({
   vehicleCategory: z.enum(
-    ["Pragya", "Motorbike/Okada", "Tricycle/Aboboyaa"],
+    ["Pragya", "Motorbike/Okada", "Tricycle/Aboboyaa", "Quadricycle"],
     {
       message: "Please select a valid vehicle category",
     }
@@ -263,10 +264,10 @@ export const phoneLookupSchema = z.object({
     .regex(phoneRegex, "Phone number must be exactly 10 digits"),
 });
 
-export const opnLookupSchema = z.object({
-  opn: z
+export const RINLookupSchema = z.object({
+  RIN: z
     .string()
-    .regex(/^[A-Z0-9\-]+$/, "Invalid OPN format"),
+    .regex(/^[A-Z0-9\-]+$/, "Invalid RIN format"),
 });
 
 // ============================================================================

@@ -110,10 +110,10 @@ type UserType = "admin" | "operator";
                 <ShieldCheck className="w-8 h-8 text-emerald-400" />
               </div>
               <h1 className="text-3xl font-extrabold tracking-tight mb-4">
-                OPN Registry <span className="text-emerald-400">System</span>
+                RIN Registry <span className="text-emerald-400">System</span>
               </h1>
               <p className="text-slate-400 text-lg leading-relaxed max-w-[280px]">
-                Ghana's official secure portal for motor rider registration and permit issuance.
+                Ghana's official secure portal for motor rider registration and permi issuance.
               </p>
             </div>
 
@@ -124,7 +124,7 @@ type UserType = "admin" | "operator";
               </div>
               <Image
                 src="/logo/rawlogo.png" 
-                alt="OPN Logo"
+                alt="RIN Logo"
                 width={180}
                 height={180}
                 className="opacity-90 brightness-110"
@@ -238,7 +238,7 @@ type UserType = "admin" | "operator";
 
             <div className="mt-10 pt-8 border-t border-slate-100 text-center">
               <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">
-                &copy; 2026 Ghana OPN Registry • v2.4.0
+                &copy; 2026 Ghana RIN Registry • v2.4.0
               </p>
             </div>
           </div>

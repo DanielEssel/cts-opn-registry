@@ -24,7 +24,7 @@ export default function StepTwoLocation({
   const selectedDistrict = form.watch("districtMunicipality");
   const selectedTown = form.watch("residentialTown");
 
-  // Estimated OPN preview (districtCode-XXXX-MM-YY)
+  // Estimated RIN preview (districtCode-XXXX-MM-YY)
   const getPreview = () => {
     const code =
       selectedDistrict && DISTRICT_CODES[selectedDistrict]
@@ -42,7 +42,7 @@ export default function StepTwoLocation({
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 p-4 text-center">
         <span className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
-          Estimated OPN
+          Estimated RIN
         </span>
         <p className="text-2xl font-mono font-black text-blue-700">
           {getPreview()}

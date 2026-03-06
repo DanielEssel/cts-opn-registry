@@ -99,7 +99,7 @@ export function RidersTable({
               Rider / Contact
             </TableHead>
             <TableHead className="font-bold text-slate-700">
-              OPN Number
+              RIN Number
             </TableHead>
             <TableHead className="font-bold text-center text-slate-700">
               Quick Scan

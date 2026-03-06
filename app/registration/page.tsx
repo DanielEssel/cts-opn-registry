@@ -93,7 +93,7 @@ export default function OperatorRegistry() {
             Register New Rider
           </h1>
           <p className="text-slate-500 font-medium">
-            Quick permit registration for {profile.entity}
+            Quick permi registration for {profile.entity}
           </p>
         </div>
         <RegistrationFormLayout />
@@ -109,10 +109,10 @@ export default function OperatorRegistry() {
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center">
                   <BadgeIcon className="h-5 w-5 text-white" />
                 </div>
-                <span className="font-bold text-gray-900">OPN Registry</span>
+                <span className="font-bold text-gray-900">RIN Registry</span>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Ghana's trusted Operating Permit Number registration system for riders and operators.
+                Ghana's trusted Rider Registration Number registration system for riders and operators.
               </p>
             </div>
 
@@ -138,10 +138,10 @@ export default function OperatorRegistry() {
                 </li>
                 <li>
                   <Link
-                    href="/operator/opn-issuance"
+                    href="/operator/RIN-issuance"
                     className="text-sm text-gray-600 hover:text-green-600 transition-colors"
                   >
-                    OPN Issuance
+                    RIN Issuance
                   </Link>
                 </li>
                 <li>
@@ -165,16 +165,16 @@ export default function OperatorRegistry() {
                     href="tel:0800123456"
                     className="text-sm text-gray-600 hover:text-green-600 transition-colors"
                   >
-                    0800-OPN-HELP
+                    0800-RIN-HELP
                   </a>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-green-600 flex-shrink-0" />
                   <a
-                    href="mailto:support@opn.gov.gh"
+                    href="mailto:support@RIN.gov.gh"
                     className="text-sm text-gray-600 hover:text-green-600 transition-colors"
                   >
-                    support@opn.gov.gh
+                    support@RIN.gov.gh
                   </a>
                 </li>
                 <li className="flex items-center gap-3">
@@ -191,12 +191,12 @@ export default function OperatorRegistry() {
           {/* BOTTOM */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-600">
-              &copy; 2024 Operating Permit Number Registry. All rights reserved.
+              &copy; 2024 Rider Registration Number Registry. All rights reserved.
             </p>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <span>Made with</span>
               <Heart className="h-4 w-4 text-red-500 fill-red-500" />
-              <span>by OPN Team</span>
+              <span>by RIN Team</span>
             </div>
           </div>
         </div>

@@ -149,7 +149,7 @@ export function PreviewStep({ data, photoPreview }: PreviewStepProps) {
         <div>
           <p className="text-sm font-semibold text-green-900">Ready to Submit</p>
           <p className="text-xs text-green-700 mt-0.5">
-            Your OPN will be generated instantly. Permit is valid for 6 months from today.
+            Your RIN will be generated instantly. P is valid for 6 months from today.
           </p>
         </div>
       </div>

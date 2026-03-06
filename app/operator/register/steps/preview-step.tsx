@@ -296,7 +296,7 @@ export function PreviewStep({ data, photoPreview }: PreviewStepProps) {
           <div>
             <h3 className="font-bold text-slate-900 mb-2">Ready to Submit?</h3>
             <p className="text-sm text-slate-700 leading-relaxed">
-              Your OPN will be generated instantly after submission. Your permit
+              Your RIN will be generated instantly after submission. Your permit
               is valid for 6 months from today. You can download and print your
               certificate after registration.
             </p>

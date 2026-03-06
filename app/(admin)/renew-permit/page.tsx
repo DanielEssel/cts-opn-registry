@@ -54,7 +54,7 @@ interface RenewalCandidate {
   id: string;
   fullName: string;
   phoneNumber: string;
-  opn: string;
+  RIN: string;
   vehicleCategory: string;
   expiryDate: string;
   town: string;
@@ -64,8 +64,8 @@ interface RenewalCandidate {
 
 interface RenewalRequest {
   riderId: string;
-  oldOPN: string;
-  newOPN: string;
+  oldRIN: string;
+  newRIN: string;
   renewalFee: number;
   paymentMethod: string;
 }
@@ -149,7 +149,7 @@ export default function RenewPermitsEngine() {
               id: doc.id,
               fullName: data.fullName,
               phoneNumber: data.phoneNumber,
-              opn: data.opn,
+              RIN: data.RIN,
               vehicleCategory: data.vehicleCategory,
               expiryDate: data.expiryDate,
               town: data.town,
@@ -186,7 +186,7 @@ export default function RenewPermitsEngine() {
     let filtered = renewalCandidates.filter((candidate) => {
       const matchesSearch =
         candidate.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        candidate.opn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        candidate.RIN.toLowerCase().includes(searchTerm.toLowerCase()) ||
         candidate.phoneNumber.includes(searchTerm);
 
       const matchesDays = candidate.daysUntilExpiry <= parseInt(filterDays);
@@ -202,11 +202,11 @@ export default function RenewPermitsEngine() {
 
     setIsProcessing(true);
     try {
-      // Generate new OPN
+      // Generate new RIN
       const today = new Date();
       const month = String(today.getMonth() + 1).padStart(2, "0");
       const year = String(today.getFullYear()).slice(-2);
-      const newOPN = `${selectedRider.opn.split("-")[0]}-${parseInt(selectedRider.opn.split("-")[1]) + 1}-${month}-${year}`;
+      const newRIN = `${selectedRider.RIN.split("-")[0]}-${parseInt(selectedRider.RIN.split("-")[1]) + 1}-${month}-${year}`;
 
       // Calculate new expiry date
       const newExpiryDate = new Date();
@@ -215,7 +215,7 @@ export default function RenewPermitsEngine() {
       // Update rider record
       const riderRef = doc(db, "riders", selectedRider.id);
       await updateDoc(riderRef, {
-        opn: newOPN,
+        RIN: newRIN,
         issueDate: serverTimestamp(),
         expiryDate: newExpiryDate.toISOString(),
         status: "Active",
@@ -226,8 +226,8 @@ export default function RenewPermitsEngine() {
       await addDoc(collection(db, "renewals"), {
         riderId: selectedRider.id,
         riderName: selectedRider.fullName,
-        oldOPN: selectedRider.opn,
-        newOPN,
+        oldRIN: selectedRider.RIN,
+        newRIN,
         renewalFee: RENEWAL_FEE,
         paymentMethod,
         status: "completed",
@@ -240,7 +240,7 @@ export default function RenewPermitsEngine() {
       await addDoc(collection(db, "audit_logs"), {
         type: "RENEW",
         admin: auth.currentUser?.email,
-        action: `Renewed permit ${selectedRider.opn} to ${newOPN}`,
+        action: `Renewed Registration ${selectedRider.RIN} to ${newRIN}`,
         target: selectedRider.fullName,
         targetId: selectedRider.id,
         status: "success",
@@ -254,7 +254,7 @@ export default function RenewPermitsEngine() {
       setPaymentMethod("momo");
 
       // Show success notification (you can use a toast here)
-      alert(`Permit renewed successfully!\nNew OPN: ${newOPN}`);
+      alert(`Permit renewed successfully!\nNew RIN: ${newRIN}`);
     } catch (error) {
       console.error("Renewal error:", error);
       alert("Error processing renewal. Please try again.");
@@ -284,10 +284,10 @@ export default function RenewPermitsEngine() {
       {/* Header */}
       <div>
         <h1 className="text-4xl font-black tracking-tight mb-2">
-          🔄 Permit Renewal Engine
+          🔄 Registration Renewal Engine
         </h1>
         <p className="text-slate-500 font-medium">
-          Manage and process permit renewals for expiring permits
+          Manage and process renewals for expiring rider identification
         </p>
       </div>
 
@@ -342,7 +342,7 @@ export default function RenewPermitsEngine() {
           <div className="flex gap-4 flex-col md:flex-row">
             <div className="flex-1">
               <Input
-                placeholder="Search by name, OPN, or phone..."
+                placeholder="Search by name, RIN, or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="rounded-lg"
@@ -376,7 +376,7 @@ export default function RenewPermitsEngine() {
           <TableHeader className="bg-slate-50/50">
             <TableRow className="border-b-2 border-slate-200">
               <TableHead className="font-bold text-slate-700">Rider</TableHead>
-              <TableHead className="font-bold text-slate-700">OPN</TableHead>
+              <TableHead className="font-bold text-slate-700">RIN</TableHead>
               <TableHead className="font-bold text-slate-700">Vehicle</TableHead>
               <TableHead className="font-bold text-slate-700">Expiry Date</TableHead>
               <TableHead className="font-bold text-slate-700">Days Left</TableHead>
@@ -395,7 +395,7 @@ export default function RenewPermitsEngine() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-mono font-bold">
-                      {candidate.opn}
+                      {candidate.RIN}
                     </Badge>
                   </TableCell>
                   <TableCell className="font-medium">{candidate.vehicleCategory}</TableCell>
@@ -442,7 +442,7 @@ export default function RenewPermitsEngine() {
       <Dialog open={isRenewingModalOpen} onOpenChange={setIsRenewingModalOpen}>
         <DialogContent className="max-w-2xl rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Process Permit Renewal</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Process Rider Registration Renewal</DialogTitle>
             <DialogDescription>
               Review and confirm renewal details for {selectedRider?.fullName}
             </DialogDescription>
@@ -470,10 +470,10 @@ export default function RenewPermitsEngine() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 uppercase font-bold mb-1">
-                    Current OPN
+                    Current RIN
                   </p>
                   <p className="text-base font-mono font-bold text-blue-600">
-                    {selectedRider.opn}
+                    {selectedRider.RIN}
                   </p>
                 </div>
                 <div>
@@ -492,7 +492,7 @@ export default function RenewPermitsEngine() {
                   <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-bold text-orange-900">
-                      Current permit expires in {selectedRider.daysUntilExpiry} days
+                      Current permi expires in {selectedRider.daysUntilExpiry} days
                     </p>
                     <p className="text-sm text-orange-700 mt-1">
                       Expiry Date: {new Date(selectedRider.expiryDate).toLocaleDateString()}

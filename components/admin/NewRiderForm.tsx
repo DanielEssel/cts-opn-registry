@@ -34,8 +34,8 @@ export default function NewRiderForm({ onSuccess }: NewRiderFormProps) {
   async function onSubmit(values: RiderFormValues) {
     setIsSubmitting(true);
     try {
-      const opn = await createRider(values);
-      toast.success(`Registration Successful! OPN: ${opn}`);
+      const RIN = await createRider(values);
+      toast.success(`Registration Successful! RIN: ${RIN}`);
       form.reset();
       setStep(1);
       onSuccess?.(); // ✅ Called on success
@@ -144,7 +144,7 @@ export default function NewRiderForm({ onSuccess }: NewRiderFormProps) {
               <div className="flex gap-4">
                 <Button type="button" variant="outline" onClick={prevStep} className="w-full">Back</Button>
                 <Button type="submit" disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700">
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : "Complete Registration & Issue OPN"}
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : "Complete Registration & Issue RIN"}
                 </Button>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation"
 import { useRef } from "react"
-import { toPng } from "html-to-image"
+import { tRINg } from "html-to-image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2, Download, Printer, ArrowRight, ShieldCheck } from "lucide-react"
@@ -13,12 +13,12 @@ export default function SuccessPage() {
   const searchParams = useSearchParams()
   const permitRef = useRef<HTMLDivElement>(null)
   
-  const opn = searchParams.get("opn") || "PENDING";
+  const RIN = searchParams.get("RIN") || "PENDING";
   const riderName = searchParams.get("name") || "Valued Rider";
   const town = searchParams.get("town") || "N/A";
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://permittrack.gov.gh';
-  const verificationUrl = `${baseUrl}/verify/${opn}`;
+  const verificationUrl = `${baseUrl}/verify/${RIN}`;
 
   // 1. SAVE AS IMAGE FUNCTION
   const saveAsImage = async () => {
@@ -26,14 +26,14 @@ export default function SuccessPage() {
 
     try {
       // We add a slight delay to ensure the QR code is fully rendered
-      const dataUrl = await toPng(permitRef.current, { 
+      const dataUrl = await tRINg(permitRef.current, { 
         cacheBust: true,
         backgroundColor: "#ffffff",
         pixelRatio: 2, // Higher quality image
       });
       
       const link = document.createElement('a');
-      link.download = `Permit-${opn}.png`;
+      link.download = `Permit-${RIN}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -55,7 +55,7 @@ export default function SuccessPage() {
           <p className="text-slate-500 mt-2">Permit is now active.</p>
         </div>
 
-        {/* THE DIGITAL PERMIT CARD */}
+        {/* THE DIGITAL PE CARD */}
         {/* Added ref={permitRef} and 'print-card' class */}
         <Card 
           ref={permitRef} 
@@ -65,7 +65,7 @@ export default function SuccessPage() {
           <div className="bg-slate-900 py-4 px-6 text-white flex justify-between items-center">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-blue-400" />
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Digital Operating Permit</span>
+              <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Digital Rider Registration</span>
             </div>
             <span className="text-[9px] opacity-60 font-bold uppercase tracking-tighter">Republic of Ghana</span>
           </div>
@@ -73,9 +73,9 @@ export default function SuccessPage() {
           <CardContent className="p-8">
             <div className="flex justify-between items-start gap-4 mb-8 text-left">
               <div className="space-y-1">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Unique OPN</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Unique RIN</p>
                 <p className="text-3xl font-mono font-black text-blue-600 tracking-tighter uppercase">
-                  {opn}
+                  {RIN}
                 </p>
               </div>
               

@@ -15,7 +15,7 @@ export function SearchBar({ searchTerm, onSearchChange }: SearchBarProps) {
         <Input
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by name, OPN, or phone number..."
+          placeholder="Search by name, RIN, or phone number..."
           className="pl-11 h-10 border-none focus-visible:ring-0 text-slate-700 placeholder:text-slate-400"
         />
       </div>

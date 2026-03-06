@@ -127,7 +127,7 @@ export function SearchBar({ onFiltersChange }: SearchBarProps) {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
             <Input
-              placeholder="Search by name, OPN, phone number..."
+              placeholder="Search by name, RIN, phone number..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               className="pl-10 h-11 border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
