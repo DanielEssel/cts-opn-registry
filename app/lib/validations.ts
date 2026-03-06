@@ -1,5 +1,5 @@
 import { z } from "zod";
-
+import { DISTRICT_CODES, CATEGORY_CODES } from "@/lib/rin-constants";
 // ============================================================================
 // REGEX PATTERNS
 // ============================================================================
@@ -9,26 +9,6 @@ const phoneRegex = /^\d{10}$/;
 const voterIdRegex = /^\d{10}$/;
 const passportRegex = /^[A-Z]\d{6,8}$/;
 const driversLicenseRegex = /^[A-Z]{3}-\d{8}-\d{5}$/;
-
-// ============================================================================
-// DISTRICT CODES
-// ============================================================================
-
-export const DISTRICT_CODES: Record<string, string> = {
-  "Accra Metro": "AM",
-  Krowor: "KR",
-  Madina: "MD",
-  Ashaiman: "AS",
-  "Tema Metro": "TM",
-  "Ga South": "GS",
-  "Ga West": "GW",
-  "Ga East": "GE",
-  "Ga Central": "GC",
-  Ledzokuku: "LD",
-  "Ablekuma North": "AN",
-  "Ablekuma Central": "AC",
-  "Ablekuma West": "AW",
-};
 
 
 // ============================================================================
@@ -56,17 +36,6 @@ const calculateAge = (dateString: string) => {
 
 const normalizeUpper = (value: string) => value.trim().toUpperCase();
 
-
-// ============================================================================
-// VEHICLE CATEGORY CODES
-// ============================================================================
-
-export const CATEGORY_CODES: Record<string, string> = {
-  "Pragya": "P",
-  "Motorbike/Okada": "M",
-  "Tricycle/Aboboyaa": "T",
-  "Quadricycle" : "Q",
-};
 
 // ============================================================================
 // BIO DATA SCHEMA
@@ -137,36 +106,24 @@ export const bioDataSchema = z.object({
 // ============================================================================
 
 export const locationSchema = z.object({
+  //Locked to Greater Accra
   region: z.literal("Greater Accra", {
-    message: "Region must be Greater Accra",
-  }),
+  message: "Region must be Greater Accra",
+}),
+
+
+  // region: z.string().min(1, "Region is required"), //for all region
 
   districtMunicipality: z.enum(
-    [
-      "Accra Metro",
-      "Krowor",
-      "Madina",
-      "Ashaiman",
-      "Tema Metro",
-      "Ga South",
-      "Ga West",
-      "Ga East",
-      "Ga Central",
-      "Ledzokuku",
-      "Ablekuma North",
-      "Ablekuma Central",
-      "Ablekuma West",
-    ],
-    {
-      message: "Please select a valid district",
-    }
+    Object.keys(DISTRICT_CODES) as [string, ...string[]],
+    { message: "Please select a valid district" }
   ),
 
   residentialTown: z
     .string()
     .min(2, "Town name must be at least 2 characters")
     .max(50, "Town name is too long")
-    .regex(/^[a-zA-Z\s\-]+$/i, "Town name must contain only letters and hyphens"), 
+    .regex(/^[a-zA-Z\s\-]+$/i, "Town name must contain only letters and hyphens"),
 });
 
 // ============================================================================
@@ -175,62 +132,21 @@ export const locationSchema = z.object({
 
 export const vehicleInfoSchema = z.object({
   vehicleCategory: z.enum(
-    ["Pragya", "Motorbike/Okada", "Tricycle/Aboboyaa", "Quadricycle"],
-    {
-      message: "Please select a valid vehicle category",
-    }
+    Object.keys(CATEGORY_CODES) as [string, ...string[]],
+    { message: "Please select a valid vehicle category" }
   ),
 
   plateNumber: z
     .string()
     .min(2, "Plate number is required")
     .max(20, "Plate number is too long")
-    .regex(/^[A-Z0-9\-]+$/i, "Invalid plate number format (letters, numbers, and hyphens only)"),
+    .regex(/^[A-Z0-9\-]+$/i, "Invalid plate number format"),
 
   chassisNumber: z
     .string()
     .min(10, "Chassis number must be at least 10 characters")
     .max(30, "Chassis number is too long")
-    .regex(/^[A-Z0-9]+$/i, "Chassis number must be alphanumeric (letters and numbers only)"),
-});
-
-export const complianceSchema = z.object({
-  driversLicenseNumber: z
-    .string()
-    .trim()
-    .transform(normalizeUpper)
-    .refine(
-      (value) => driversLicenseRegex.test(value),
-      "Invalid Driver's License format. Expected: FAT-12345678-00001"
-    ),
-
-  licenseExpiryDate: z.string().refine((date) => {
-    const expiry = new Date(date);
-    if (isNaN(expiry.getTime())) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return expiry > today;
-  }, "License must not be expired"),
-
-  nextOfKinName: z
-    .string()
-    .trim()
-    .min(3, "Next of kin name must be at least 3 characters")
-    .max(100)
-    .regex(/^[a-zA-Z\s]+$/, "Name must contain only letters and spaces"),
-
-  nextOfKinContact: z
-    .string()
-    .trim()
-    .regex(phoneRegex, "Next of kin contact must be exactly 10 digits"),
-
-  passportPhoto: z.any()
-  .refine((file) => file instanceof File, "Please upload a passport photo")
-  .refine((file) => !(file instanceof File) || file.size <= 5 * 1024 * 1024, "Photo must be less than 5MB")
-  .refine((file) => !(file instanceof File) || ["image/jpeg", "image/png"].includes(file.type), "Photo must be JPEG or PNG")
-  .optional(),
+    .regex(/^[A-Z0-9]+$/i, "Chassis number must be alphanumeric"),
 });
 
 

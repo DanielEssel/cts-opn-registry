@@ -1,0 +1,58 @@
+/**
+ * lib/firebase.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Firebase client initialisation for Next.js.
+ *
+ * ⚠️  Replace the firebaseConfig values below with your NEW Firebase project
+ *     credentials from the Firebase Console → Project Settings → Your apps.
+ *
+ * Added in this version:
+ *   • getFunctions() export  — required by rider-service to call Cloud Functions
+ *   • connectFunctionsEmulator()  — uncomment during local development
+ */
+
+import { initializeApp, getApps, getApp }      from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth, connectAuthEmulator }           from "firebase/auth";
+import { getStorage, connectStorageEmulator }      from "firebase/storage";
+import { getFunctions, connectFunctionsEmulator }  from "firebase/functions";
+import { getAnalytics, isSupported }               from "firebase/analytics";
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCPprJc-tFU4ouayRL9MrvJIfkuAsyd1s8",
+  authDomain: "cts-rin-registry.firebaseapp.com",
+  projectId: "cts-rin-registry",
+  storageBucket: "cts-rin-registry.firebasestorage.app",
+  messagingSenderId: "371283843923",
+  appId: "1:371283843923:web:aa6d10284972c04e109fa6"
+};
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
+export const db       = getFirestore(app);
+export const auth     = getAuth(app);
+export const storage  = getStorage(app);
+
+/**
+ * Functions instance — region must match the region used in index.ts.
+ * Default region is "us-central1"; we set it to "europe-west1" to match CF.
+ */
+export const functions = getFunctions(app, "europe-west2");
+
+// ─── LOCAL EMULATOR (uncomment during development) ────────────────────────────
+// if (process.env.NODE_ENV === "development") {
+//   connectFirestoreEmulator(db,       "localhost", 8080);
+//   connectAuthEmulator(auth,          "http://localhost:9099");
+//   connectStorageEmulator(storage,    "localhost", 9199);
+//   connectFunctionsEmulator(functions,"localhost", 5001);
+// }
+
+// ─── ANALYTICS (browser-only) ─────────────────────────────────────────────────
+export const initAnalytics = async () => {
+  if (typeof window !== "undefined" && (await isSupported())) {
+    return getAnalytics(app);
+  }
+  return null;
+};

@@ -1,14 +1,13 @@
 {
   "firestore": {
     "database": "(default)",
-    "location": "africa-south1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
   "functions": [
     {
-      "source": "functions",
-      "codebase": "default",
+      "source": "rin-functions",
+      "codebase": "rin-functions",
       "disallowLegacyRuntimeConfig": true,
       "ignore": [
         "node_modules",
@@ -18,7 +17,6 @@
         "*.local"
       ],
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint",
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }

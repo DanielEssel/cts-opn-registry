@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import {
   Sheet,
@@ -7,8 +9,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button }   from "@/components/ui/button";
+import { Input }    from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,42 +20,75 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, Lock, Loader2, Mail, UserPlus } from "lucide-react";
 import { db, auth, firebaseConfig } from "@/lib/firebase";
-import { initializeApp, getApp } from "firebase/app";
-import { createUserWithEmailAndPassword, getAuth, signOut } from "firebase/auth";
+import { initializeApp, getApp }   from "firebase/app";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  signOut,
+}                                   from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { toast } from "sonner";
-import type { AdminProfile } from "@/app/hooks/useAdminProfile";
-import { DISTRICTS } from "@/app/(admin)/settings/constants";
+import { toast }                    from "sonner";
+import type { AdminProfile }        from "@/app/hooks/useAdminProfile";
+import { DISTRICTS, ROLES }         from "@/app/(admin)/settings/constants";
 
 interface AddUserSheetProps {
   adminProfile: AdminProfile;
 }
 
 const defaultForm = {
-  name: "",
-  email: "",
+  name:     "",
+  email:    "",
   password: "",
-  entity: "",
-  role: "Operator",
+  entity:   "",
+  role:     "Operator" as string,
 };
 
 export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(defaultForm);
+  const [open,        setOpen]        = useState(false);
+  const [formData,    setFormData]    = useState(defaultForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [error,       setError]       = useState("");
 
   const isSuperAdmin = adminProfile.role === "Super Admin";
 
   const set = (key: keyof typeof defaultForm) => (val: string) =>
     setFormData((prev) => ({ ...prev, [key]: val }));
 
+  // ── Validation ─────────────────────────────────────────────────────────────
+  const validate = (): string | null => {
+    if (!formData.name.trim())     return "Full name is required.";
+    if (!formData.email.trim())    return "Email is required.";
+    if (formData.password.length < 6) return "Password must be at least 6 characters.";
+    if (!formData.role)            return "Role is required.";
+
+    // Entity required for District Admin and Operator
+    if (
+      formData.role !== "Super Admin" &&
+      !formData.entity &&
+      isSuperAdmin
+    ) {
+      return "Please select a district for this user.";
+    }
+
+    return null;
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError("");
 
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
+      // Use a secondary Firebase app so creating a new user doesn't
+      // sign out the currently logged-in Super Admin.
       let secondaryApp;
       try {
         secondaryApp = getApp("AdminProvisioner");
@@ -62,25 +97,31 @@ export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
       }
       const secondaryAuth = getAuth(secondaryApp);
 
+      // 1. Create Firebase Auth account
       const credential = await createUserWithEmailAndPassword(
         secondaryAuth,
-        formData.email,
+        formData.email.trim(),
         formData.password
       );
       const newUid = credential.user.uid;
 
+      // 2. Write Firestore profile
+      const effectiveEntity = isSuperAdmin
+        ? formData.entity
+        : (adminProfile.entity ?? "");
+
       await setDoc(doc(db, "admin_users", newUid), {
-        uid: newUid,
-        name: formData.name,
-        email: formData.email,
-        // Super Admin picks district; District Admin scopes to their own entity
-        entity: isSuperAdmin ? formData.entity : (adminProfile.entity ?? ""),
-        role: formData.role,
-        status: "Active",
+        uid:       newUid,
+        name:      formData.name.trim(),
+        email:     formData.email.trim().toLowerCase(),
+        role:      formData.role,
+        entity:    effectiveEntity,
+        status:    "Active",
         createdAt: serverTimestamp(),
-        createdBy: auth.currentUser?.uid,
+        createdBy: auth.currentUser?.uid ?? "system",
       });
 
+      // 3. Sign out the secondary auth instance
       await signOut(secondaryAuth);
 
       toast.success(`${formData.name} has been provisioned successfully.`);
@@ -89,9 +130,11 @@ export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
     } catch (err: any) {
       console.error("Provisioning error:", err);
       if (err.code === "auth/email-already-in-use") {
-        setError("This email is already registered to another administrator.");
+        setError("This email is already registered.");
       } else if (err.code === "auth/weak-password") {
         setError("Password must be at least 6 characters.");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Please enter a valid email address.");
       } else if (err.code === "permission-denied") {
         setError("You do not have permission to create users.");
       } else {
@@ -117,11 +160,12 @@ export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
             New Access Profile
           </SheetTitle>
           <SheetDescription>
-            Provision a new administrator account.
+            Provision a new user account. They can log in immediately after creation.
           </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+
           {/* Full Name */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase text-slate-500">
@@ -145,7 +189,7 @@ export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
               <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input
                 type="email"
-                placeholder="admin@mmdce.gov.gh"
+                placeholder="user@mmdce.gov.gh"
                 className="pl-9 h-10"
                 value={formData.email}
                 onChange={(e) => set("email")(e.target.value)}
@@ -170,9 +214,12 @@ export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
                 required
               />
             </div>
+            <p className="text-[11px] text-slate-400">
+              User should change this after first login.
+            </p>
           </div>
 
-          {/* Role — Super Admin only can assign Super Admin */}
+          {/* Role */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase text-slate-500">
               Role
@@ -201,7 +248,7 @@ export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Select a district" />
                 </SelectTrigger>
-                <SelectContent className="max-h-56">
+                <SelectContent className="max-h-60">
                   {DISTRICTS.map((d) => (
                     <SelectItem key={d} value={d}>
                       {d}
@@ -209,11 +256,16 @@ export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
                   ))}
                 </SelectContent>
               </Select>
+              {formData.role === "Super Admin" && (
+                <p className="text-[11px] text-amber-600">
+                  Super Admins have system-wide access regardless of district.
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase text-slate-500">
-                Entity
+                Entity (Your District)
               </label>
               <Input
                 value={adminProfile.entity ?? ""}
@@ -237,7 +289,7 @@ export function AddUserSheet({ adminProfile }: AddUserSheetProps) {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-bold text-base"
+            className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-bold text-base rounded-xl"
           >
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />

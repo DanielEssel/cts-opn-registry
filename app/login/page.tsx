@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 export default function LoginPage() {
-   const [userType, setUserType] = useState<UserType>("operator");
+  const [userType, setUserType] = useState<UserType>("operator");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,10 +30,9 @@ export default function LoginPage() {
   const router = useRouter();
 
   const ADMIN_ROLES = ["Super Admin", "District Admin"] as const;
-const OPERATOR_ROLES = ["Operator"] as const;
+  const OPERATOR_ROLES = ["Operator"] as const;
 
-type UserType = "admin" | "operator";
-
+  type UserType = "admin" | "operator";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +43,7 @@ type UserType = "admin" | "operator";
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
 
       const user = userCredential.user;
@@ -54,7 +53,7 @@ type UserType = "admin" | "operator";
 
       if (!userDocSnap.exists()) {
         setError(
-          "User profile not found. Please contact the Boss (Super Admin)."
+          "User profile not found. Please contact the Boss (Super Admin).",
         );
         await auth.signOut();
         return;
@@ -65,7 +64,9 @@ type UserType = "admin" | "operator";
       const status = userData?.status as string | undefined;
 
       if (status && status !== "Active") {
-        setError("Account is not active. Please contact the Boss (Super Admin).");
+        setError(
+          "Account is not active. Please contact the Boss (Super Admin).",
+        );
         await auth.signOut();
         return;
       }
@@ -95,13 +96,12 @@ type UserType = "admin" | "operator";
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-[1000px] bg-white rounded-3xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col md:flex-row min-h-[600px] border border-slate-100">
-        
         {/* LEFT PANEL: BRANDING & IDENTITY */}
         <div className="hidden md:flex flex-col w-[45%] bg-[#0F172A] p-12 text-white relative overflow-hidden">
           {/* Subtle Background Pattern */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
-             <div className="absolute top-[-10%] left-[-10%] w-full h-full border-[1px] border-white rounded-full" />
-             <div className="absolute bottom-[-20%] right-[-20%] w-full h-full border-[1px] border-white rounded-full" />
+            <div className="absolute top-[-10%] left-[-10%] w-full h-full border-[1px] border-white rounded-full" />
+            <div className="absolute bottom-[-20%] right-[-20%] w-full h-full border-[1px] border-white rounded-full" />
           </div>
 
           <div className="relative z-10 flex flex-col h-full justify-between">
@@ -113,17 +113,20 @@ type UserType = "admin" | "operator";
                 RIN Registry <span className="text-emerald-400">System</span>
               </h1>
               <p className="text-slate-400 text-lg leading-relaxed max-w-[280px]">
-                Ghana's official secure portal for motor rider registration and permi issuance.
+                Ghana's official secure portal for motor rider registration and
+                permi issuance.
               </p>
             </div>
 
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <div className="h-1 w-12 bg-emerald-500 rounded-full" />
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-bold">Official Portal</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-bold">
+                  Official Portal
+                </p>
               </div>
               <Image
-                src="/logo/rawlogo.png" 
+                src="/logo/rawlogo.png"
                 alt="RIN Logo"
                 width={180}
                 height={180}
@@ -137,8 +140,12 @@ type UserType = "admin" | "operator";
         <div className="flex-1 px-8 py-12 lg:px-16 flex flex-col justify-center">
           <div className="max-w-sm mx-auto w-full">
             <div className="mb-10">
-              <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Login</h2>
-              <p className="text-slate-500 mt-2 text-sm">Welcome back! Please enter your details.</p>
+              <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
+                Login
+              </h2>
+              <p className="text-slate-500 mt-2 text-sm">
+                Welcome back! Please enter your details.
+              </p>
             </div>
 
             {/* USER TYPE SELECTOR */}
@@ -146,8 +153,8 @@ type UserType = "admin" | "operator";
               <button
                 onClick={() => setUserType("operator")}
                 className={`py-2.5 text-sm font-bold rounded-lg transition-all ${
-                  userType === "operator" 
-                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200" 
+                  userType === "operator"
+                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200"
                     : "text-slate-500 hover:text-slate-700"
                 }`}
               >
@@ -156,8 +163,8 @@ type UserType = "admin" | "operator";
               <button
                 onClick={() => setUserType("admin")}
                 className={`py-2.5 text-sm font-bold rounded-lg transition-all ${
-                  userType === "admin" 
-                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200" 
+                  userType === "admin"
+                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200"
                     : "text-slate-500 hover:text-slate-700"
                 }`}
               >
@@ -168,13 +175,17 @@ type UserType = "admin" | "operator";
             {error && (
               <Alert className="mb-6 bg-red-50 border-red-200 text-red-800 rounded-xl animate-in fade-in slide-in-from-top-1">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-xs font-medium">{error}</AlertDescription>
+                <AlertDescription className="text-xs font-medium">
+                  {error}
+                </AlertDescription>
               </Alert>
             )}
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Email Address</label>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">
+                  Email Address
+                </label>
                 <div className="relative group">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                   <Input
@@ -189,7 +200,9 @@ type UserType = "admin" | "operator";
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Password</label>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">
+                  Password
+                </label>
                 <div className="relative group">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                   <Input
@@ -205,17 +218,29 @@ type UserType = "admin" | "operator";
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div className="flex items-center justify-between px-1">
                 <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
-                  <span className="text-xs font-medium text-slate-500 group-hover:text-slate-700 transition-colors">Remember device</span>
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
+                  />
+                  <span className="text-xs font-medium text-slate-500 group-hover:text-slate-700 transition-colors">
+                    Remember device
+                  </span>
                 </label>
-                <button type="button" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors">
+                <button
+                  type="button"
+                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
+                >
                   Forgot Password?
                 </button>
               </div>
