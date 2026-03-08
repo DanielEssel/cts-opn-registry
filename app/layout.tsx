@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "RIN Registry | CTS Riders ",
-  description: "Official platform for the secure registration of motor riders and the issuance of Rider Registration Numbers (RIN) in Ghana.",
+  description: "Official platform for the secure registration of motor riders and the issuance of Rider Identification Numbers (RIN) in Ghana.",
 };
 
 export default function RootLayout({

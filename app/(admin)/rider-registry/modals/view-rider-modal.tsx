@@ -4,447 +4,265 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  User,
-  Phone,
-  CreditCard,
-  Calendar,
-  MapPin,
-  Bike,
-  FileText,
-  Users,
-  Download,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
+  User, Phone, CreditCard, Calendar, MapPin,
+  Bike, FileText, Clock, AlertCircle,
+  CheckCircle2, X, Printer,
 } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
-import { RiderRecord } from "@/lib/rider-service";
+import { type RiderRecord } from "@/lib/rider-service";
 
-// ============================================================================
-// TYPES
-// ============================================================================
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ViewRiderModalProps {
-  open: boolean;
-  rider: (RiderRecord & { id: string }) | null;
+  open:         boolean;
+  rider:        (RiderRecord & { id: string }) | null;
   onOpenChange: (open: boolean) => void;
 }
 
-// ============================================================================
-// VIEW RIDER MODAL COMPONENT
-// ============================================================================
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export function ViewRiderModal({
-  open,
-  rider,
-  onOpenChange,
-}: ViewRiderModalProps) {
+function safeDate(value: string | undefined | null): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function fmtDate(value: string | undefined | null, fallback = "—"): string {
+  const d = safeDate(value);
+  if (!d) return fallback;
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  Active:    "bg-green-600 text-white",
+  Pending:   "bg-yellow-500 text-white",
+  Expired:   "bg-red-500 text-white",
+  Suspended: "bg-slate-500 text-white",
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function ViewRiderModal({ open, rider, onOpenChange }: ViewRiderModalProps) {
   if (!rider) return null;
 
-  // ========================================================================
-  // CALCULATE DATES & STATUS
-  // ========================================================================
-
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const verificationUrl = `${baseUrl}/verify/${rider.RIN}`;
-
-  const issueDate = new Date(rider.issueDate);
-  const expiryDate = new Date(rider.expiryDate);
-  const licenseExpiryDate = new Date(rider.licenseExpiryDate);
-  
-  const isExpired = expiryDate < new Date();
-  const daysLeft = Math.ceil(
-    (expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  // ========================================================================
-  // GET STATUS COLOR
-  // ========================================================================
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-500 text-white";
-      case "Pending":
-        return "bg-yellow-500 text-white";
-      case "Expired":
-        return "bg-red-500 text-white";
-      case "Suspended":
-        return "bg-slate-500 text-white";
-      default:
-        return "bg-slate-500 text-white";
-    }
-  };
-
-  // ========================================================================
-  // RENDER
-  // ========================================================================
+  const expiryDate  = safeDate(rider.expiryDate);
+  const issueDate   = safeDate(rider.issueDate);
+  const now         = new Date();
+  const isExpired   = expiryDate ? expiryDate < now : false;
+  const daysLeft    = expiryDate
+    ? Math.ceil((expiryDate.getTime() - now.getTime()) / 86_400_000)
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] p-0 overflow-hidden">
-        {/* HEADER */}
-        <div className="sticky top-0 z-50 bg-gradient-to-r from-green-600 to-emerald-600 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-1">
-                Rider Profile
-              </h2>
-              <p className="text-green-100 text-sm">Complete rider information</p>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+
+        {/* ── Header ── */}
+        <div className="sticky top-0 z-50 bg-green-700 px-6 py-5 flex items-start justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-200 mb-0.5">
+              Rider Profile
+            </p>
+            <h2 className="text-xl font-bold text-white leading-tight">{rider.fullName}</h2>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className="font-mono text-xs bg-white/10 text-green-100 px-2 py-0.5 rounded">
+                {rider.RIN}
+              </span>
+              <Badge className={`text-xs ${STATUS_STYLES[rider.status] ?? "bg-slate-500 text-white"}`}>
+                {rider.status}
+              </Badge>
+              <Badge variant="outline" className="text-xs border-green-400 text-green-100">
+                {rider.vehicleCategory}
+              </Badge>
             </div>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <X className="h-5 w-5 text-white" />
-            </button>
           </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-green-200 hover:text-white transition-colors mt-0.5 shrink-0"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* CONTENT */}
-        <div className="overflow-y-auto max-h-[calc(90vh-88px)]">
-          <div className="p-8 space-y-6">
-            {/* PROFILE HEADER */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* LEFT - MAIN INFO */}
-              <div className="md:col-span-2 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-3xl font-bold text-slate-900 mb-2">
-                      {rider.fullName}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className="font-mono text-sm bg-slate-900 text-white">
-                        {rider.RIN}
-                      </Badge>
-                      <Badge className={`${getStatusColor(rider.status)}`}>
-                        {rider.status}
-                      </Badge>
-                      <Badge variant="outline" className="border-slate-300">
-                        {rider.vehicleCategory}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+        {/* ── Scrollable body ── */}
+        <div className="overflow-y-auto max-h-[calc(90vh-100px)]">
+          <div className="p-6 space-y-5">
 
-                {/* QUICK INFO */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-slate-500" />
-                    <span className="font-semibold">{rider.phoneNumber}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-slate-500" />
-                    <span className="font-semibold">
-                      {rider.districtMunicipality}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <CreditCard className="h-4 w-4 text-slate-500" />
-                    <span className="font-mono font-semibold text-xs">
-                      {rider.idType}: {rider.idNumber}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-slate-500" />
-                    <span className="font-semibold">
-                      Born: {new Date(rider.dateOfBirth).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* RIGHT - QR CODE */}
-              <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border-2 border-slate-200">
-                <div className="bg-white p-4 rounded-lg shadow-sm mb-3">
-                  <QRCodeSVG value={verificationUrl} size={120} level="H" />
-                </div>
-                <p className="text-xs text-slate-600 text-center font-semibold">
-                  Scan to verify
-                </p>
-              </div>
-            </div>
-
-            {/* STATUS CARDS */}
+            {/* ── Top row: photo + QR + quick stats ── */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* ISSUE DATE */}
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                  <p className="text-xs font-bold text-blue-700 uppercase">
-                    Issued
-                  </p>
-                </div>
-                <p className="text-xl font-bold text-blue-900">
-                  {issueDate.toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
 
-              {/* EXPIRY DATE */}
-              <div
-                className={`p-4 rounded-lg border ${
-                  isExpired
-                    ? "bg-gradient-to-br from-red-50 to-red-100 border-red-200"
-                    : daysLeft <= 30
-                    ? "bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200"
-                    : "bg-gradient-to-br from-green-50 to-green-100 border-green-200"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  {isExpired ? (
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                  ) : (
-                    <Clock className="h-4 w-4 text-green-600" />
-                  )}
-                  <p
-                    className={`text-xs font-bold uppercase ${
-                      isExpired ? "text-red-700" : "text-green-700"
-                    }`}
-                  >
-                    {isExpired ? "Expired" : "Expires In"}
-                  </p>
-                </div>
-                <p
-                  className={`text-xl font-bold ${
-                    isExpired ? "text-red-900" : "text-green-900"
-                  }`}
-                >
-                  {isExpired ? "Expired" : `${daysLeft} days`}
-                </p>
-                <p className="text-xs text-slate-600 mt-1">
-                  {expiryDate.toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-
-              {/* LICENSE EXPIRY */}
-              <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="h-4 w-4 text-purple-600" />
-                  <p className="text-xs font-bold text-purple-700 uppercase">
-                    License Expires
-                  </p>
-                </div>
-                <p className="text-xl font-bold text-purple-900">
-                  {licenseExpiryDate.toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-
-            {/* DETAILS SECTIONS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* PERSONAL INFORMATION */}
-              <div className="bg-white border border-slate-200 rounded-lg p-6">
-                <h4 className="text-sm font-bold text-slate-900 uppercase mb-4 flex items-center gap-2">
-                  <User className="h-4 w-4 text-green-600" />
-                  Personal Information
-                </h4>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Full Name
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {rider.fullName}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs text-slate-500 font-semibold mb-1">
-                        Gender
-                      </p>
-                      <p className="text-sm font-bold text-slate-900">
-                        {rider.gender}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 font-semibold mb-1">
-                        Phone
-                      </p>
-                      <p className="text-sm font-bold text-slate-900">
-                        {rider.phoneNumber}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      ID Type & Number
-                    </p>
-                    <p className="text-sm font-mono font-bold text-slate-900">
-                      {rider.idType}: {rider.idNumber}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Date of Birth
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {new Date(rider.dateOfBirth).toLocaleDateString("en-GB")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* LOCATION */}
-              <div className="bg-white border border-slate-200 rounded-lg p-6">
-                <h4 className="text-sm font-bold text-slate-900 uppercase mb-4 flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-green-600" />
-                  Location
-                </h4>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Region
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {rider.region}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      District/Municipality
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {rider.districtMunicipality}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Residential Town
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {rider.residentialTown}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* VEHICLE */}
-              <div className="bg-white border border-slate-200 rounded-lg p-6">
-                <h4 className="text-sm font-bold text-slate-900 uppercase mb-4 flex items-center gap-2">
-                  <Bike className="h-4 w-4 text-green-600" />
-                  Vehicle
-                </h4>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Category
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {rider.vehicleCategory}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Plate Number
-                    </p>
-                    <p className="text-sm font-mono font-bold text-slate-900">
-                      {rider.plateNumber.toUpperCase()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Chassis Number
-                    </p>
-                    <p className="text-sm font-mono font-bold text-slate-900">
-                      {rider.chassisNumber.toUpperCase()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* COMPLIANCE */}
-              <div className="bg-white border border-slate-200 rounded-lg p-6">
-                <h4 className="text-sm font-bold text-slate-900 uppercase mb-4 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-green-600" />
-                  Compliance
-                </h4>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Driver's License
-                    </p>
-                    <p className="text-sm font-mono font-bold text-slate-900">
-                      {rider.driversLicenseNumber.toUpperCase()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      License Expiry
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {licenseExpiryDate.toLocaleDateString("en-GB")}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Next of Kin Name
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {rider.nextOfKinName}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold mb-1">
-                      Next of Kin Contact
-                    </p>
-                    <p className="text-sm font-bold text-slate-900">
-                      {rider.nextOfKinContact}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* PASSPORT PHOTO */}
-            {rider.passportPhotoUrl && (
-              <div className="bg-white border border-slate-200 rounded-lg p-6">
-                <h4 className="text-sm font-bold text-slate-900 uppercase mb-4 flex items-center gap-2">
-                  <User className="h-4 w-4 text-green-600" />
-                  Passport Photo
-                </h4>
-                <div className="flex justify-center">
+              {/* Passport photo */}
+              <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-xl p-4 gap-3">
+                {rider.passportPhotoUrl ? (
                   <img
                     src={rider.passportPhotoUrl}
-                    alt="Passport"
-                    className="h-48 w-auto rounded-lg object-cover shadow-lg border border-slate-200"
+                    alt="Passport photo"
+                    className="h-36 w-28 object-cover rounded-lg shadow border border-slate-200"
                   />
+                ) : (
+                  <div className="h-36 w-28 bg-slate-200 rounded-lg flex items-center justify-center">
+                    <User className="h-10 w-10 text-slate-400" />
+                  </div>
+                )}
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Passport Photo
+                </p>
+              </div>
+
+              {/* QR code — uses stored URL, no client-side generation */}
+              <div className="flex flex-col items-center justify-center bg-white border-2 border-green-200 rounded-xl p-4 gap-2">
+                {rider.qrCodeUrl ? (
+                  <>
+                    <img
+                      src={rider.qrCodeUrl}
+                      alt={`QR code for ${rider.RIN}`}
+                      className="w-28 h-28 object-contain"
+                    />
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-green-700">
+                      Scan to Verify
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-400 italic">No QR code</p>
+                )}
+              </div>
+
+              {/* Date cards */}
+              <div className="space-y-3">
+                {/* Issued */}
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-blue-700">Issued</p>
+                  </div>
+                  <p className="text-sm font-bold text-blue-900">{fmtDate(rider.issueDate)}</p>
+                </div>
+
+                {/* Expiry */}
+                <div className={`p-3 rounded-lg border ${
+                  isExpired            ? "bg-red-50 border-red-200"    :
+                  daysLeft !== null && daysLeft <= 30 ? "bg-yellow-50 border-yellow-200" :
+                                         "bg-green-50 border-green-200"
+                }`}>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    {isExpired
+                      ? <AlertCircle className="h-3.5 w-3.5 text-red-600" />
+                      : <Clock className="h-3.5 w-3.5 text-green-600" />
+                    }
+                    <p className={`text-[10px] font-bold uppercase tracking-wide ${
+                      isExpired ? "text-red-700" : "text-green-700"
+                    }`}>
+                      {isExpired ? "Expired" : "Expires"}
+                    </p>
+                  </div>
+                  <p className={`text-sm font-bold ${isExpired ? "text-red-900" : "text-green-900"}`}>
+                    {isExpired ? "Expired" : daysLeft !== null ? `${daysLeft}d left` : "—"}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{fmtDate(rider.expiryDate)}</p>
+                </div>
+
+                {/* License expiry */}
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <FileText className="h-3.5 w-3.5 text-purple-600" />
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-purple-700">
+                      License Expiry
+                    </p>
+                  </div>
+                  <p className="text-sm font-bold text-purple-900">
+                    {fmtDate(rider.licenseExpiryDate)}
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* ACTIONS */}
-            <div className="flex gap-3 pt-4 border-t border-slate-200">
+            {/* ── Details grid ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Personal */}
+              <InfoCard icon={<User className="h-4 w-4 text-green-600" />} title="Personal Information">
+                <Field label="Full Name"       value={rider.fullName} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Gender"        value={rider.gender} />
+                  <Field label="Date of Birth" value={fmtDate(rider.dateOfBirth)} />
+                </div>
+                <Field label="Phone Number"    value={rider.phoneNumber} />
+                <Field label="ID Type"         value={rider.idType} />
+                <Field label="ID Number"       value={rider.idNumber} mono />
+              </InfoCard>
+
+              {/* Location */}
+              <InfoCard icon={<MapPin className="h-4 w-4 text-green-600" />} title="Location">
+                <Field label="Region"                value={rider.region} />
+                <Field label="District / Municipality" value={rider.districtMunicipality} />
+                <Field label="Residential Town"      value={rider.residentialTown} />
+              </InfoCard>
+
+              {/* Vehicle */}
+              <InfoCard icon={<Bike className="h-4 w-4 text-green-600" />} title="Vehicle">
+                <Field label="Category"       value={rider.vehicleCategory} />
+                <Field label="Plate Number"   value={rider.plateNumber?.toUpperCase()} mono />
+                <Field label="Chassis Number" value={rider.chassisNumber?.toUpperCase()} mono />
+              </InfoCard>
+
+              {/* Compliance */}
+              <InfoCard icon={<FileText className="h-4 w-4 text-green-600" />} title="Compliance">
+                <Field label="Driver's License" value={rider.driversLicenseNumber?.toUpperCase()} mono />
+                <Field label="License Expiry"   value={fmtDate(rider.licenseExpiryDate)} />
+                <Field label="Next of Kin"      value={rider.nextOfKinName} />
+                <Field label="Kin Contact"      value={rider.nextOfKinContact} />
+              </InfoCard>
+            </div>
+
+            {/* ── Actions ── */}
+            <div className="flex gap-3 pt-2 border-t border-slate-200">
               <Button
                 onClick={() => window.print()}
-                className="flex-1 bg-green-600 hover:bg-green-700 h-11 gap-2"
+                className="flex-1 h-10 bg-green-700 hover:bg-green-800 gap-2 text-sm"
               >
-                <Download className="h-4 w-4" />
-                Download Profile
+                <Printer className="h-4 w-4" /> Print Profile
               </Button>
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="flex-1 h-11"
+                className="flex-1 h-10 text-sm"
               >
                 Close
               </Button>
             </div>
+
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function InfoCard({
+  icon, title, children,
+}: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+        {icon} {title}
+      </h4>
+      {children}
+    </div>
+  );
+}
+
+function Field({
+  label, value, mono = false,
+}: { label: string; value?: string | null; mono?: boolean }) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        {label}
+      </p>
+      <p className={`text-sm font-semibold text-slate-800 break-words ${mono ? "font-mono" : ""}`}>
+        {value || <span className="text-slate-300 font-normal italic">—</span>}
+      </p>
+    </div>
   );
 }

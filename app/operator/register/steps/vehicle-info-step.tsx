@@ -10,38 +10,41 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Bike, Zap, Car } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 interface VehicleInfoStepProps {
   form: UseFormReturn<RiderRegistrationData>;
 }
 
-// Vehicle categories - matching schema exactly
+// Must match CATEGORY_CODES keys in lib/rin-constants.ts exactly
 const VEHICLE_CATEGORIES = [
-  { 
-    value: "Pragya" as const, 
-    label: "🛵 Pragya", 
-    icon: Car,
-    description: "Three-wheeled taxi" 
+  {
+    value: "Motorbike",
+    emoji: "🏍️",
+    label: "Motorbike",
+    local: "Okada",
+    code: "M",
   },
-  { 
-    value: "Motorbike/Okada" as const, 
-    label: "🏍️ Motorbike/Okada", 
-    icon: Bike,
-    description: "Two-wheeled motorcycle" 
+  {
+    value: "Tricycle",
+    emoji: "🛺",
+    label: "Tricycle",
+    local: "Aboboyaa",
+    code: "T",
   },
-  { 
-    value: "Tricycle/Aboboyaa" as const, 
-    label: "🛺 Tricycle/Aboboyaa", 
-    icon: Zap,
-    description: "Three-wheeled vehicle" 
+  {
+    value: "Pragya",
+    emoji: "🛵",
+    label: "Pragya",
+    local: "3-wheel taxi",
+    code: "P",
+  },
+  {
+    value: "Quadricycle",
+    emoji: "🚗",
+    label: "Quadricycle",
+    local: "4-wheel light",
+    code: "Q",
   },
 ] as const;
 
@@ -51,62 +54,90 @@ export function VehicleInfoStep({ form }: VehicleInfoStepProps) {
   const selectedCategory = form.watch("vehicleCategory");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">Vehicle Information</h3>
-        <p className="text-sm text-gray-500 mt-1">
-          Provide details about your vehicle
+        <h3 className="text-base font-semibold text-gray-900">Vehicle Information</h3>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Select a vehicle type and provide registration details
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Vehicle Category */}
-        <FormField
-          control={form.control}
-          name="vehicleCategory"
-          render={({ field }) => (
-            <FormItem className="md:col-span-2">
-              <FormLabel className="text-base font-semibold">
-                Vehicle Category *
-              </FormLabel>
-              <Select 
-                value={field.value || ""} 
-                onValueChange={(value) => {
-                  field.onChange(value as VehicleCategory);
-                }}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-11 bg-white">
-                    <SelectValue placeholder="Select vehicle category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {VEHICLE_CATEGORIES.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      <div className="flex items-center gap-2">
-                        <span>{category.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500 mt-1">
-                {selectedCategory && 
-                  VEHICLE_CATEGORIES.find(c => c.value === selectedCategory)?.description}
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      {/* ── Vehicle Category ──────────────────────────────────────────── */}
+      <FormField
+        control={form.control}
+        name="vehicleCategory"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="font-semibold text-gray-700">
+              Vehicle Category <span className="text-red-500">*</span>
+            </FormLabel>
 
-        {/* Plate Number */}
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              {VEHICLE_CATEGORIES.map((cat) => {
+                const isSelected = field.value === cat.value;
+                return (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() =>
+                      form.setValue("vehicleCategory", cat.value as VehicleCategory, {
+                        shouldValidate: true,
+                      })
+                    }
+                    className={`
+                      relative flex items-center gap-4 px-4 py-4 rounded-xl border-2
+                      text-left transition-all duration-150
+                      ${isSelected
+                        ? "border-green-600 bg-green-50"
+                        : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                      }
+                    `}
+                  >
+                    {/* Emoji */}
+                    <span className="text-3xl shrink-0 leading-none">{cat.emoji}</span>
+
+                    {/* Labels */}
+                    <div className="min-w-0">
+                      <p className={`text-sm font-bold leading-none ${isSelected ? "text-green-800" : "text-gray-800"}`}>
+                        {cat.label}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-1">{cat.local}</p>
+                    </div>
+
+                    {/* Code badge */}
+                    <span className={`
+                      ml-auto shrink-0 text-[10px] font-black w-6 h-6 rounded-md
+                      flex items-center justify-center
+                      ${isSelected ? "bg-green-600 text-white" : "bg-gray-100 text-gray-400"}
+                    `}>
+                      {cat.code}
+                    </span>
+
+                    {/* Selected check */}
+                    {isSelected && (
+                      <span className="absolute top-2 right-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <FormMessage className="mt-2" />
+          </FormItem>
+        )}
+      />
+
+      {/* ── Plate & Chassis ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-5">
         <FormField
           control={form.control}
           name="plateNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base font-semibold">
-                Plate Number *
+              <FormLabel className="font-semibold text-gray-700">
+                Plate Number <span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input
@@ -116,22 +147,21 @@ export function VehicleInfoStep({ form }: VehicleInfoStepProps) {
                   onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                 />
               </FormControl>
-              <p className="text-xs text-gray-500 mt-1">
-                Format: GR-0000-00
+              <p className="text-xs text-gray-400 mt-1">
+                As shown on vehicle registration document
               </p>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Chassis Number */}
         <FormField
           control={form.control}
           name="chassisNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base font-semibold">
-                Chassis Number *
+              <FormLabel className="font-semibold text-gray-700">
+                Chassis Number <span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input
@@ -141,39 +171,13 @@ export function VehicleInfoStep({ form }: VehicleInfoStepProps) {
                   onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                 />
               </FormControl>
-              <p className="text-xs text-gray-500 mt-1">
-                VIN or chassis number from vehicle documents
+              <p className="text-xs text-gray-400 mt-1">
+                VIN / chassis number from vehicle documents — letters and numbers only
               </p>
               <FormMessage />
             </FormItem>
           )}
         />
-      </div>
-
-      {/* Category Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 pt-6 border-t">
-        {VEHICLE_CATEGORIES.map((category) => {
-          const Icon = category.icon;
-          const isSelected = selectedCategory === category.value;
-          
-          return (
-            <div
-              key={category.value}
-              className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                isSelected
-                  ? "border-green-600 bg-green-50"
-                  : "border-gray-200 bg-gray-50 hover:border-green-300"
-              }`}
-              onClick={() => {
-                form.setValue("vehicleCategory", category.value as VehicleCategory);
-              }}
-            >
-              <Icon className="h-8 w-8 mb-2 text-green-600" />
-              <p className="font-semibold text-gray-900 text-sm">{category.label}</p>
-              <p className="text-xs text-gray-600 mt-1">{category.description}</p>
-            </div>
-          );
-        })}
       </div>
     </div>
   );

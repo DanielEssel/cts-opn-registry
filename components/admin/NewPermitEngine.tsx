@@ -284,7 +284,7 @@ export default function RenewPermitsEngine() {
       {/* Header */}
       <div>
         <h1 className="text-4xl font-black tracking-tight mb-2">
-          🔄 Identification Number Renewal Engine
+          🔄 Identification Number Renewal Database
         </h1>
         <p className="text-slate-500 font-medium">
           Manage and process RIN renewals for expiring permits

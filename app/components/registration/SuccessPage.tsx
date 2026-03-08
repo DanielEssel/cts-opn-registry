@@ -88,7 +88,7 @@ export function SuccessPage({ RIN, name, town }: SuccessPageProps) {
               Successfully Registered!
             </h1>
             <p className="text-lg text-gray-600">
-              Your Rider Registration Number is now active
+              Your Rider Identification Number is now active
             </p>
           </div>
         </div>

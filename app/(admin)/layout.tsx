@@ -76,7 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const roleLabel = useMemo(() => {
     if (!profile) return "";
-    if (profile.role === "Super Admin") return "Boss";
+    if (profile.role === "Super Admin") return "CTS Africa";
     if (profile.role === "District Admin") return `District • ${profile.entity ?? "—"}`;
     return "Operator";
   }, [profile]);

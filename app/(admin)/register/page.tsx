@@ -1,9 +1,7 @@
-import { RegistrationForm } from "@/app/components/registration/RegistrationForm";
+"use client";
+
+import { RegistrationForm } from "@/components/shared/RegistrationForm";
 
 export default function AdminRegisterPage() {
-  return (
-    <div className="container mx-auto ">
-      <RegistrationForm />
-    </div>
-  );
+  return <RegistrationForm />;
 }

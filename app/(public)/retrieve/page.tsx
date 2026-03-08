@@ -101,7 +101,7 @@ export default function RetrieveRIN() {
                 Find Your RIN
               </h2>
               <p className="text-gray-600">
-                Look up your Rider Registration Number instantly
+                Look up your Rider Identification Number instantly
               </p>
             </div>
           )}
@@ -204,7 +204,7 @@ export default function RetrieveRIN() {
                   <div className="animate-in fade-in zoom-in duration-500">
                     <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl text-center group">
                       <p className="text-xs font-bold text-green-700 uppercase tracking-widest mb-3">
-                        Rider Registration Number
+                        Rider Identification Number
                       </p>
                       <div className="flex items-center justify-center gap-3">
                         <p className="text-3xl font-mono font-black text-gray-900">
@@ -317,7 +317,7 @@ export default function RetrieveRIN() {
       {/* FOOTER */}
       <footer className="border-t border-green-200/30 bg-white/40 backdrop-blur-lg mt-auto">
         <div className="max-w-7xl mx-auto px-6 py-6 text-center text-sm text-gray-600">
-          <p>&copy; 2024 Rider Registration Number Registry. All rights reserved.</p>
+          <p>&copy; 2024 Rider Identification Number Registry. All rights reserved.</p>
         </div>
       </footer>
     </div>

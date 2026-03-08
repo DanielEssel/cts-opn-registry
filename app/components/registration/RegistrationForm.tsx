@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -8,14 +8,17 @@ import {
   CheckCircle2,
   ArrowLeft,
   ArrowRight,
-  Edit,
-  Sparkles,
+  RotateCcw,
+  Printer,
+  Shield,
+  User,
+  MapPin,
+  Bike,
+  FileCheck,
+  Eye,
 } from "lucide-react";
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import {
   riderRegistrationSchema,
   type RiderRegistrationData,
@@ -24,431 +27,366 @@ import {
   vehicleInfoSchema,
   complianceSchema,
 } from "@/app/lib/validations";
-
 import { saveRiderRegistration } from "@/lib/rider-service";
-import { StepIndicator } from "./Step-Indicator";
-import { BioDataStep } from "./steps/bio-data-step";
-import { LocationStep } from "./steps/location-step";
-import { VehicleInfoStep } from "./steps/vehicle-info-step";
-import { ComplianceStep } from "./steps/compliance-step";
-import { PreviewStep } from "./steps/preview-step";
+import { BioDataStep } from "@/app/components/registration/steps/bio-data-step";
+import { LocationStep } from "@/app/components/registration/steps/location-step";
+import { VehicleInfoStep } from "@/app/components/registration/steps/vehicle-info-step";
+import { ComplianceStep } from "@/app/components/registration/steps/compliance-step";
+import { PreviewStep } from "@/app/operator/register/steps/preview-step";
 
-// ============================================================================
-// REGISTRATION STEPS
-// ============================================================================
+// ─── STEPS CONFIG ─────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, title: "Bio Data", description: "Personal Information" },
-  { id: 2, title: "Location", description: "Residential Details" },
-  { id: 3, title: "Vehicle", description: "Vehicle Information" },
-  { id: 4, title: "Compliance", description: "Documents & License" },
-  { id: 5, title: "Review", description: "Verify Information" },
+  { id: 1, title: "Bio Data",    subtitle: "Personal information",  icon: User,      schema: bioDataSchema },
+  { id: 2, title: "Location",    subtitle: "Residential details",   icon: MapPin,    schema: locationSchema },
+  { id: 3, title: "Vehicle",     subtitle: "Vehicle information",   icon: Bike,      schema: vehicleInfoSchema },
+  { id: 4, title: "Compliance",  subtitle: "Documents & license",   icon: FileCheck, schema: complianceSchema },
+  { id: 5, title: "Review",      subtitle: "Verify & submit",       icon: Eye,       schema: null },
 ];
 
-// ============================================================================
-// REGISTRATION FORM COMPONENT
-// ============================================================================
+// ─── COMPONENT ────────────────────────────────────────────────────────────────
 
 export function RegistrationForm() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [generatedRIN, setGeneratedRIN] = useState("");
+  const [currentStep, setCurrentStep]         = useState(1);
+  const [completedSteps, setCompletedSteps]   = useState<Set<number>>(new Set());
+  const [isSubmitting, setIsSubmitting]       = useState(false);
+  const [submitSuccess, setSubmitSuccess]     = useState(false);
+  const [generatedRIN, setGeneratedRIN]       = useState("");
   const [generatedRiderId, setGeneratedRiderId] = useState("");
-  const [error, setError] = useState("");
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [error, setError]                     = useState("");
+  const [photoPreview, setPhotoPreview]       = useState<string | null>(null);
 
   const form = useForm<RiderRegistrationData>({
     resolver: zodResolver(riderRegistrationSchema),
     defaultValues: {
-      // Bio Data
-      fullName: "",
-      phoneNumber: "",
-      idType: undefined,
-      idNumber: "",
-      dateOfBirth: "",
-      gender: undefined,
-
-      // Location
-      region: "Greater Accra",
-      districtMunicipality: undefined,
-      residentialTown: "",
-
-      // Vehicle Info
-      vehicleCategory: undefined,
-      plateNumber: "",
-      chassisNumber: "",
-
-      // Compliance
-      driversLicenseNumber: "",
-      licenseExpiryDate: "",
-      nextOfKinName: "",
-      nextOfKinContact: "",
-      passportPhoto: undefined,
+      fullName: "", phoneNumber: "", idType: undefined, idNumber: "",
+      dateOfBirth: "", gender: undefined, region: "Greater Accra",
+      districtMunicipality: undefined, residentialTown: "",
+      vehicleCategory: undefined, plateNumber: "", chassisNumber: "",
+      driversLicenseNumber: "", licenseExpiryDate: "",
+      nextOfKinName: "", nextOfKinContact: "", passportPhoto: undefined,
     },
     mode: "onChange",
   });
 
-  // Watch for photo changes to update preview
   const watchPhoto = form.watch("passportPhoto");
-
-  // Update photo preview when photo changes
-  useState(() => {
+  useEffect(() => {
     if (watchPhoto instanceof File) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
+      reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(watchPhoto);
     }
-  });
+  }, [watchPhoto]);
 
-  // ========================================================================
-  // VALIDATE STEP
-  // ========================================================================
+  // ─── VALIDATE ───────────────────────────────────────────────────────────────
 
-  /**
-   * Validate current step before proceeding
-   */
   const validateStep = async (step: number): Promise<boolean> => {
-    let fieldsToValidate: (keyof RiderRegistrationData)[] = [];
-
-    switch (step) {
-      case 1:
-        fieldsToValidate = Object.keys(
-          bioDataSchema.shape
-        ) as (keyof RiderRegistrationData)[];
-        break;
-      case 2:
-        fieldsToValidate = Object.keys(
-          locationSchema.shape
-        ) as (keyof RiderRegistrationData)[];
-        break;
-      case 3:
-        fieldsToValidate = Object.keys(
-          vehicleInfoSchema.shape
-        ) as (keyof RiderRegistrationData)[];
-        break;
-      case 4:
-        fieldsToValidate = Object.keys(
-          complianceSchema.shape
-        ) as (keyof RiderRegistrationData)[];
-        break;
-      case 5:
-        // Preview step - validate all fields
-        return form.formState.isValid;
-    }
-
-    const result = await form.trigger(fieldsToValidate);
-    return result;
+    if (step === 5) return form.formState.isValid;
+    const stepConfig = STEPS.find((s) => s.id === step);
+    if (!stepConfig?.schema) return true;
+    const fields = Object.keys(stepConfig.schema.shape) as (keyof RiderRegistrationData)[];
+    return await form.trigger(fields);
   };
 
-  // ========================================================================
-  // NAVIGATION HANDLERS
-  // ========================================================================
+  // ─── NAVIGATION ─────────────────────────────────────────────────────────────
 
   const handleNext = async () => {
+    setError("");
     const isValid = await validateStep(currentStep);
     if (isValid) {
+      setCompletedSteps((prev) => new Set([...prev, currentStep]));
       setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
-      setError("");
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setError("Please complete all required fields before continuing.");
     }
   };
 
   const handleBack = () => {
+    setError("");
     setCurrentStep((prev) => Math.max(prev - 1, 1));
-    setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleEdit = (step: number) => {
-    setCurrentStep(step);
-    setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  // ========================================================================
-  // SUBMIT HANDLER
-  // ========================================================================
+  // ─── SUBMIT ─────────────────────────────────────────────────────────────────
 
   const onSubmit = async (data: RiderRegistrationData) => {
     setIsSubmitting(true);
     setError("");
-
     try {
       const result = await saveRiderRegistration(data);
-
       if (result.success) {
         setGeneratedRIN(result.RIN);
         setGeneratedRiderId(result.riderId);
         setSubmitSuccess(true);
-        form.reset();
-        setPhotoPreview(null);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        setError(result.error || "Failed to register rider. Please try again.");
+        setError(result.error || "Registration failed. Please try again.");
       }
-    } catch (err) {
-      console.error("Registration error:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to register rider. Please try again."
-      );
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err: any) {
+      setError(err?.message ?? "An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ========================================================================
-  // RENDER STEP
-  // ========================================================================
+  const handleReset = () => {
+    form.reset();
+    setSubmitSuccess(false);
+    setCurrentStep(1);
+    setCompletedSteps(new Set());
+    setGeneratedRIN("");
+    setGeneratedRiderId("");
+    setPhotoPreview(null);
+    setError("");
+  };
+
+  // ─── STEP CONTENT ────────────────────────────────────────────────────────────
 
   const renderStep = () => {
     switch (currentStep) {
-      case 1:
-        return <BioDataStep form={form} />;
-      case 2:
-        return <LocationStep form={form} />;
-      case 3:
-        return <VehicleInfoStep form={form} />;
-      case 4:
-        return <ComplianceStep form={form} />;
-      case 5:
-        return (
-          <PreviewStep data={form.getValues()} photoPreview={photoPreview} />
-        );
-      default:
-        return null;
+      case 1: return <BioDataStep form={form} />;
+      case 2: return <LocationStep form={form} />;
+      case 3: return <VehicleInfoStep form={form} />;
+      case 4: return <ComplianceStep form={form} />;
+      case 5: return <PreviewStep data={form.getValues()} photoPreview={photoPreview} />;
+      default: return null;
     }
   };
 
-  // ========================================================================
-  // SUCCESS SCREEN
-  // ========================================================================
+  // ─── SUCCESS SCREEN ──────────────────────────────────────────────────────────
 
   if (submitSuccess) {
+    const issuedAt = new Date().toLocaleString("en-GH", {
+      year: "numeric", month: "long", day: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+
     return (
-      <Card className="max-w-3xl mx-auto border-2 border-green-100 shadow-2xl">
-        <CardContent className="pt-16 pb-16 px-8">
-          <div className="flex flex-col items-center text-center space-y-8">
-            {/* Success Icon */}
+      <div className="max-w-2xl mx-auto">
+        <div className="rounded-2xl border border-green-200 bg-white overflow-hidden shadow-lg">
+
+          {/* Top accent */}
+          <div className="h-1 w-full bg-gradient-to-r from-green-600 via-yellow-400 to-green-600" />
+
+          {/* Header */}
+          <div className="bg-gradient-to-br from-green-800 to-green-700 px-8 py-8 text-white text-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-5"
+              style={{ backgroundImage: "repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)", backgroundSize: "12px 12px" }} />
             <div className="relative">
-              <div className="absolute inset-0 bg-green-100 rounded-full blur-2xl opacity-60 animate-pulse" />
-              <div className="relative w-24 h-24 rounded-full bg-green-600 flex items-center justify-center shadow-2xl">
-                <CheckCircle2 className="w-14 h-14 text-white" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 border-2 border-white/30 mb-4">
+                <Shield className="w-8 h-8 text-white" />
               </div>
-            </div>
-
-            {/* Success Message */}
-            <div className="space-y-2">
-              <Badge className="mb-2 bg-green-100 text-green-700 border-green-200 px-4 py-1">
-                <Sparkles className="w-3 h-3 mr-1" />
-                Registration Complete
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-                Successfully Registered!
-              </h2>
-              <p className="text-lg text-gray-600">
-                The Rider Registration Number has been generated
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-green-300 mb-1">
+                CTS Africa — Greater Accra Region
               </p>
-            </div>
-
-            {/* RIN Display */}
-            <div className="w-full bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8 shadow-lg">
-              <p className="text-sm font-semibold text-green-700 mb-3 uppercase tracking-wide">
-                Rider Registration Number
-              </p>
-              <p className="text-4xl md:text-5xl font-bold text-green-700 font-mono tracking-wider break-all">
-                {generatedRIN}
-              </p>
-              {generatedRiderId && (
-                <div className="mt-4 pt-4 border-t border-green-200">
-                  <p className="text-xs text-green-600 mb-1">Rider ID</p>
-                  <p className="text-sm font-mono text-green-700">{generatedRiderId}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Info Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-              <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-                <div className="text-2xl mb-1">✓</div>
-                <p className="text-sm font-medium text-gray-900">
-                  Valid 6 Months
-                </p>
-                <p className="text-xs text-gray-500">From today</p>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-                <div className="text-2xl mb-1">📱</div>
-                <p className="text-sm font-medium text-gray-900">Keep Safe</p>
-                <p className="text-xs text-gray-500">Save this number</p>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-                <div className="text-2xl mb-1">🛡️</div>
-                <p className="text-sm font-medium text-gray-900">
-                  Present Always
-                </p>
-                <p className="text-xs text-gray-500">During checks</p>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full pt-4">
-              <Button
-                onClick={() => {
-                  setSubmitSuccess(false);
-                  setGeneratedRIN("");
-                  setGeneratedRiderId("");
-                  setCurrentStep(1);
-                }}
-                size="lg"
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg"
-              >
-                Register Another Rider
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="flex-1 border-2"
-                onClick={() => window.print()}
-              >
-                Print Certificate
-              </Button>
+              <h2 className="text-xl font-bold">Registration Successful</h2>
+              <p className="text-xs text-green-200 mt-1">{issuedAt}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* RIN */}
+          <div className="px-8 py-6 text-center border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400 mb-3">
+              Rider Identification Number
+            </p>
+            <div className="inline-block bg-green-50 border-2 border-green-200 rounded-xl px-8 py-4">
+              <p className="text-4xl font-black font-mono tracking-widest text-green-800 select-all">
+                {generatedRIN}
+              </p>
+            </div>
+            <p className="text-[10px] text-gray-400 mt-2">Click to select and copy</p>
+          </div>
+
+          {/* Rider ID */}
+          {generatedRiderId && (
+            <div className="px-8 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Record ID</span>
+              <span className="text-xs font-mono text-gray-600 bg-white border border-gray-200 rounded px-2 py-0.5 select-all">
+                {generatedRiderId}
+              </span>
+            </div>
+          )}
+
+          {/* Pills */}
+          <div className="px-8 py-5 grid grid-cols-3 gap-3">
+            {[
+              { icon: "✓",  label: "Registered",      sub: "Status: Pending" },
+              { icon: "⏱", label: "6 Month Validity", sub: "From issue date" },
+              { icon: "🛡️", label: "Tamper-proof",    sub: "Unique identifier" },
+            ].map((item) => (
+              <div key={item.label} className="text-center p-3 rounded-xl bg-gray-50 border border-gray-100">
+                <div className="text-lg mb-1">{item.icon}</div>
+                <p className="text-[11px] font-bold text-gray-700">{item.label}</p>
+                <p className="text-[10px] text-gray-400">{item.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="px-8 pb-7 flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleReset}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-green-700 hover:bg-green-800 text-white font-semibold text-sm px-5 py-3 transition-colors shadow-md shadow-green-900/20"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Register Another Rider
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm px-5 py-3 transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Print Certificate
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 
-  // ========================================================================
-  // REGISTRATION FORM
-  // ========================================================================
+  // ─── FORM ────────────────────────────────────────────────────────────────────
 
   return (
-    <Card className="max-w-5xl mx-auto shadow-xl border-2 border-gray-100">
-      {/* Header */}
-      <CardHeader className="border-b bg-gradient-to-r from-green-50 to-emerald-50">
-        <div className="flex items-center justify-between">
+    <div className="max-w-3xl mx-auto">
+
+      {/* ── Step indicator ── */}
+      <div className="mb-6 flex items-center gap-0">
+        {STEPS.map((step, idx) => {
+          const Icon = step.icon;
+          const isActive    = step.id === currentStep;
+          const isDone      = completedSteps.has(step.id);
+          const isUpcoming  = !isActive && !isDone;
+
+          return (
+            <div key={step.id} className="flex items-center flex-1 min-w-0">
+              {/* Step node */}
+              <div className="flex flex-col items-center shrink-0">
+                <div
+                  className={`
+                    w-9 h-9 rounded-full flex items-center justify-center transition-all border-2
+                    ${isActive  ? "bg-green-700 border-green-700 text-white shadow-md shadow-green-900/20"
+                    : isDone    ? "bg-green-100 border-green-400 text-green-700"
+                                : "bg-white border-gray-200 text-gray-300"}
+                  `}
+                >
+                  {isDone && !isActive
+                    ? <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    : <Icon className="w-4 h-4" />
+                  }
+                </div>
+                <span
+                  className={`mt-1.5 text-[10px] font-semibold whitespace-nowrap
+                    ${isActive ? "text-green-700" : isDone ? "text-green-600" : "text-gray-400"}
+                  `}
+                >
+                  {step.title}
+                </span>
+              </div>
+
+              {/* Connector line */}
+              {idx < STEPS.length - 1 && (
+                <div className="flex-1 h-0.5 mx-2 mb-5 rounded-full transition-all duration-300
+                  ${isDone ? 'bg-green-300' : 'bg-gray-200'}"
+                  style={{ background: isDone ? "#86efac" : "#e5e7eb" }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Form card ── */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+
+        {/* Card header */}
+        <div className="px-7 py-4 border-b border-gray-100 bg-gray-50/60 flex items-center justify-between">
           <div>
-            <CardTitle className="text-3xl font-bold text-gray-900">
-              🏍️ Rider Registration
-            </CardTitle>
-            <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className="border-green-600 text-green-700"
-              >
-                Greater Accra Region
-              </Badge>
-              Rider Registration System
-            </p>
+            <h3 className="text-base font-bold text-gray-900">
+              {STEPS[currentStep - 1].title}
+            </h3>
+            <p className="text-xs text-gray-500">{STEPS[currentStep - 1].subtitle}</p>
           </div>
-          <div className="hidden md:block">
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Step</p>
-              <p className="text-2xl font-bold text-green-600">
-                {currentStep} / {STEPS.length}
-              </p>
-            </div>
-          </div>
+          <span className="text-xs font-semibold text-gray-400">
+            {currentStep} of {STEPS.length}
+          </span>
         </div>
-      </CardHeader>
 
-      {/* Content */}
-      <CardContent className="pt-8">
-        {/* Step Indicator */}
-        <StepIndicator steps={STEPS} currentStep={currentStep} />
+        {/* Form content */}
+        <div className="px-7 py-6">
+          {error && (
+            <Alert variant="destructive" className="mb-5 border-red-200 bg-red-50">
+              <AlertDescription className="text-sm text-red-700 font-medium">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
 
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className="mb-6 border-2">
-            <AlertDescription className="font-medium">{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Form */}
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Step Content */}
-            <div className="bg-white rounded-xl p-6 border border-gray-100">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.target as HTMLElement).tagName !== "TEXTAREA")
+                  e.preventDefault();
+              }}
+            >
               {renderStep()}
-            </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between items-center pt-6 border-t-2 border-gray-100">
-              {/* Back Button */}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 1 || isSubmitting}
-                size="lg"
-                className="border-2"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
+              {/* Navigation */}
+              <div className="mt-8 pt-5 border-t border-gray-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={currentStep === 1 || isSubmitting}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-semibold hover:border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </button>
 
-              {/* Right Action Buttons */}
-              <div className="flex gap-3">
-                {/* Edit Button - Only on Review Step */}
-                {currentStep === 5 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleEdit(1)}
-                    disabled={isSubmitting}
-                    size="lg"
-                    className="border-2"
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Details
-                  </Button>
-                )}
+                {/* Progress dots */}
+                <div className="flex items-center gap-1.5">
+                  {STEPS.map((s) => (
+                    <div
+                      key={s.id}
+                      className={`rounded-full transition-all duration-300 ${
+                        s.id === currentStep      ? "w-5 h-2 bg-green-600"
+                        : completedSteps.has(s.id) ? "w-2 h-2 bg-green-400"
+                                                   : "w-2 h-2 bg-gray-200"
+                      }`}
+                    />
+                  ))}
+                </div>
 
-                {/* Next Button or Submit Button */}
                 {currentStep < STEPS.length ? (
-                  <Button
+                  <button
                     type="button"
                     onClick={handleNext}
                     disabled={isSubmitting}
-                    size="lg"
-                    className="bg-green-600 hover:bg-green-700 shadow-lg min-w-[140px]"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-bold transition-colors shadow-md shadow-green-900/20 disabled:opacity-50"
                   >
-                    {currentStep === 4 ? "Review" : "Next Step"}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                    {currentStep === 4 ? "Review" : "Continue"}
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
                 ) : (
-                  // SUBMIT BUTTON - Review Step
-                  <Button
-                    type="submit"
+                  <button
+                    type="button"
+                    onClick={form.handleSubmit(onSubmit)}
                     disabled={isSubmitting}
-                    size="lg"
-                    className="bg-green-600 hover:bg-green-700 shadow-lg min-w-[180px]"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-bold transition-colors shadow-md shadow-green-900/20 disabled:opacity-50 min-w-[170px] justify-center"
                   >
                     {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Submitting...
-                      </>
+                      <><Loader2 className="w-4 h-4 animate-spin" />Submitting...</>
                     ) : (
-                      <>
-                        <CheckCircle2 className="mr-2 h-5 w-5" />
-                        Submit Registration
-                      </>
+                      <><CheckCircle2 className="w-4 h-4" />Submit Registration</>
                     )}
-                  </Button>
+                  </button>
                 )}
               </div>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            </form>
+          </Form>
+        </div>
+      </div>
+    </div>
   );
 }

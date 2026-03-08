@@ -3,108 +3,91 @@
 import { useState, useEffect, useMemo } from "react";
 import { db, auth } from "@/lib/firebase";
 import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-  doc,
-  updateDoc,
-  writeBatch,
-  where,
-  getDoc,
+  collection, onSnapshot, query, orderBy,
+  doc, updateDoc, writeBatch, where, getDoc,
+  addDoc, serverTimestamp,
 } from "firebase/firestore";
-import { RegistryHeader } from "./header";
-import { SearchBar, type SearchFilters } from "./search-bar";
-import { RidersTable } from "./riders-table";
-import { BulkActionBar } from "./bulk-action-bar";
-import { ViewRiderModal } from "./modals/view-rider-modal";
-import { EditRiderModal } from "./modals/edit-rider-modal";
-import { DeleteConfirmation } from "./modals/delete-confirmation";
-import RenewPermitDialog from "@/components/admin/RenewPermitDialog";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const PAGE_SIZE = 10;
+// ─── Registry sub-components ──────────────────────────────────────────────────
+import { RegistryHeader }     from "./header";
+import { SearchBar, type SearchFilters } from "./search-bar";
+import { RidersTable }        from "./riders-table";
+import { BulkActionBar }      from "./bulk-action-bar";
+
+// ─── Modals ───────────────────────────────────────────────────────────────────
+import { ViewRiderModal }     from "./modals/view-rider-modal";
+import { EditRiderModal }     from "./modals/edit-rider-modal";
+import { DeleteConfirmation } from "./modals/delete-confirmation";
+import { RenewRiderModal, type RenewableRider } from "./modals/renewal-modal";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Role = "Super Admin" | "District Admin" | "Operator";
 
-type UserProfile = {
-  uid: string;
-  role: Role;
-  entity: string; // district jurisdiction, e.g. "Ga South"
-};
+interface UserProfile {
+  uid:    string;
+  role:   Role;
+  entity: string;
+  name?:  string;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const PAGE_SIZE = 10;
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function RiderRegistry() {
-  // --- AUTH/PROFILE STATE ---
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // ── Auth / profile ────────────────────────────────────────────────────────
+  const [userProfile,    setUserProfile]    = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  //bulk sms state
-  const canBulkRenew =
-    userProfile?.role === "Super Admin" ||
-    userProfile?.role === "District Admin";
-  const canBulkSMS =
-    userProfile?.role === "Super Admin" ||
-    userProfile?.role === "District Admin";
-
-  // --- BACKEND STATE ---
-  const [riders, setRiders] = useState<any[]>([]);
+  // ── Data ──────────────────────────────────────────────────────────────────
+  const [riders,  setRiders]  = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ── Filters / pagination ──────────────────────────────────────────────────
   const [filters, setFilters] = useState<SearchFilters>({
-    searchTerm: "",
-    status: "All",
-    vehicleCategory: "All Categories",
-    district: "All Districts",
-    registrationPeriod: "All",
-    expiryStatus: "All",
+    searchTerm: "", status: "All", vehicleCategory: "All Categories",
+    district: "All Districts", registrationPeriod: "All", expiryStatus: "All",
   });
-
-  // --- PAGINATION STATE ---
   const [currentPage, setCurrentPage] = useState(1);
 
-  // --- UI STATE ---
+  // ── Selection ─────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<string[]>([]);
-  const [viewRider, setViewRider] = useState<any | null>(null);
-  const [renewRider, setRenewRider] = useState<any | null>(null);
+
+  // ── Modal targets ─────────────────────────────────────────────────────────
+  const [viewRider,    setViewRider]    = useState<any | null>(null);
   const [editingRider, setEditingRider] = useState<any | null>(null);
-  const [deletingRider, setDeletingRider] = useState<any | null>(null);
-  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [deletingRider,setDeletingRider]= useState<any | null>(null);
+  const [renewRider,   setRenewRider]   = useState<RenewableRider | null>(null);
+  const [approvingId,  setApprovingId]  = useState<string | null>(null);
 
-  // ----------------------------
-  // Capability flags by role
-  // ----------------------------
-  const canApprove =
-    userProfile?.role === "Super Admin" ||
-    userProfile?.role === "District Admin";
-  const canDelete = userProfile?.role === "Super Admin";
-  const showDistrictColumn = userProfile?.role === "Super Admin"; // show more global columns only for Boss
-  const isOperator = userProfile?.role === "Operator";
-  const isDistrictAdmin = userProfile?.role === "District Admin";
+  // ── Derived capability flags ──────────────────────────────────────────────
+  const canApprove       = userProfile?.role === "Super Admin" || userProfile?.role === "District Admin";
+  const canDelete        = userProfile?.role === "Super Admin";
+  const canRenew         = userProfile?.role !== "Operator";
+  const isDistrictAdmin  = userProfile?.role === "District Admin";
+  const showDistrictColumn = userProfile?.role === "Super Admin";
 
-  // FETCH USER PROFILE
+  // ── 1. Load user profile ──────────────────────────────────────────────────
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsub = auth.onAuthStateChanged(async (user) => {
+      setProfileLoading(true);
       try {
-        setProfileLoading(true);
-
-        if (!user) {
-          setUserProfile(null);
-          return;
-        }
+        if (!user) { setUserProfile(null); return; }
 
         const snap = await getDoc(doc(db, "admin_users", user.uid));
         if (!snap.exists()) {
-          // fail closed: no profile, no access
           setUserProfile(null);
           await auth.signOut();
           return;
         }
 
         const data = snap.data() as any;
-
-        // Optional: block inactive
         if (data?.status && data.status !== "Active") {
           setUserProfile(null);
           await auth.signOut();
@@ -112,237 +95,232 @@ export default function RiderRegistry() {
         }
 
         setUserProfile({
-          uid: user.uid,
-          role: data.role as Role,
+          uid:    user.uid,
+          role:   data.role   as Role,
           entity: data.entity as string,
+          name:   data.name,
         });
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
+      } catch (err) {
+        console.error("Profile fetch error:", err);
         setUserProfile(null);
       } finally {
         setProfileLoading(false);
       }
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  // FETCH RIDERS DATA (role-aware)
+  // ── 2. Real-time riders listener (role-scoped) ────────────────────────────
   useEffect(() => {
     if (!userProfile) return;
-
     setLoading(true);
 
-    const ridersRef = collection(db, "riders");
-
+    const ref = collection(db, "riders");
     const q =
       userProfile.role === "Super Admin"
-        ? query(ridersRef, orderBy("createdAt", "desc"))
+        ? query(ref, orderBy("createdAt", "desc"))
         : userProfile.role === "District Admin"
-          ? query(
-              ridersRef,
-              where("districtMunicipality", "==", userProfile.entity),
-              orderBy("createdAt", "desc"),
-            )
-          : query(
-              ridersRef,
-              where("createdBy", "==", userProfile.uid),
-              orderBy("createdAt", "desc"),
-            );
+        ? query(ref,
+            where("districtMunicipality", "==", userProfile.entity),
+            orderBy("createdAt", "desc"),
+          )
+        : query(ref,
+            where("createdBy", "==", userProfile.uid),
+            orderBy("createdAt", "desc"),
+          );
 
-    const unsubscribe = onSnapshot(
+    const unsub = onSnapshot(
       q,
-      (snapshot) => {
-        setRiders(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      (snap) => {
+        setRiders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         setLoading(false);
       },
-      (err) => {
-        console.error("Query Error:", err);
-        setLoading(false);
-      },
+      (err) => { console.error("Riders listener error:", err); setLoading(false); },
     );
-
-    return () => unsubscribe();
+    return () => unsub();
   }, [userProfile]);
 
-  // Reset to page 1 whenever filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
+  // ── 3. Reset page on filter change ───────────────────────────────────────
+  useEffect(() => { setCurrentPage(1); }, [filters]);
 
-  // Apply role-aware UI restrictions to filters (operator + district admin)
-  const effectiveFilters = useMemo(() => {
-    if (!userProfile) return filters;
-
-    // District Admin: lock district filter to their district
-    if (isDistrictAdmin) {
+  // ── 4. Effective filters (District Admin locked to own district) ──────────
+  const effectiveFilters = useMemo<SearchFilters>(() => {
+    if (isDistrictAdmin && userProfile)
       return { ...filters, district: userProfile.entity };
-    }
-
-    // Operator: lock district filter to All (or their district) — but data is already scoped by createdBy
-    // Keeping as-is is fine. If you want to hide the district filter in UI, do it in <SearchBar />
     return filters;
   }, [filters, userProfile, isDistrictAdmin]);
 
-  // APPLY ALL FILTERS (client-side on the already-scoped dataset)
-  const filteredRiders = riders.filter((rider) => {
+  // ── 5. Client-side filtering ──────────────────────────────────────────────
+  const filteredRiders = useMemo(() => riders.filter((r) => {
     const term = effectiveFilters.searchTerm.toLowerCase();
 
-    const matchesSearch =
-      !term ||
-      rider.fullName?.toLowerCase().includes(term) ||
-      rider.RIN?.toLowerCase().includes(term) ||
-      rider.phoneNumber?.includes(term);
+    const matchSearch = !term
+      || r.fullName?.toLowerCase().includes(term)
+      || r.RIN?.toLowerCase().includes(term)
+      || r.phoneNumber?.includes(term);
 
-    const matchesStatus =
-      effectiveFilters.status === "All" ||
-      rider.status === effectiveFilters.status;
+    const matchStatus   = effectiveFilters.status === "All"              || r.status === effectiveFilters.status;
+    const matchVehicle  = effectiveFilters.vehicleCategory === "All Categories" || r.vehicleCategory === effectiveFilters.vehicleCategory;
+    const matchDistrict = effectiveFilters.district === "All Districts"  || r.districtMunicipality === effectiveFilters.district;
 
-    const matchesVehicle =
-      effectiveFilters.vehicleCategory === "All Categories" ||
-      rider.vehicleCategory === effectiveFilters.vehicleCategory;
-
-    const matchesDistrict =
-      effectiveFilters.district === "All Districts" ||
-      rider.districtMunicipality === effectiveFilters.district;
-
-    const matchesPeriod = (() => {
+    const matchPeriod = (() => {
       if (effectiveFilters.registrationPeriod === "All") return true;
-      const createdDate = rider.createdAt?.toDate
-        ? rider.createdAt.toDate()
-        : new Date(rider.createdAt);
+      const d = r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
       const now = new Date();
       switch (effectiveFilters.registrationPeriod) {
-        case "Today":
-          return createdDate.toDateString() === now.toDateString();
-        case "This Week":
-          return (
-            createdDate >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          );
-        case "This Month":
-          return (
-            createdDate.getMonth() === now.getMonth() &&
-            createdDate.getFullYear() === now.getFullYear()
-          );
+        case "Today":         return d.toDateString() === now.toDateString();
+        case "This Week":     return d >= new Date(now.getTime() - 7  * 86_400_000);
+        case "This Month":    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         case "Last Month": {
           const lm = new Date(now.getFullYear(), now.getMonth() - 1);
-          return (
-            createdDate.getMonth() === lm.getMonth() &&
-            createdDate.getFullYear() === lm.getFullYear()
-          );
+          return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear();
         }
-        case "Last 3 Months":
-          return (
-            createdDate >= new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-          );
-        case "This Year":
-          return createdDate.getFullYear() === now.getFullYear();
-        default:
-          return true;
+        case "Last 3 Months": return d >= new Date(now.getTime() - 90 * 86_400_000);
+        case "This Year":     return d.getFullYear() === now.getFullYear();
+        default: return true;
       }
     })();
 
-    const matchesExpiry = (() => {
+    const matchExpiry = (() => {
       if (effectiveFilters.expiryStatus === "All") return true;
-      if (!rider.expiryDate) return false;
-      const days = Math.ceil(
-        (new Date(rider.expiryDate).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24),
-      );
+      if (!r.expiryDate) return false;
+      const days = Math.ceil((new Date(r.expiryDate).getTime() - Date.now()) / 86_400_000);
       switch (effectiveFilters.expiryStatus) {
-        case "Valid":
-          return days > 0;
-        case "Expiring Soon":
-          return days > 0 && days <= 30;
-        case "Expiring This Week":
-          return days > 0 && days <= 7;
-        case "Expired":
-          return days <= 0;
-        default:
-          return true;
+        case "Valid":               return days > 0;
+        case "Expiring Soon":       return days > 0 && days <= 30;
+        case "Expiring This Week":  return days > 0 && days <= 7;
+        case "Expired":             return days <= 0;
+        default: return true;
       }
     })();
 
-    return (
-      matchesSearch &&
-      matchesStatus &&
-      matchesVehicle &&
-      matchesDistrict &&
-      matchesPeriod &&
-      matchesExpiry
-    );
-  });
+    return matchSearch && matchStatus && matchVehicle && matchDistrict && matchPeriod && matchExpiry;
+  }), [riders, effectiveFilters]);
 
-  // ── PAGINATION CALCULATIONS ───────────────────────────────────────────────
-  const totalPages = Math.max(1, Math.ceil(filteredRiders.length / PAGE_SIZE));
-  const safePage = Math.min(currentPage, totalPages);
-  const pageStart = (safePage - 1) * PAGE_SIZE;
-  const pageEnd = pageStart + PAGE_SIZE;
-  const pagedRiders = filteredRiders.slice(pageStart, pageEnd);
+  // ── 6. Pagination ─────────────────────────────────────────────────────────
+  const totalPages  = Math.max(1, Math.ceil(filteredRiders.length / PAGE_SIZE));
+  const safePage    = Math.min(currentPage, totalPages);
+  const pageStart   = (safePage - 1) * PAGE_SIZE;
+  const pagedRiders = filteredRiders.slice(pageStart, pageStart + PAGE_SIZE);
 
-  const goTo = (page: number) =>
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  const goTo = (page: number) => setCurrentPage(Math.max(1, Math.min(page, totalPages)));
 
-  const pageNumbers = (() => {
-    const range: number[] = [];
+  const pageNumbers = useMemo(() => {
     const delta = 2;
-    for (
-      let i = Math.max(1, safePage - delta);
-      i <= Math.min(totalPages, safePage + delta);
-      i++
-    ) {
-      range.push(i);
-    }
-    return range;
-  })();
+    const nums: number[] = [];
+    for (let i = Math.max(1, safePage - delta); i <= Math.min(totalPages, safePage + delta); i++)
+      nums.push(i);
+    return nums;
+  }, [safePage, totalPages]);
 
-  // HANDLERS
+  // ── 7. Handlers ──────────────────────────────────────────────────────────
+
   const handleApprove = async (id: string) => {
     if (!canApprove) return;
-
     setApprovingId(id);
     try {
-      await updateDoc(doc(db, "riders", id), { status: "Active" });
-    } catch (error) {
-      console.error("Error approving:", error);
+      await updateDoc(doc(db, "riders", id), {
+        status: "Active",
+        updatedAt: serverTimestamp(),
+      });
+      // Audit log
+      if (auth.currentUser) {
+        await addDoc(collection(db, "audit_logs"), {
+          type:      "APPROVE",
+          adminUid:  auth.currentUser.uid,
+          adminRole: userProfile?.role ?? "",
+          action:    "Approved rider registration",
+          target:    riders.find((r) => r.id === id)?.fullName ?? "",
+          targetId:  id,
+          district:  userProfile?.entity ?? "",
+          status:    "success",
+          timestamp: serverTimestamp(),
+        });
+      }
+    } catch (err) {
+      console.error("Approve error:", err);
     } finally {
       setApprovingId(null);
     }
   };
 
   const handleDelete = async () => {
-    if (!deletingRider) return;
-    if (!canDelete) return;
-
+    if (!deletingRider || !canDelete) return;
     try {
       const batch = writeBatch(db);
-      batch.delete(doc(db, "riders", deletingRider.id));
-      if (deletingRider.RIN) {
-        batch.delete(
-          doc(db, "RIN_registry", String(deletingRider.RIN).toUpperCase()),
-        );
+
+      // Bulk delete
+      if (deletingRider.id === "__bulk__" && deletingRider._bulkIds) {
+        (deletingRider._bulkIds as string[]).forEach((id: string) => {
+          batch.delete(doc(db, "riders", id));
+        });
+        if (auth.currentUser) {
+          await addDoc(collection(db, "audit_logs"), {
+            type:      "DELETE",
+            adminUid:  auth.currentUser.uid,
+            adminRole: userProfile?.role ?? "",
+            action:    `Bulk deleted ${deletingRider._bulkIds.length} rider records`,
+            target:    `${deletingRider._bulkIds.length} riders`,
+            district:  userProfile?.entity ?? "",
+            status:    "success",
+            timestamp: serverTimestamp(),
+          });
+        }
+      } else {
+        // Single delete
+        batch.delete(doc(db, "riders", deletingRider.id));
+        if (auth.currentUser) {
+          await addDoc(collection(db, "audit_logs"), {
+            type:      "DELETE",
+            adminUid:  auth.currentUser.uid,
+            adminRole: userProfile?.role ?? "",
+            action:    "Deleted rider record",
+            target:    deletingRider.fullName ?? "",
+            targetId:  deletingRider.id,
+            RIN:       deletingRider.RIN ?? "",
+            district:  deletingRider.districtMunicipality ?? "",
+            status:    "success",
+            timestamp: serverTimestamp(),
+          });
+        }
       }
+
       await batch.commit();
+      setSelected([]);
       setDeletingRider(null);
-    } catch (error) {
-      console.error("Delete failed:", error);
+    } catch (err) {
+      console.error("Delete error:", err);
     }
   };
 
-  const toggleAll = () => {
-    if (selected.length === pagedRiders.length) setSelected([]);
-    else setSelected(pagedRiders.map((r) => r.id));
+  // Open renewal modal — map rider to RenewableRider shape
+  const handleRenewOpen = (rider: any) => {
+    setRenewRider({
+      id:                   rider.id,
+      fullName:             rider.fullName,
+      phoneNumber:          rider.phoneNumber,
+      RIN:                  rider.RIN,
+      vehicleCategory:      rider.vehicleCategory,
+      districtMunicipality: rider.districtMunicipality,
+      expiryDate:           rider.expiryDate,
+      status:               rider.status,
+    });
   };
 
-  const toggleOne = (id: string) =>
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
+  const allSelected: boolean =
+    pagedRiders.length > 0 && selected.length === pagedRiders.length;
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const toggleAll = () =>
+    setSelected(allSelected ? [] : pagedRiders.map((r: any) => r.id as string));
+
+  const toggleOne = (id: string) =>
+    setSelected((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6 relative min-h-[80vh] pb-24">
+
       <RegistryHeader
         profileLoading={profileLoading}
         userRole={userProfile?.role}
@@ -358,77 +336,52 @@ export default function RiderRegistry() {
         riders={pagedRiders}
         loading={loading}
         selected={selected}
+        allSelected={allSelected}
         approvingId={approvingId}
-        baseUrl={baseUrl}
         onToggleAll={toggleAll}
         onToggleOne={toggleOne}
-        onViewRider={setViewRider}
-        onEditRider={setEditingRider}
-        onApproveRider={handleApprove}
-        onRenewRider={setRenewRider}
-        onDeleteRider={(r) => (canDelete ? setDeletingRider(r) : null)}
-        showTownColumn={userProfile?.role === "Super Admin"} // or adjust
-        canApprove={
-          userProfile?.role === "Super Admin" ||
-          userProfile?.role === "District Admin"
-        }
-        canDelete={userProfile?.role === "Super Admin"}
+        onViewRider={(r: any) => setViewRider(r)}
+        onEditRider={(r: any) => setEditingRider(r)}
+        onApproveRider={canApprove ? handleApprove : undefined}
+        onRenewRider={canRenew ? handleRenewOpen : undefined}
+        onDeleteRider={canDelete ? (r: any) => setDeletingRider(r) : undefined}
+        showTownColumn={showDistrictColumn}
+        canApprove={canApprove}
+        canDelete={canDelete}
         canEdit={true}
-        canRenew={userProfile?.role !== "Operator"} // if operator can't renew
+        canRenew={canRenew}
       />
 
-      {/* Pagination */}
+      {/* ── Pagination ── */}
       {!loading && filteredRiders.length > 0 && (
         <div className="flex items-center justify-between px-2">
           <p className="text-sm text-slate-500">
             Showing{" "}
             <span className="font-semibold text-slate-700">
-              {pageStart + 1}–{Math.min(pageEnd, filteredRiders.length)}
+              {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, filteredRiders.length)}
             </span>{" "}
             of{" "}
-            <span className="font-semibold text-slate-700">
-              {filteredRiders.length}
-            </span>{" "}
+            <span className="font-semibold text-slate-700">{filteredRiders.length}</span>{" "}
             riders
           </p>
 
           <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => goTo(safePage - 1)}
-              disabled={safePage === 1}
-            >
+            <Button variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => goTo(safePage - 1)} disabled={safePage === 1}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
             {pageNumbers[0] > 1 && (
               <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 text-sm"
-                  onClick={() => goTo(1)}
-                >
-                  1
-                </Button>
-                {pageNumbers[0] > 2 && (
-                  <span className="px-1 text-slate-400 text-sm">…</span>
-                )}
+                <Button variant="outline" size="icon" className="h-8 w-8 text-sm" onClick={() => goTo(1)}>1</Button>
+                {pageNumbers[0] > 2 && <span className="px-1 text-slate-400 text-sm">…</span>}
               </>
             )}
 
             {pageNumbers.map((n) => (
-              <Button
-                key={n}
+              <Button key={n} size="icon"
                 variant={n === safePage ? "default" : "outline"}
-                size="icon"
-                className={`h-8 w-8 text-sm ${
-                  n === safePage
-                    ? "bg-green-600 hover:bg-green-700 border-green-600"
-                    : ""
-                }`}
+                className={`h-8 w-8 text-sm ${n === safePage ? "bg-green-700 hover:bg-green-800 border-green-700" : ""}`}
                 onClick={() => goTo(n)}
               >
                 {n}
@@ -440,31 +393,21 @@ export default function RiderRegistry() {
                 {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
                   <span className="px-1 text-slate-400 text-sm">…</span>
                 )}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 text-sm"
-                  onClick={() => goTo(totalPages)}
-                >
-                  {totalPages}
+                <Button variant="outline" size="icon" className="h-8 w-8 text-sm"
+                  onClick={() => goTo(totalPages)}>{totalPages}
                 </Button>
               </>
             )}
 
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => goTo(safePage + 1)}
-              disabled={safePage === totalPages}
-            >
+            <Button variant="outline" size="icon" className="h-8 w-8"
+              onClick={() => goTo(safePage + 1)} disabled={safePage === totalPages}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* Modals */}
+      {/* ── Modals ── */}
       <ViewRiderModal
         open={!!viewRider}
         rider={viewRider}
@@ -484,31 +427,34 @@ export default function RiderRegistry() {
         onOpenChange={() => setDeletingRider(null)}
       />
 
-      <Dialog open={!!renewRider} onOpenChange={() => setRenewRider(null)}>
-        <DialogContent>
-          {renewRider && (
-            <RenewPermitDialog
-              rider={renewRider}
-              onConfirm={() => setRenewRider(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Shared renewal modal — same component used by Renewal Database page */}
+      <RenewRiderModal
+        open={!!renewRider}
+        rider={renewRider}
+        adminRole={userProfile?.role}
+        onOpenChange={(o) => { if (!o) setRenewRider(null); }}
+        onSuccess={() => setRenewRider(null)}
+      />
 
       <BulkActionBar
-        selectedCount={selected.length}
-        onClose={() => setSelected([])}
-        canRenewAll={
-          userProfile?.role === "Super Admin" ||
-          userProfile?.role === "District Admin"
-        }
-        canSendSMS={
-          userProfile?.role === "Super Admin" ||
-          userProfile?.role === "District Admin"
-        } // or include Operator if you want
-        onRenewAll={() => console.log("Renew all:", selected)}
-        onSendSMS={() => console.log("Send SMS to:", selected)}
-      />
+  selectedCount={selected.length}
+  selectedRiders={riders.filter((r: any) => selected.includes(r.id))}
+  adminRole={userProfile?.role}
+  onClose={() => setSelected([])}
+  canRenewAll={canApprove}
+  canSendSMS={canApprove}
+  canDelete={canDelete}
+  onSendSMS={() => console.log("Bulk SMS:", selected)}
+  onDeleteAll={() => {
+    setDeletingRider({
+      id: "__bulk__",
+      fullName: `${selected.length} riders`,
+      _bulkIds: selected,
+    });
+  }}
+  onRenewSuccess={(renewed) => console.log(`${renewed} permits renewed`)}
+/>
+
     </div>
   );
 }

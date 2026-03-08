@@ -18,26 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DISTRICT_CODES } from "@/lib/rin-constants";
 
 interface LocationStepProps {
   form: UseFormReturn<RiderRegistrationData>;
 }
 
-const DISTRICTS = [
-  "Accra Metro",
-  "Krowor",
-  "Madina",
-  "Ashaiman",
-  "Tema Metro",
-  "Ga South",
-  "Ga West",
-  "Ga East",
-  "Ga Central",
-  "Ledzokuku",
-  "Ablekuma North",
-  "Ablekuma Central",
-  "Ablekuma West",
-];
+// Derived directly from rin-constants — always in sync
+const DISTRICTS = Object.keys(DISTRICT_CODES);
 
 export function LocationStep({ form }: LocationStepProps) {
   return (
@@ -50,6 +38,7 @@ export function LocationStep({ form }: LocationStepProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Region — locked */}
         <FormField
           control={form.control}
           name="region"
@@ -73,13 +62,14 @@ export function LocationStep({ form }: LocationStepProps) {
           )}
         />
 
+        {/* District */}
         <FormField
           control={form.control}
           name="districtMunicipality"
           render={({ field }) => (
             <FormItem>
               <FormLabel>District / Municipality *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select value={field.value || ""} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="Select district" />
@@ -98,6 +88,7 @@ export function LocationStep({ form }: LocationStepProps) {
           )}
         />
 
+        {/* Residential Town */}
         <FormField
           control={form.control}
           name="residentialTown"

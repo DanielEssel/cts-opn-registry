@@ -305,7 +305,7 @@ export default function HomePage() {
                 step: "04",
                 title: "Receive Your RIN",
                 description:
-                  "Get your Rider Registration Number (RIN) instantly and keep it safe",
+                  "Get your Rider Identification Number (RIN) instantly and keep it safe",
                 icon: CheckCircle,
               },
             ].map((item, index) => (
@@ -378,7 +378,7 @@ export default function HomePage() {
             Already Registered?
           </h2>
           <p className="text-white/95 text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            Retrieve your Rider Registration Number and check your RIN status
+            Retrieve your Rider Identification Number and check your RIN status
             online
           </p>
           <Link href="/retrieve">

@@ -1,7 +1,10 @@
 /**
  * rin-constants.ts
  * RIN FORMAT: [RegionCode][VehicleCode]-[Sequence]-[DistrictCode][MMYY]
- * EXAMPLE:    GAT-0001-AM0226
+ * EXAMPLE:    GAP-0001-KR0326
+ *
+ * Counter logic: per district only (24 counters max)
+ * Sequence is unique within a district regardless of vehicle type.
  */
 
 export const REGION_CODES: Record<string, string> = {
@@ -84,11 +87,12 @@ export function isValidRIN(rin: string): boolean {
   return parseRIN(rin) !== null;
 }
 
-export function getCounterPath(
-  districtCode: string,
-  vehicleCode:  string
-): string {
-  return `rin_counters/${districtCode}-${vehicleCode}`;
+/**
+ * Counter path — scoped per district only.
+ * e.g. rin_counters/KR → all riders in Krowor, sequence unique within district.
+ */
+export function getCounterPath(districtCode: string): string {
+  return `rin_counters/${districtCode}`;
 }
 
 export const COUNTER_START = 1;

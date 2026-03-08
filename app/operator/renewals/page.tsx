@@ -41,7 +41,7 @@ export default function RenewalsPage() {
                 <span className="font-bold text-gray-900">RIN Registry</span>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Ghana's trusted Rider Registration Number registration system for riders and operators.
+                Ghana's trusted Rider Identification Number registration system for riders and operators.
               </p>
             </div>
 
@@ -98,7 +98,7 @@ export default function RenewalsPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-600">
-              &copy; 2024 Rider Registration Number Registry. All rights reserved.
+              &copy; 2024 Rider Identification Number Registry. All rights reserved.
             </p>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <span>Made with</span>

@@ -4,7 +4,7 @@
 
 | Area | Old (OPN) | New (RIN) |
 |---|---|---|
-| Full name | Operating Permit Number | Rider Registration Number |
+| Full name | Operating Permit Number | Rider Identification Number |
 | Short code | OPN | RIN |
 | Generation | Client-side (race-condition prone) | Cloud Function (atomic transaction) |
 | Counter scope | Per district prefix query | Single global counter (`rin_counters/global`) |
@@ -98,13 +98,13 @@ grep -r "OPN\|opn\|operatingPermit\|permit_number\|permitNumber" src/ --include=
 | `OPN-certificate` | `RIN-certificate` | HTML IDs (already updated in registration page) |
 | `calculatePermitDates` | `calculateRegistrationDates` | internal naming |
 | `isPermitExpired` | `isRegistrationExpired` | already renamed in rider-service |
-| `"Operating Permit Number"` | `"Rider Registration Number"` | UI text |
+| `"Operating Permit Number"` | `"Rider Identification Number"` | UI text |
 
 **In your registration-page.tsx** — these are already correct:
 - ✅ `generatedRIN` state variable
 - ✅ `#RIN-certificate` div ID  
 - ✅ Print styles reference `#RIN-certificate`
-- ✅ Certificate header says "Rider Registration Number"
+- ✅ Certificate header says "Rider Identification Number"
 
 ---
 
