@@ -16,16 +16,16 @@ function SuperAdminCards({ users }: { users: AdminUser[] }) {
 
   return (
     <div className="grid md:grid-cols-3 gap-4">
-      <Card className="bg-slate-900 text-white border-none shadow-xl">
+      <Card className="bg-green-700 text-white border-none shadow-xl">
         <CardHeader className="pb-2">
-          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
             <ShieldCheck className="h-3.5 w-3.5" />
             CTS Admins
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-black">{superCount}</div>
-          <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-tighter">
+          <p className="text-[10px] text-white font-bold mt-1 uppercase tracking-tighter">
             Full system access
           </p>
         </CardContent>

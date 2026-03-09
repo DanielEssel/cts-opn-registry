@@ -328,6 +328,7 @@ export default function RiderRegistry() {
         ridersCount={riders.length}
         loading={loading}
         onNewRegistration={() => {}}
+        riders={filteredRiders}
       />
 
       <SearchBar onFiltersChange={setFilters} />
