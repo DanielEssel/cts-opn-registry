@@ -292,7 +292,7 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="text-4xl font-black tracking-tight mb-2">
             {userProfile?.role === "Super Admin"
-              ? "🌍 System Analytics"
+              ? "System Analytics"
               : `📊 ${userProfile?.entity} Reports`}
           </h1>
           <p className="text-slate-500 font-medium">

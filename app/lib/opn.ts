@@ -1,4 +1,4 @@
-import { DISTRICT_CODES, CATEGORY_CODES } from "@/app/lib/validations";
+import { DISTRICT_CODES, CATEGORY_CODES } from "@/lib/rin-constants";
 
 export type RINParts = {
   districtCode: string;

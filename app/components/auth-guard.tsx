@@ -15,46 +15,87 @@ export function AuthGuard({
   redirectTo = "/login",
   unauthorizedRedirectTo = "/operator/register",
 }: {
-  children: React.ReactNode;
-  allowedRoles?: Role[];
-  redirectTo?: string; // not logged in
-  unauthorizedRedirectTo?: string; // logged in but wrong role
+  children:               React.ReactNode;
+  allowedRoles?:          Role[];
+  redirectTo?:            string;
+  unauthorizedRedirectTo?: string;
 }) {
-  const [loading, setLoading] = useState(true);
+  const [loading,       setLoading]       = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
+        // ── Not logged in ─────────────────────────────────────────────────
         if (!user) {
           setAuthenticated(false);
+          setLoading(false);
           router.replace(redirectTo);
           return;
         }
 
-        setAuthenticated(true);
+        // ── No role restriction — any logged-in user allowed ──────────────
+        if (!allowedRoles || allowedRoles.length === 0) {
+          setAuthenticated(true);
+          setLoading(false);
+          return;
+        }
 
-        // If no role restriction was provided, allow any logged-in user
-        if (!allowedRoles || allowedRoles.length === 0) return;
+        // ── Fetch profile ─────────────────────────────────────────────────
+        let snap;
+        try {
+          snap = await getDoc(doc(db, "admin_users", user.uid));
+        } catch (firestoreErr: any) {
+          // Permissions error mid-flight (e.g. during sign-out race condition)
+          // Treat as unauthenticated — don't crash
+          console.warn("AuthGuard: Firestore read failed (likely mid-signout):", firestoreErr?.code);
+          setAuthenticated(false);
+          setLoading(false);
+          router.replace(redirectTo);
+          return;
+        }
 
-        // Fetch role from admin_users/{uid}
-        const snap = await getDoc(doc(db, "admin_users", user.uid));
+        // ── No profile = kick out ─────────────────────────────────────────
         if (!snap.exists()) {
-          // No profile = sign out and redirect
           await auth.signOut();
           setAuthenticated(false);
+          setLoading(false);
           router.replace(redirectTo);
           return;
         }
 
-        const role = (snap.data() as any)?.role as Role | undefined;
+        const data   = snap.data() as any;
+        const role   = data?.role as Role | undefined;
+        const status = data?.status as string | undefined;
 
-        if (!role || !allowedRoles.includes(role)) {
-          router.replace(unauthorizedRedirectTo);
+        // ── Inactive account ──────────────────────────────────────────────
+        if (status && status !== "Active") {
+          await auth.signOut();
+          setAuthenticated(false);
+          setLoading(false);
+          router.replace(redirectTo);
+          return;
         }
-      } finally {
+
+        // ── Wrong role ────────────────────────────────────────────────────
+        if (!role || !allowedRoles.includes(role)) {
+          setAuthenticated(false);
+          setLoading(false);
+          router.replace(unauthorizedRedirectTo);
+          return;
+        }
+
+        // ── All good ──────────────────────────────────────────────────────
+        setAuthenticated(true);
         setLoading(false);
+
+      } catch (err) {
+        // Catch-all — never leave user on a broken loading screen
+        console.error("AuthGuard unexpected error:", err);
+        setAuthenticated(false);
+        setLoading(false);
+        router.replace(redirectTo);
       }
     });
 
@@ -64,7 +105,7 @@ export function AuthGuard({
   if (loading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-green-700" />
       </div>
     );
   }

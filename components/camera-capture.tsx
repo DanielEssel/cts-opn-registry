@@ -143,10 +143,10 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
     if (!canvas) return;
 
     // If over limit, try lower quality
-    let quality = PHOTO.quality;
-    if (photoSizeKB && photoSizeKB > PHOTO.maxKB) {
-      quality = Math.max(0.5, PHOTO.quality * (PHOTO.maxKB / photoSizeKB));
-    }
+    let quality: number = PHOTO.quality;
+if (photoSizeKB && photoSizeKB > PHOTO.maxKB) {
+  quality = Math.max(0.5, PHOTO.quality * (PHOTO.maxKB / photoSizeKB));
+}
 
     canvas.toBlob(
       (blob) => {
