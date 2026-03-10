@@ -327,7 +327,6 @@ export default function RiderRegistry() {
         userEntity={userProfile?.entity}
         ridersCount={riders.length}
         loading={loading}
-        onNewRegistration={() => {}}
         riders={filteredRiders}
       />
 
