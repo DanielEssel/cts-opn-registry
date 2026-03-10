@@ -13,7 +13,6 @@ import {
   FileText,
   Settings,
   LogOut,
-  Shield,
   Menu,
   X,
   Home,
@@ -25,10 +24,9 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
 import { useAdminProfile } from "@/app/hooks/useAdminProfile";
+import Image from "next/image";
 
 type AdminRole = "Super Admin" | "District Admin";
-
-
 
 type NavItem = {
   name: string;
@@ -38,16 +36,55 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["Super Admin", "District Admin"] },
-  { name: "Register Rider", href: "/register", icon: UserPlus, roles: ["Super Admin"] }, // if district can register
-  { name: "All Riders", href: "/rider-registry", icon: Users, roles: ["Super Admin", "District Admin"] },
-  { name: "Renewals", href: "/renew-permit", icon: RefreshCw, roles: ["Super Admin"] },
-  { name: "Analytics", href: "/analytics", icon: BarChart3, roles: ["Super Admin"] },
-  { name: "Audit Log", href: "/audit", icon: FileText, roles: ["Super Admin", "District Admin"] },
-  { name: "Settings", href: "/settings", icon: Settings, roles: ["Super Admin", "District Admin"] },
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    roles: ["Super Admin", "District Admin"],
+  },
+  {
+    name: "Register Rider",
+    href: "/register",
+    icon: UserPlus,
+    roles: ["Super Admin"],
+  }, // if district can register
+  {
+    name: "All Riders",
+    href: "/rider-registry",
+    icon: Users,
+    roles: ["Super Admin", "District Admin"],
+  },
+  {
+    name: "Renewals",
+    href: "/renew-permit",
+    icon: RefreshCw,
+    roles: ["Super Admin"],
+  },
+  {
+    name: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+    roles: ["Super Admin"],
+  },
+  {
+    name: "Audit Log",
+    href: "/audit",
+    icon: FileText,
+    roles: ["Super Admin", "District Admin"],
+  },
+  {
+    name: "Settings",
+    href: "/settings",
+    icon: Settings,
+    roles: ["Super Admin", "District Admin"],
+  },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -77,7 +114,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const roleLabel = useMemo(() => {
     if (!profile) return "";
     if (profile.role === "Super Admin") return "CTS Africa";
-    if (profile.role === "District Admin") return `District • ${profile.entity ?? "—"}`;
+    if (profile.role === "District Admin")
+      return `District • ${profile.entity ?? "—"}`;
     return "Operator";
   }, [profile]);
 
@@ -86,7 +124,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/login");
   };
 
- return (
+  return (
     <AuthGuard
       allowedRoles={["Super Admin", "District Admin"]}
       unauthorizedRedirectTo="/operator/register"
@@ -104,21 +142,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <aside
           className={cn(
             "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            sidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
           <div className="flex flex-col h-full">
             {/* Logo */}
             <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
               <Link href="/dashboard" className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
                 <div>
-                  <h1 className="font-bold text-gray-900 text-sm">Rider Identification Number</h1>
+                  <Image
+                    src="/logo/rinlogo2.png"
+                    alt="RIN Logo"
+                    width={80}
+                    height={80}
+                  />
+                </div>
+
+                <div>
+                  <h1 className="font-bold text-gray-900 text-sm">
+                    Rider Identification Number
+                  </h1>
                   <p className="text-xs text-gray-500"></p>
                 </div>
               </Link>
+
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="lg:hidden text-gray-500 hover:text-gray-700"
@@ -127,18 +174,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
             </div>
 
-            {/* Role pill */}
-            <div className="px-4 pt-4">
-              {loading ? (
-                <div className="text-xs text-gray-500 px-2">Loading profile…</div>
-              ) : error ? (
-                <div className="text-xs text-red-600 px-2">{error}</div>
-              ) : (
-                <Badge variant="outline" className="w-full justify-center">
-                  {roleLabel}
-                </Badge>
-              )}
-            </div>
 
             {/* Navigation */}
             <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
@@ -153,13 +188,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group relative",
                       isActive
                         ? "bg-green-50 text-green-700 shadow-sm"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
                     )}
                   >
                     <item.icon
                       className={cn(
                         "w-5 h-5 transition-transform group-hover:scale-110",
-                        isActive ? "text-green-600" : "text-gray-400"
+                        isActive ? "text-green-600" : "text-gray-400",
                       )}
                     />
                     <span>{item.name}</span>
@@ -214,11 +249,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
 
               <div className="flex-1 lg:flex items-center gap-2 hidden">
-                <Link href="/" className="text-gray-500 hover:text-gray-700 transition">
+                <Link
+                  href="/"
+                  className="text-gray-500 hover:text-gray-700 transition"
+                >
                   <Home className="w-4 h-4" />
                 </Link>
                 <span className="text-gray-400">/</span>
-                <span className="text-sm font-medium text-gray-900">{title}</span>
+                <span className="text-sm font-medium text-gray-900">
+                  {title}
+                </span>
               </div>
 
               <div className="flex items-center gap-3">

@@ -3,522 +3,495 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
 import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  doc,
-  getDoc,
-  orderBy,         // ✅ FIX 1: was missing
+  collection, onSnapshot, query,
+  where, doc, getDoc, orderBy,
 } from "firebase/firestore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Download,
-  PieChart,
-  Loader2,
-  MapPin,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Users,
-  Bike,
-  DollarSign,
-  Activity,
-  BarChart3,
+  Download, Loader2, MapPin, AlertTriangle,
+  CheckCircle2, Clock, Users, Bike,
+  TrendingUp, Activity, RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 
 type Role = "Super Admin" | "District Admin" | "Operator";
 
 interface Rider {
   id: string;
   fullName?: string;
-  name?: string;
   RIN: string;
   phoneNumber?: string;
-  phone?: string;
-  town: string;
-  districtMunicipality?: string;   // ✅ FIX 3: was missing from type
+  districtMunicipality?: string;
+  residentialTown?: string;
   status: "Active" | "Pending" | "Expired" | "Suspended";
   vehicleCategory?: string;
   expiryDate?: string;
-  createdAt?: any;
   issueDate?: string;
+  createdAt?: any;
 }
+
+interface AnalyticsData {
+  statusCounts:      { Active: number; Pending: number; Expired: number; Suspended: number; total: number };
+  locationData:      Record<string, number>;
+  vehicleData:       Record<string, number>;
+  expiringToday:     number;
+  expiringIn30:      number;
+  avgPermitAgeDays:  number;
+  trend:             { date: string; label: string; count: number }[];
+}
+
+const VEHICLE_COLORS: Record<string, string> = {
+  Motorbike:   "#16a34a",
+  Tricycle:    "#2563eb",
+  Pragya:      "#d97706",
+  Quadricycle: "#7c3aed",
+  Unknown:     "#94a3b8",
+};
 
 export default function AnalyticsPage() {
   const router = useRouter();
 
-  const [userProfile, setUserProfile] = useState<{
-    uid: string;
-    role: Role;
-    entity: string;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [riders, setRiders] = useState<Rider[]>([]);
-  const [data, setData] = useState({
-    statusCounts: { Active: 0, Pending: 0, Expired: 0, Suspended: 0, total: 0 },
-    townData: {} as Record<string, number>,
-    vehicleData: {} as Record<string, number>,
-    expiringTodayCount: 0,
-    renewalsNeeded: 0,
-    avgPermitAge: 0,
-    mostActiveTown: "---",
-    registrationTrend: [] as { date: string; count: number }[],
-    revenueEstimate: 0,
+  const [userProfile, setUserProfile] = useState<{ uid: string; role: Role; entity: string } | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [riders,      setRiders]      = useState<Rider[]>([]);
+  const [analytics,   setAnalytics]   = useState<AnalyticsData>({
+    statusCounts:     { Active: 0, Pending: 0, Expired: 0, Suspended: 0, total: 0 },
+    locationData:     {},
+    vehicleData:      {},
+    expiringToday:    0,
+    expiringIn30:     0,
+    avgPermitAgeDays: 0,
+    trend:            [],
   });
 
-  const PERMIT_FEE = 100;
+  // ── Auth ─────────────────────────────────────────────────────────────────
 
-  // 1) Fetch user profile
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsub = auth.onAuthStateChanged(async (user) => {
       try {
-        if (!user) {
-          setUserProfile(null);
-          router.replace("/login");
-          return;
-        }
-
+        if (!user) { router.replace("/login"); return; }
         const snap = await getDoc(doc(db, "admin_users", user.uid));
-        if (!snap.exists()) {
-          await auth.signOut();
-          setUserProfile(null);
-          router.replace("/login");
-          return;
-        }
-
+        if (!snap.exists()) { await auth.signOut(); router.replace("/login"); return; }
         const p = snap.data() as any;
-
-        if (p?.status && p.status !== "Active") {
-          await auth.signOut();
-          setUserProfile(null);
-          router.replace("/login");
-          return;
-        }
-
-        setUserProfile({
-          uid: user.uid,
-          role: p.role as Role,
-          entity: (p.entity as string) ?? "",
-        });
-      } catch (e) {
-        console.error("Error fetching user profile:", e);
-        setUserProfile(null);
-        router.replace("/login");
-      }
+        if (p?.status && p.status !== "Active") { await auth.signOut(); router.replace("/login"); return; }
+        setUserProfile({ uid: user.uid, role: p.role, entity: p.entity ?? "" });
+      } catch { router.replace("/login"); }
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, [router]);
 
-  // 2) Fetch + compute analytics
+  // ── Data ──────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!userProfile) return;
-
     setLoading(true);
 
-    const ridersRef = collection(db, "riders");
+    const ref = collection(db, "riders");
+    const q   = userProfile.role === "Super Admin"
+      ? query(ref, orderBy("createdAt", "desc"))
+      : query(ref, where("districtMunicipality", "==", userProfile.entity), orderBy("createdAt", "desc"));
 
-    const q =
-      userProfile.role === "Super Admin"
-        ? query(ridersRef, orderBy("createdAt", "desc"))
-        : query(
-            ridersRef,
-            where("districtMunicipality", "==", userProfile.entity),
-            orderBy("createdAt", "desc")
-          );
+    const unsub = onSnapshot(q, (snap) => {
+      const riderList: Rider[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const statusMap = { Active: 0, Pending: 0, Expired: 0, Suspended: 0, total: 0 };
-        const locationMap: Record<string, number> = {};
-        const vehicleMap: Record<string, number> = {};
-        const registrationByDate: Record<string, number> = {};
-        const riderList: Rider[] = [];
+      const statusCounts = { Active: 0, Pending: 0, Expired: 0, Suspended: 0, total: 0 };
+      const locationData: Record<string, number> = {};
+      const vehicleData:  Record<string, number> = {};
+      const byDate:       Record<string, number> = {};
+      let totalAge = 0, expiringToday = 0, expiringIn30 = 0;
 
-        let expiringCount = 0;
-        let renewalCount = 0;
-        let totalPermitAge = 0;
+      const now   = new Date();
+      const today = new Date(now); today.setHours(0, 0, 0, 0);
+      const in30  = new Date(today); in30.setDate(in30.getDate() + 30);
 
-        const now = new Date();
-        const startOfToday = new Date(now);
-        startOfToday.setHours(0, 0, 0, 0);
+      riderList.forEach((r) => {
+        const s = r.status || "Pending";
+        if (s in statusCounts) statusCounts[s as keyof typeof statusCounts]++;
+        statusCounts.total++;
 
-        const in30Days = new Date(startOfToday);
-        in30Days.setDate(in30Days.getDate() + 30);
+        const loc = userProfile.role === "Super Admin"
+          ? (r.districtMunicipality || "Unknown")
+          : (r.residentialTown || "Unknown");
+        locationData[loc] = (locationData[loc] || 0) + 1;
 
-        snapshot.docs.forEach((d) => {
-          const rider = { id: d.id, ...(d.data() as any) } as Rider;
-          riderList.push(rider);
+        const v = r.vehicleCategory || "Unknown";
+        vehicleData[v] = (vehicleData[v] || 0) + 1;
 
-          const status = rider.status || "Pending";
-          if (status in statusMap) statusMap[status as keyof typeof statusMap]++;
-          statusMap.total++;
+        if (r.expiryDate) {
+          const exp = new Date(r.expiryDate); exp.setHours(0, 0, 0, 0);
+          if (exp.getTime() === today.getTime()) expiringToday++;
+          if (exp > today && exp <= in30) expiringIn30++;
+        }
 
-          const key =
-            userProfile.role === "Super Admin"
-              ? rider.districtMunicipality || "Unknown"
-              : rider.town || "Unknown";
-          locationMap[key] = (locationMap[key] || 0) + 1;
+        if (r.issueDate) {
+          const age = Math.floor((today.getTime() - new Date(r.issueDate).getTime()) / 86400000);
+          totalAge += Math.max(0, age);
+        }
 
-          const vehicle = rider.vehicleCategory || "Unknown";
-          vehicleMap[vehicle] = (vehicleMap[vehicle] || 0) + 1;
+        if (r.createdAt) {
+          const d = r.createdAt?.toDate?.() instanceof Date ? r.createdAt.toDate() : new Date(r.createdAt);
+          const key = d.toISOString().split("T")[0];
+          byDate[key] = (byDate[key] || 0) + 1;
+        }
+      });
 
-          if (rider.expiryDate) {
-            const expiry = new Date(rider.expiryDate);
-            const expiryDay = new Date(expiry);
-            expiryDay.setHours(0, 0, 0, 0);
-            if (expiryDay.getTime() === startOfToday.getTime()) expiringCount++;
-            if (expiryDay > startOfToday && expiryDay <= in30Days) renewalCount++;
-          }
+      const trend = Object.entries(byDate)
+        .sort(([a], [b]) => (a < b ? -1 : 1))
+        .slice(-7)
+        .map(([date, count]) => ({
+          date,
+          label: format(new Date(date), "dd MMM"),
+          count,
+        }));
 
-          if (rider.issueDate) {
-            const issueDate = new Date(rider.issueDate);
-            const ageInDays = Math.floor(
-              (startOfToday.getTime() - issueDate.getTime()) / (1000 * 60 * 60 * 24)
-            );
-            totalPermitAge += Math.max(0, ageInDays);
-          }
+      setRiders(riderList);
+      setAnalytics({
+        statusCounts,
+        locationData,
+        vehicleData,
+        expiringToday,
+        expiringIn30,
+        avgPermitAgeDays: riderList.length > 0 ? Math.round(totalAge / riderList.length) : 0,
+        trend,
+      });
+      setLoading(false);
+    }, (err) => { console.error(err); setLoading(false); });
 
-          if (rider.createdAt) {
-            const created =
-              rider.createdAt?.toDate?.() instanceof Date
-                ? rider.createdAt.toDate()
-                : new Date(rider.createdAt);
-            const dateKey = created.toISOString().split("T")[0];
-            registrationByDate[dateKey] = (registrationByDate[dateKey] || 0) + 1;
-          }
-        });
-
-        const sortedLocations = Object.entries(locationMap).sort((a, b) => b[1] - a[1]);
-        const avgPermitAge =
-          riderList.length > 0 ? Math.round(totalPermitAge / riderList.length) : 0;
-        const estimatedRevenue = statusMap.Active * PERMIT_FEE;
-        const sortedTrend = Object.entries(registrationByDate)
-          .sort(([a], [b]) => (a < b ? -1 : 1))
-          .slice(-7)
-          .map(([date, count]) => ({ date, count }));
-
-        setRiders(riderList);
-        setData({
-          statusCounts: statusMap,
-          townData: locationMap,
-          vehicleData: vehicleMap,
-          expiringTodayCount: expiringCount,
-          renewalsNeeded: renewalCount,
-          avgPermitAge,
-          mostActiveTown: sortedLocations[0]?.[0] || "None",
-          registrationTrend: sortedTrend,
-          revenueEstimate: estimatedRevenue,
-        });
-
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Analytics Listener Error:", error);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
+    return () => unsub();
   }, [userProfile]);
 
-  // ✅ FIX 2: these were outside the function — moved inside
-  const getPercentage = (count: number) =>
-    data.statusCounts.total > 0
-      ? Math.round((count / data.statusCounts.total) * 100)
-      : 0;
+  // ── Export — matches displayed analytics ─────────────────────────────────
 
-  if (loading)
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-mono text-sm uppercase tracking-widest">
-          {userProfile?.role === "Super Admin"
-            ? "Aggregating National Data..."
-            : `Syncing ${userProfile?.entity} Data...`}
-        </p>
-      </div>
-    );
+  const handleExport = () => {
+    const scope  = userProfile?.entity || "System";
+    const today  = format(new Date(), "yyyy-MM-dd");
+    const pct    = (n: number) => analytics.statusCounts.total > 0
+      ? `${Math.round((n / analytics.statusCounts.total) * 100)}%` : "0%";
 
-  const exportToCSV = () => {
-    if (riders.length === 0) return;
+    const sections: string[] = [];
 
-    const headers = [
-      "Full Name",
-      "RIN",
-      "Phone",
-      "Town",
-      "Vehicle",
-      "Status",
-      "Issue Date",
-      "Expiry Date",
-      "Date Registered",
-    ];
-    const rows = riders.map((r) => [
-      `"${r.fullName || r.name}"`,
-      `"${r.RIN}"`,
-      `"${r.phoneNumber || r.phone}"`,
-      `"${r.town}"`,
-      `"${r.vehicleCategory || "N/A"}"`,
-      `"${r.status}"`,
-      `"${r.issueDate ? new Date(r.issueDate).toLocaleDateString() : "N/A"}"`,
-      `"${r.expiryDate ? new Date(r.expiryDate).toLocaleDateString() : "N/A"}"`,
-      `"${r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString() : "N/A"}"`,
-    ]);
+    // Summary
+    sections.push("ANALYTICS REPORT");
+    sections.push(`Scope: ${userProfile?.role === "Super Admin" ? "National (All Districts)" : scope}`);
+    sections.push(`Generated: ${format(new Date(), "dd MMM yyyy HH:mm")}`);
+    sections.push("");
 
-    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `${userProfile?.entity}_Rider_Registry_${new Date().toISOString().split("T")[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Status breakdown
+    sections.push("STATUS BREAKDOWN");
+    sections.push(["Status","Count","Percentage"].join(","));
+    sections.push(`Active,${analytics.statusCounts.Active},${pct(analytics.statusCounts.Active)}`);
+    sections.push(`Pending,${analytics.statusCounts.Pending},${pct(analytics.statusCounts.Pending)}`);
+    sections.push(`Expired,${analytics.statusCounts.Expired},${pct(analytics.statusCounts.Expired)}`);
+    sections.push(`Suspended,${analytics.statusCounts.Suspended},${pct(analytics.statusCounts.Suspended)}`);
+    sections.push(`TOTAL,${analytics.statusCounts.total},100%`);
+    sections.push("");
+
+    // Vehicle breakdown
+    sections.push("VEHICLE TYPE BREAKDOWN");
+    sections.push(["Vehicle Type","Count","Percentage"].join(","));
+    Object.entries(analytics.vehicleData)
+      .sort(([,a],[,b]) => b - a)
+      .forEach(([v, c]) => sections.push(`${v},${c},${pct(c)}`));
+    sections.push("");
+
+    // Location breakdown
+    sections.push(userProfile?.role === "Super Admin" ? "DISTRICT BREAKDOWN" : "LOCATION BREAKDOWN");
+    sections.push(["Location","Count"].join(","));
+    Object.entries(analytics.locationData)
+      .sort(([,a],[,b]) => b - a)
+      .forEach(([l, c]) => sections.push(`"${l}",${c}`));
+    sections.push("");
+
+    // Trend
+    sections.push("REGISTRATION TREND (LAST 7 DAYS)");
+    sections.push(["Date","Registrations"].join(","));
+    analytics.trend.forEach(({ date, count }) => sections.push(`${date},${count}`));
+    sections.push("");
+
+    // Key metrics
+    sections.push("KEY METRICS");
+    sections.push(`Expiring Today,${analytics.expiringToday}`);
+    sections.push(`Expiring Within 30 Days,${analytics.expiringIn30}`);
+    sections.push(`Avg Permit Age (Days),${analytics.avgPermitAgeDays}`);
+    sections.push(`Active Rate,${pct(analytics.statusCounts.Active)}`);
+
+    const blob = new Blob([sections.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement("a"), {
+      href: url,
+      download: `analytics-report-${scope.replace(/\s+/g, "-").toLowerCase()}-${today}.csv`,
+    });
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
   };
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  const pct = (n: number) => analytics.statusCounts.total > 0
+    ? Math.round((n / analytics.statusCounts.total) * 100) : 0;
+
+  const maxTrend = Math.max(...analytics.trend.map((t) => t.count), 1);
+
+  const topLocations = Object.entries(analytics.locationData)
+    .sort(([,a],[,b]) => b - a)
+    .slice(0, 6);
+
+  const maxLocation = topLocations[0]?.[1] || 1;
+
+  // ── Loading ───────────────────────────────────────────────────────────────
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+      <div className="relative">
+        <div className="w-16 h-16 rounded-full border-4 border-green-100" />
+        <Loader2 className="w-16 h-16 animate-spin text-green-700 absolute inset-0" />
+      </div>
+      <p className="text-slate-500 text-sm font-semibold tracking-widest uppercase">
+        {userProfile?.role === "Super Admin" ? "Aggregating national data..." : `Loading ${userProfile?.entity}...`}
+      </p>
+    </div>
+  );
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex justify-between items-end">
+    <div className="space-y-8">
+
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight mb-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-green-700 mb-1">
+            {userProfile?.role === "Super Admin" ? "National Overview" : userProfile?.entity}
+          </p>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Analytics & Reports</h1>
+          <p className="text-slate-500 text-sm mt-1">
             {userProfile?.role === "Super Admin"
-              ? "System Analytics"
-              : `📊 ${userProfile?.entity} Reports`}
-          </h1>
-          <p className="text-slate-500 font-medium">
-            {userProfile?.role === "Super Admin"
-              ? `Consolidated reporting across ${Object.keys(data.townData).length} districts • ${data.statusCounts.total} total permits`
-              : `Local performance metrics • ${data.statusCounts.total} active permits`}
+              ? `${Object.keys(analytics.locationData).length} districts · ${analytics.statusCounts.total} total permits`
+              : `${analytics.statusCounts.total} permits · live data`}
           </p>
         </div>
         <Button
-          className="h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg"
-          onClick={exportToCSV}
-          disabled={loading || data.statusCounts.total === 0}
+          onClick={handleExport}
+          disabled={analytics.statusCounts.total === 0}
+          className="bg-green-700 hover:bg-green-800 gap-2 h-10 shadow-sm"
         >
-          <Download className="mr-2 h-5 w-5" />
-          Export Full Report (.CSV)
+          <Download className="h-4 w-4" />
+          Export Report
         </Button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-        <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-600" />
-              Total Permits
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-black text-slate-900">{data.statusCounts.total}</p>
-            <p className="text-xs text-slate-400 mt-1">Active & Pending</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-green-200 bg-green-50/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold text-green-600 uppercase tracking-wider flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              Active
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-black text-green-900">{data.statusCounts.Active}</p>
-            <p className="text-xs text-green-600 mt-1">{getPercentage(data.statusCounts.Active)}% of total</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-orange-200 bg-orange-50/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold text-orange-600 uppercase tracking-wider flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Expiring Today
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-black text-orange-900">{data.expiringTodayCount}</p>
-            <p className="text-xs text-orange-600 mt-1">Require action</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-yellow-200 bg-yellow-50/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold text-yellow-600 uppercase tracking-wider flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Renewal Soon
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-black text-yellow-900">{data.renewalsNeeded}</p>
-            <p className="text-xs text-yellow-600 mt-1">Within 30 days</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-purple-200 bg-purple-50/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold text-purple-600 uppercase tracking-wider flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Est. Revenue
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-black text-purple-900">₵{data.revenueEstimate.toLocaleString()}</p>
-            <p className="text-xs text-purple-600 mt-1">From active permits</p>
-          </CardContent>
-        </Card>
+      {/* ── KPI row ── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { label: "Total",          value: analytics.statusCounts.total,    icon: Users,         bg: "bg-slate-900",   text: "text-white",        sub: "All permits",           subColor: "text-slate-400"   },
+          { label: "Active",         value: analytics.statusCounts.Active,   icon: CheckCircle2,  bg: "bg-green-700",   text: "text-white",        sub: `${pct(analytics.statusCounts.Active)}% of total`, subColor: "text-green-200"   },
+          { label: "Pending",        value: analytics.statusCounts.Pending,  icon: Clock,         bg: "bg-white",       text: "text-blue-700",     sub: `${pct(analytics.statusCounts.Pending)}% of total`, subColor: "text-slate-400"   },
+          { label: "Expired",        value: analytics.statusCounts.Expired,  icon: AlertTriangle, bg: "bg-white",       text: "text-red-600",      sub: `${pct(analytics.statusCounts.Expired)}% of total`,  subColor: "text-slate-400"   },
+          { label: "Expiring Today", value: analytics.expiringToday,         icon: AlertTriangle, bg: "bg-orange-50",   text: "text-orange-700",   sub: "Need action",           subColor: "text-orange-500"  },
+          { label: "Due in 30 Days", value: analytics.expiringIn30,          icon: RefreshCw,     bg: "bg-yellow-50",   text: "text-yellow-700",   sub: "Upcoming renewals",     subColor: "text-yellow-600"  },
+        ].map(({ label, value, icon: Icon, bg, text, sub, subColor }) => (
+          <div key={label} className={`${bg} rounded-2xl p-4 border border-slate-200 shadow-sm`}>
+            <div className="flex items-center justify-between mb-3">
+              <p className={`text-[10px] font-bold uppercase tracking-wider ${text === "text-white" ? "text-white/70" : "text-slate-500"}`}>
+                {label}
+              </p>
+              <Icon className={`h-4 w-4 ${text === "text-white" ? "text-white/50" : "text-slate-300"}`} />
+            </div>
+            <p className={`text-3xl font-black ${text}`}>{value}</p>
+            <p className={`text-[10px] mt-1 font-semibold ${subColor}`}>{sub}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-blue-600" />
-              Status Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* ── Charts row ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Status breakdown */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-1 h-5 bg-green-700 rounded-full" />
+            <h3 className="font-bold text-slate-900">Status Breakdown</h3>
+          </div>
+          <div className="space-y-4">
             {[
-              { label: "Active", value: data.statusCounts.Active, color: "bg-green-500" },
-              { label: "Pending", value: data.statusCounts.Pending, color: "bg-blue-500" },
-              { label: "Expired", value: data.statusCounts.Expired, color: "bg-red-500" },
-              { label: "Suspended", value: data.statusCounts.Suspended, color: "bg-slate-500" },
-            ].map(({ label, value, color }) => (
+              { label: "Active",    count: analytics.statusCounts.Active,    color: "bg-green-500",  textColor: "text-green-700" },
+              { label: "Pending",   count: analytics.statusCounts.Pending,   color: "bg-blue-500",   textColor: "text-blue-700"  },
+              { label: "Expired",   count: analytics.statusCounts.Expired,   color: "bg-red-500",    textColor: "text-red-700"   },
+              { label: "Suspended", count: analytics.statusCounts.Suspended, color: "bg-slate-400",  textColor: "text-slate-600" },
+            ].map(({ label, count, color, textColor }) => (
               <div key={label}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="flex items-center gap-2 font-medium">
-                    <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
-                    {label}
-                  </span>
-                  <span className="font-bold text-lg">{value}</span>
+                <div className="flex justify-between items-center mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${color}`} />
+                    <span className="text-sm font-semibold text-slate-700">{label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-bold ${textColor}`}>{pct(count)}%</span>
+                    <span className="text-sm font-black text-slate-900 w-8 text-right">{count}</span>
+                  </div>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-2">
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-2 rounded-full ${color} transition-all`}
-                    style={{ width: `${getPercentage(value)}%` }}
+                    className={`h-full ${color} rounded-full transition-all duration-700`}
+                    style={{ width: `${pct(count)}%` }}
                   />
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Bike className="h-5 w-5 text-yellow-600" />
-              Vehicle Types
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(data.vehicleData)
-              .sort(([, a], [, b]) => b - a)
-              .map(([vehicle, count]) => (
-                <div key={vehicle} className="flex justify-between items-center">
-                  <span className="font-medium text-slate-700">{vehicle}</span>
-                  <Badge className="bg-blue-100 text-blue-700 font-bold">{count}</Badge>
-                </div>
-              ))}
-          </CardContent>
-        </Card>
+          {/* Donut-style summary */}
+          <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
+            <div className="text-center">
+              <p className="text-2xl font-black text-slate-900">{analytics.statusCounts.total}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-black text-green-700">{pct(analytics.statusCounts.Active)}%</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Rate</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-green-600" />
-              Top {userProfile?.role === "Super Admin" ? "Districts" : "Locations"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(data.townData)
-              .sort(([, a], [, b]) => b - a)
-              .slice(0, 5)
-              .map(([town, count]) => (
-                <div key={town} className="flex justify-between items-center">
-                  <span className="font-medium text-slate-700">{town}</span>
-                  <Badge className="bg-green-100 text-green-700 font-bold">{count}</Badge>
-                </div>
-              ))}
-          </CardContent>
-        </Card>
-      </div>
+        {/* Registration trend */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-1 h-5 bg-blue-600 rounded-full" />
+            <h3 className="font-bold text-slate-900">Registration Trend</h3>
+            <span className="ml-auto text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last 7 days</span>
+          </div>
 
-      {/* Bottom Row */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 shadow-sm border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
-              Registration Trend (Last 7 Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-around h-[140px] gap-2 px-2 border-b-2 border-slate-100">
-              {data.registrationTrend.length > 0 ? (
-                data.registrationTrend.map(({ date, count }) => {
-                  const maxCount = Math.max(...data.registrationTrend.map((d) => d.count), 1);
-                  const height = (count / maxCount) * 100;
-                  return (
-                    <div key={date} className="flex flex-col items-center flex-1">
-                      <span className="text-xs font-bold text-blue-600 mb-1">{count}</span>
+          {analytics.trend.length > 0 ? (
+            <div className="flex items-end gap-2 h-32">
+              {analytics.trend.map(({ date, label, count }) => {
+                const h = Math.max((count / maxTrend) * 100, 6);
+                return (
+                  <div key={date} className="flex-1 flex flex-col items-center gap-1 group">
+                    <span className="text-[9px] font-bold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {count}
+                    </span>
+                    <div className="w-full relative">
                       <div
-                        className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-sm hover:from-blue-500 hover:to-blue-300 transition-all"
-                        style={{ height: `${Math.max(height, 10)}%` }}
+                        className="w-full bg-blue-600 rounded-t-md hover:bg-blue-500 transition-colors cursor-default"
+                        style={{ height: `${h * 1.1}px` }}
+                        title={`${label}: ${count}`}
                       />
-                      <span className="text-xs text-slate-500 mt-2">
-                        {new Date(date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
                     </div>
-                  );
-                })
-              ) : (
-                <p className="text-slate-400 text-center w-full self-center">No data available</p>
-              )}
+                    <span className="text-[9px] text-slate-400 font-medium mt-1 truncate w-full text-center">{label}</span>
+                  </div>
+                );
+              })}
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <div className="h-32 flex items-center justify-center text-slate-400 text-sm">No data yet</div>
+          )}
 
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Activity className="h-5 w-5 text-purple-600" />
-              Key Metrics
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 uppercase font-bold mb-1">Avg. Permi Age</p>
-              <p className="text-2xl font-black text-slate-900">{data.avgPermitAge} days</p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 uppercase font-bold mb-1">Active Rate</p>
-              <p className="text-2xl font-black text-green-600">
-                {getPercentage(data.statusCounts.Active)}%
-              </p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 uppercase font-bold mb-1">Scope</p>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between">
+            <div>
               <p className="text-lg font-black text-slate-900">
-                {userProfile?.role === "Super Admin" ? "National" : userProfile?.entity}
+                {analytics.trend.reduce((s, t) => s + t.count, 0)}
               </p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Registrations</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-right">
+              <p className="text-lg font-black text-slate-900">{analytics.avgPermitAgeDays}d</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Permit Age</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Vehicle types */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-1 h-5 bg-yellow-500 rounded-full" />
+            <h3 className="font-bold text-slate-900">Vehicle Types</h3>
+            <Bike className="ml-auto h-4 w-4 text-slate-300" />
+          </div>
+          <div className="space-y-3">
+            {Object.entries(analytics.vehicleData)
+              .sort(([,a],[,b]) => b - a)
+              .map(([vehicle, count]) => {
+                const color = VEHICLE_COLORS[vehicle] ?? VEHICLE_COLORS.Unknown;
+                const p = analytics.statusCounts.total > 0
+                  ? Math.round((count / analytics.statusCounts.total) * 100) : 0;
+                return (
+                  <div key={vehicle}>
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />
+                        <span className="text-sm font-semibold text-slate-700">{vehicle}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-400">{p}%</span>
+                        <span className="text-sm font-black text-slate-900 w-8 text-right">{count}</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${p}%`, background: color }} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
       </div>
+
+      {/* ── Location breakdown ── */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-5">
+          <div className="w-1 h-5 bg-green-700 rounded-full" />
+          <h3 className="font-bold text-slate-900">
+            {userProfile?.role === "Super Admin" ? "District Breakdown" : "Location Breakdown"}
+          </h3>
+          <MapPin className="ml-auto h-4 w-4 text-slate-300" />
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            {Object.keys(analytics.locationData).length} {userProfile?.role === "Super Admin" ? "districts" : "locations"}
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {topLocations.map(([loc, count], i) => (
+            <div key={loc} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-7 h-7 rounded-lg bg-green-700 text-white text-[10px] font-black flex items-center justify-center shrink-0">
+                {i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-800 truncate">{loc}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-600 rounded-full transition-all duration-700"
+                      style={{ width: `${(count / maxLocation) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-black text-slate-700 shrink-0">{count}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Key metrics strip ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Active Rate",         value: `${pct(analytics.statusCounts.Active)}%`,     icon: TrendingUp,   color: "text-green-700"  },
+          { label: "Avg Permit Age",       value: `${analytics.avgPermitAgeDays} days`,          icon: Activity,     color: "text-blue-700"   },
+          { label: "Expiring Today",       value: analytics.expiringToday,                       icon: AlertTriangle,color: "text-orange-600" },
+          { label: "Scope",                value: userProfile?.role === "Super Admin" ? "National" : userProfile?.entity?.split(" ").slice(0,2).join(" ") || "—",
+            icon: MapPin, color: "text-slate-700" },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+            <Icon className={`h-5 w-5 ${color} shrink-0`} />
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
+              <p className={`text-lg font-black ${color}`}>{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
     </div>
   );
-}  
+}

@@ -1,214 +1,135 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
-  BadgeIcon,
-  FileText,
-  MapPin,
-  Truck,
-  Shield,
-  BarChart3,
-  ChevronDown,
-  Menu,
-  X,
-  Home,
+  FileText, MapPin, Truck, Shield,
+  BarChart3, Menu, X, Home, CheckCircle2,
+  LogOut, ChevronRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
-// ============================================================================
-// SIDEBAR NAVIGATION ITEMS
-// ============================================================================
-
-const REGISTRATION_STEPS = [
-  {
-    id: 1,
-    title: "Bio Data",
-    description: "Personal Information",
-    icon: FileText,
-    href: "/operator/register?step=1",
-    color: "bg-blue-100 text-blue-700",
-  },
-  {
-    id: 2,
-    title: "Location",
-    description: "Residential Details",
-    icon: MapPin,
-    href: "/operator/register?step=2",
-    color: "bg-purple-100 text-purple-700",
-  },
-  {
-    id: 3,
-    title: "Vehicle",
-    description: "Vehicle Information",
-    icon: Truck,
-    href: "/operator/register?step=3",
-    color: "bg-orange-100 text-orange-700",
-  },
-  {
-    id: 4,
-    title: "Compliance",
-    description: "Documents & License",
-    icon: Shield,
-    href: "/operator/register?step=4",
-    color: "bg-green-100 text-green-700",
-  },
+const STEPS = [
+  { id: 1, title: "Bio Data",    description: "Personal info",       icon: FileText },
+  { id: 2, title: "Location",    description: "Residential details", icon: MapPin   },
+  { id: 3, title: "Vehicle",     description: "Vehicle information", icon: Truck    },
+  { id: 4, title: "Compliance",  description: "Documents & licence", icon: Shield   },
 ];
 
-const MAIN_MENU = [
-  {
-    title: "Registration Form",
-    icon: Home,
-    href: "/operator/register",
-  },
-  {
-    title: "Daily Report",
-    icon: BarChart3,
-    href: "/operator/daily-report",
-  },
+const NAV = [
+  { title: "Register Rider", icon: Home,    href: "/operator/register"     },
+  { title: "Daily Report",   icon: BarChart3, href: "/operator/daily-report" },
 ];
-
-// ============================================================================
-// OPERATOR SIDEBAR COMPONENT
-// ============================================================================
 
 export function OperatorSidebar() {
-  const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true);
-  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const pathname     = usePathname();
+  const searchParams = useSearchParams();
+  const router       = useRouter();
+  const currentStep  = parseInt(searchParams.get("step") || "1", 10);
+  const [open, setOpen] = useState(false);
 
-  const isRegistrationPath = pathname?.includes("/register");
+  useEffect(() => { setOpen(false); }, [pathname, searchParams]);
 
-  const isLinkActive = (href: string) => {
-    return pathname === href || pathname?.startsWith(href);
+  const handleSignOut = async () => {
+    await auth.signOut();
+    router.replace("/login");
   };
+
+  const onRegisterPage = pathname.includes("/register");
 
   return (
     <>
-      {/* MOBILE MENU BUTTON */}
+      {/* ── Mobile FAB ── */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed bottom-6 right-6 z-50 p-3 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700"
+        onClick={() => setOpen(!open)}
+        className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-green-700 text-white shadow-xl shadow-green-900/30 flex items-center justify-center transition-transform active:scale-95"
+        aria-label="Toggle menu"
       >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
-      {/* SIDEBAR */}
-      <aside
-        className={`${
-          isOpen ? "w-64" : "w-0 lg:w-64"
-        } border-r border-slate-200 bg-white transition-all duration-300 overflow-hidden flex flex-col h-screen lg:relative fixed lg:sticky top-0 z-40`}
-      >
-        {/* LOGO SECTION */}
-        <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg">
-              <BadgeIcon className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">RIN Registry</h2>
-              <p className="text-xs text-slate-500">Operator Portal</p>
-            </div>
-          </div>
-        </div>
-
-        {/* MAIN MENU */}
-        <div className="px-4 py-6 border-b border-slate-200">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-            Menu
-          </p>
-          <nav className="space-y-2">
-            {MAIN_MENU.map((item) => {
-              const Icon = item.icon;
-              const isActive = isLinkActive(item.href);
-
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start gap-3 ${
-                      isActive
-                        ? "bg-green-50 text-green-700 hover:bg-green-50"
-                        : "text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="font-semibold">{item.title}</span>
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* REGISTRATION STEPS */}
-        <div className="flex-1 px-4 py-6 overflow-y-auto">
-          <div className="mb-4">
-            <button
-              onClick={() => setIsRegistrationOpen(!isRegistrationOpen)}
-              className="w-full flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 hover:text-slate-700 transition-colors"
-            >
-              <span>Registration Steps</span>
-              <ChevronDown
-                className={`h-4 w-4 transition-transform ${
-                  isRegistrationOpen ? "rotate-0" : "-rotate-90"
-                }`}
-              />
-            </button>
-
-            {isRegistrationOpen && (
-              <nav className="space-y-2">
-                {REGISTRATION_STEPS.map((step) => {
-                  const Icon = step.icon;
-                  const isActive =
-                    isRegistrationPath && pathname?.includes(`step=${step.id}`);
-
-                  return (
-                    <Link key={step.id} href={step.href}>
-                      <button
-                        className={`w-full text-left p-3 rounded-lg transition-all ${
-                          isActive
-                            ? `${step.color} border-2 border-current shadow-md`
-                            : "bg-slate-50 text-slate-700 hover:bg-slate-100 border-2 border-transparent"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm">{step.title}</p>
-                            <p className="text-xs opacity-75">
-                              {step.description}
-                            </p>
-                          </div>
-                          <span className="flex-shrink-0 text-xs font-bold opacity-50">
-                            {step.id}
-                          </span>
-                        </div>
-                      </button>
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
-          </div>
-        </div>
-
-        {/* FOOTER INFO */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50">
-          <p className="text-xs text-slate-500 text-center">
-            v2.0 • RIN Registry System
-          </p>
-        </div>
-      </aside>
-
-      {/* MOBILE OVERLAY */}
-      {isOpen && (
+      {/* ── Backdrop ── */}
+      {open && (
         <div
-          onClick={() => setIsOpen(false)}
-          className="lg:hidden fixed inset-0 bg-black/20 z-30"
+          onClick={() => setOpen(false)}
+          className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30"
         />
       )}
+
+      {/* ── Sidebar ── */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-100 flex flex-col transition-transform duration-300 ease-in-out",
+        "lg:translate-x-0 lg:static lg:flex",
+        open ? "translate-x-0" : "-translate-x-full"
+      )}>
+
+        {/* Logo */}
+        <div className="px-4 py-3.5 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+              <Image src="/logo/rinlogo2.png" alt="RIN" width={46} height={46} className="object-contain brightness-200 " />
+            </div>
+            <div>
+              <p className="text-sm font-black text-slate-900 leading-none">Rider Registry</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Operator Portal</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+
+          {/* Main nav */}
+          <div>
+            <p className="px-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.22em] mb-2">
+              Navigation
+            </p>
+            <div className="space-y-0.5">
+              {NAV.map(({ title, icon: Icon, href }) => {
+                const active = pathname === href || (href !== "/operator/register" && pathname.startsWith(href));
+                return (
+                  <Link key={href} href={href}>
+                    <div className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                      active
+                        ? "bg-green-700 text-white shadow-sm shadow-green-900/20"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    )}>
+                      <Icon className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-slate-400")} />
+                      {title}
+                      {active && <ChevronRight className="h-3.5 w-3.5 ml-auto text-green-300" />}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+          </div>
+
+
+        {/* Footer */}
+        <div className="px-3 py-3 border-t border-slate-100 space-y-1.5">
+          {/* Status */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+            <span className="text-xs font-semibold text-slate-500">System Online</span>
+            <span className="ml-auto text-[10px] font-bold text-slate-400">v2.4.0</span>
+          </div>
+
+          {/* Sign out */}
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all group"
+          >
+            <LogOut className="h-4 w-4 text-slate-400 group-hover:text-red-500 transition-colors" />
+            Sign Out
+          </button>
+        </div>
+      </aside>
     </>
   );
 }

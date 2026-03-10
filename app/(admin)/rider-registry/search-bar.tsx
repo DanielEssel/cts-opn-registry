@@ -95,7 +95,7 @@ export function SearchBar({ onFiltersChange }: SearchBarProps) {
 
   return (
     <Card className="p-4 border-slate-200">
-      <div className="space-y-4">
+      <div className="space-y-2">
 
         {/* ── Search input + filter button ── */}
         <div className="flex gap-3">
@@ -146,7 +146,7 @@ export function SearchBar({ onFiltersChange }: SearchBarProps) {
               </div>
 
               {/* Filter fields */}
-              <div className="p-4 space-y-4 max-h-[340px] overflow-y-auto">
+              <div className="p-4 space-y-2 max-h-[200px] overflow-y-auto">
 
                 {/* Status */}
                 <FilterField label="Status" icon={<CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}>

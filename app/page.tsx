@@ -25,27 +25,29 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className=" z-20 border-b border-gray-200 bg-white/90 backdrop-blur-md">
+      <header className=" z-20 max-h-15 border-b border-gray-200 bg-white/90 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex h-20 items-center justify-between">
             {/* Logo Section */}
             <Link href="/" className="flex items-center gap-3 ">
+            
               <Image
-                src="/logo/RINlogo1.png"
+                src="/logo/rinlogo2.png"
                 alt="RIN Registry"
-                width={200}
-                height={200}
+                width={80}
+                height={80}
                 className="object-contain transition duration-300 group-hover:scale-105"
                 priority
               />
+              <div><h1 className="text-emerald-900 font-bold">CTS Rider Identification Number</h1></div>
             </Link>
 
             {/* Navigation */}
-            <nav className="flex items-center gap-4">
+            <nav className="flex items-center gap-2">
               <Link href="/retrieve">
                 <Button
                   variant="ghost"
-                  className="hidden sm:flex items-center text-gray-600 hover:text-gray-900"
+                  className="hidden sm:flex items-center mb-3 text-gray-600 hover:text-gray-900"
                 >
                   <Search className="mr-2 h-4 w-4" />
                   Find RIN
@@ -53,9 +55,9 @@ export default function HomePage() {
               </Link>
 
               <Link href="/login">
-                <Button className="bg-green-600 hover:bg-green-700 text-white px-5 shadow-sm">
+                <Button className="bg-green-600 hover:bg-green-700 mb-4 text-white px-4 shadow-sm">
                   <Lock className="mr-2 h-4 w-4" />
-                  Operator Login
+                  Officer Login
                 </Button>
               </Link>
             </nav>
@@ -86,7 +88,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
-                Official digital platform for commercial transport rider permits
+                Official digital platform for commercial transport rider identification
                 in Ghana.
               </p>
 
@@ -466,7 +468,7 @@ export default function HomePage() {
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm">
             <p>
-              © {new Date().getFullYear()} Ghana Rider Registration System. All
+              © {new Date().getFullYear()} Rider Registration System. All
               rights reserved.
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">

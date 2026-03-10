@@ -1,18 +1,142 @@
-rules_version='2'
-
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 3, 13);
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
     }
+
+    function profile() {
+      return get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && profile().role == "Super Admin";
+    }
+
+    function isDistrictAdmin() {
+      return isSignedIn() && profile().role == "District Admin";
+    }
+
+    function isOperator() {
+      return isSignedIn() && profile().role == "Operator";
+    }
+
+    function isActive() {
+      return profile().get("status", "Active") == "Active";
+    }
+
+    function isAnyAdmin() {
+      return isSignedIn() && isActive() &&
+        (isSuperAdmin() || isDistrictAdmin() || isOperator());
+    }
+
+    // ── /admin_users ─────────────────────────────────────────────────────────
+
+    match /admin_users/{userId} {
+      // Every signed-in user can read their own profile (required for login)
+      allow read:       if isSignedIn() && request.auth.uid == userId;
+      // Super Admin can read and write all profiles
+      allow read, write: if isSuperAdmin() && isActive();
+    }
+
+    // ── /riders ──────────────────────────────────────────────────────────────
+
+    match /riders/{riderId} {
+
+      // Public read — QR scan verify page (unauthenticated users scanning QR codes)
+      allow read: if true;
+
+      // Super Admin: full access
+      allow read, write: if isSuperAdmin() && isActive();
+
+      // District Admin: read + update own district only
+      // Cannot touch identity fields (RIN, sequence, counters, createdBy etc.)
+      allow read: if isDistrictAdmin() && isActive()
+                  && profile().entity == resource.data.districtMunicipality;
+
+      allow update: if isDistrictAdmin() && isActive()
+                    && profile().entity == resource.data.districtMunicipality
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(["RIN", "sequence", "regionCode", "districtCode",
+                                  "createdBy", "createdAt"]);
+
+      // Operator: create riders (CF enforces district, but status must be Pending)
+      allow create: if isOperator() && isActive()
+                    && request.resource.data.createdBy == request.auth.uid
+                    && request.resource.data.status == "Pending";
+
+      // Operator: read own registrations
+      allow read: if isOperator() && isActive()
+                  && resource.data.createdBy == request.auth.uid;
+
+      // ── QR CODE PATCH ────────────────────────────────────────────────────
+      // After the CF creates the rider doc, rider-service.ts patches qrCodeUrl
+      // back onto the doc. Allow any authenticated creator to update ONLY these
+      // two fields — nothing else can be changed via this rule.
+      allow update: if isSignedIn() && isActive()
+                    && resource.data.createdBy == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(["qrCodeUrl", "updatedAt"]);
+    }
+
+    // ── /rin_counters ────────────────────────────────────────────────────────
+    // Written only by Cloud Functions via Admin SDK
+
+    match /rin_counters/{counterId} {
+      allow read:  if isSuperAdmin() && isActive();
+      allow write: if false;
+    }
+
+    // ── /renewals ────────────────────────────────────────────────────────────
+
+    match /renewals/{renewalId} {
+      allow create: if isAnyAdmin();
+      allow read:   if isSuperAdmin() && isActive();
+      allow read:   if isDistrictAdmin() && isActive()
+                    && resource.data.district == profile().entity;
+      allow update: if false; // immutable once written
+      allow delete: if isSuperAdmin() && isActive();
+    }
+
+    // ── /audit_logs ──────────────────────────────────────────────────────────
+    // Any active admin can create logs (was 'if false' before — that was the bug)
+
+    match /audit_logs/{logId} {
+      allow create: if isAnyAdmin();
+      // Super Admin sees all logs
+      allow read:   if isSuperAdmin() && isActive();
+      // District Admin sees all logs for their district
+      allow read:   if isDistrictAdmin() && isActive()
+                    && resource.data.district == profile().entity;
+      // Operator sees only their own actions
+      allow read:   if isOperator() && isActive()
+                    && resource.data.adminUid == request.auth.uid;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ── Health check ─────────────────────────────────────────────────────────
+
+    match /_health_check/{doc} {
+      allow read: if isSignedIn();
+    }
+
+    // ── Deny everything else ─────────────────────────────────────────────────
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    match /admin_users/{userId} {
+  // Every signed-in user can read their own profile (required for login)
+  allow read:        if isSignedIn() && request.auth.uid == userId;
+  // Any active admin can read all profiles (for audit log name lookup)
+  allow read:        if isAnyAdmin();
+  // Super Admin can read and write all profiles
+  allow read, write: if isSuperAdmin() && isActive();
+}
   }
 }

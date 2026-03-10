@@ -7,263 +7,252 @@ import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 import {
-  Mail,
-  Lock,
-  Loader2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  ShieldCheck,
+  Mail, Lock, Loader2, AlertCircle,
+  Eye, EyeOff, ArrowRight, ShieldCheck,
+  Users, Settings,
 } from "lucide-react";
 
+type UserType = "operator" | "admin";
+
+const ADMIN_ROLES    = ["Super Admin", "District Admin"] as const;
+const OPERATOR_ROLES = ["Operator"] as const;
+
 export default function LoginPage() {
-  const [userType, setUserType] = useState<UserType>("operator");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [userType,     setUserType]     = useState<UserType>("operator");
+  const [email,        setEmail]        = useState("");
+  const [password,     setPassword]     = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-
-  const ADMIN_ROLES = ["Super Admin", "District Admin"] as const;
-  const OPERATOR_ROLES = ["Operator"] as const;
-
-  type UserType = "admin" | "operator";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      const snap      = await getDoc(doc(db, "admin_users", user.uid));
 
-      const user = userCredential.user;
-
-      const userDocRef = doc(db, "admin_users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (!userDocSnap.exists()) {
-        setError(
-          "User profile not found. Please contact the Boss (Super Admin).",
-        );
-        await auth.signOut();
-        return;
+      if (!snap.exists()) {
+        setError("User profile not found. Contact your Super Admin.");
+        await auth.signOut(); return;
       }
 
-      const userData = userDocSnap.data();
-      const userRole = userData?.role as string | undefined;
-      const status = userData?.status as string | undefined;
+      const data   = snap.data();
+      const role   = data?.role   as string | undefined;
+      const status = data?.status as string | undefined;
 
       if (status && status !== "Active") {
-        setError(
-          "Account is not active. Please contact the Boss (Super Admin).",
-        );
-        await auth.signOut();
-        return;
+        setError("Account is inactive. Contact your Super Admin.");
+        await auth.signOut(); return;
       }
 
       if (userType === "admin") {
-        if (userRole && ADMIN_ROLES.includes(userRole as any)) {
-          router.push("/dashboard");
-        } else {
-          setError("Access Denied: Administrator privileges required.");
-          await auth.signOut();
-        }
+        if (role && ADMIN_ROLES.includes(role as any)) router.push("/dashboard");
+        else { setError("Access denied: Administrator privileges required."); await auth.signOut(); }
       } else {
-        if (userRole && OPERATOR_ROLES.includes(userRole as any)) {
-          router.push("/operator/register");
-        } else {
-          setError("Access Denied: Invalid role for operator login.");
-          await auth.signOut();
-        }
+        if (role && OPERATOR_ROLES.includes(role as any)) router.push("/operator/register");
+        else { setError("Access denied: Invalid role for operator login."); await auth.signOut(); }
       }
-    } catch (err) {
-      setError("Invalid credentials. Please check your email and password.");
+    } catch {
+      setError("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-[1000px] bg-white rounded-3xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col md:flex-row min-h-[600px] border border-slate-100">
-        {/* LEFT PANEL: BRANDING & IDENTITY */}
-        <div className="hidden md:flex flex-col w-[45%] bg-[#0F172A] p-12 text-white relative overflow-hidden">
-          {/* Subtle Background Pattern */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-[-10%] left-[-10%] w-full h-full border-[1px] border-white rounded-full" />
-            <div className="absolute bottom-[-20%] right-[-20%] w-full h-full border-[1px] border-white rounded-full" />
-          </div>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 lg:p-8">
 
-          <div className="relative z-10 flex flex-col h-full justify-between">
+      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-xl shadow-slate-200/80 overflow-hidden flex flex-col lg:flex-row border border-slate-100">
+
+        {/* ── Left branding panel ── */}
+        <div className="hidden lg:flex flex-col w-[38%] bg-slate-900 relative overflow-hidden shrink-0">
+
+          {/* Decorative rings */}
+          <div className="absolute -top-32 -left-32 w-96 h-96 border border-white/5 rounded-full pointer-events-none" />
+          <div className="absolute -top-16 -left-16 w-64 h-64 border border-white/5 rounded-full pointer-events-none" />
+          <div className="absolute -bottom-40 -right-40 w-[28rem] h-[28rem] border border-white/5 rounded-full pointer-events-none" />
+          <div className="absolute -bottom-20 -right-20 w-64 h-64 border border-white/5 rounded-full pointer-events-none" />
+
+          {/* Green accent strip */}
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-green-400 via-green-600 to-green-900" />
+
+          <div className="relative z-10 flex flex-col h-full p-8 xl:p-10 justify-between">
             <div>
-              <div className="bg-white/10 w-fit p-3 rounded-2xl backdrop-blur-md mb-8">
-                <ShieldCheck className="w-8 h-8 text-emerald-400" />
+              <div className="inline-flex items-center gap-2.5 bg-white/8 border border-white/10 px-4 py-2.5 rounded-2xl mb-10 backdrop-blur">
+                <ShieldCheck className="w-5 h-5 text-green-400" />
+                <span className="text-[10px] font-bold tracking-widest text-green-300 uppercase">Secured Portal</span>
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight mb-4">
-                RIN Registry <span className="text-emerald-400">System</span>
+
+              <h1 className="text-3xl xl:text-4xl font-black text-white tracking-tight leading-tight mb-4">
+                RIN Register<br /><span className="text-green-400">System</span>
               </h1>
-              <p className="text-slate-400 text-lg leading-relaxed max-w-[280px]">
-                Ghana's official secure portal for motor rider registration and
-                permi issuance.
+
+              <p className="text-slate-400 text-sm xl:text-base leading-relaxed max-w-xs">
+                Ghana's official secure portal for commercial motor rider
+                registration and permit issuance.
               </p>
+
+              <div className="flex flex-col gap-3 mt-8">
+                {[
+                  "Real-time permit tracking",
+                  "QR code verification",
+                  "District-level access control",
+                ].map((f) => (
+                  <div key={f} className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                    <span className="text-slate-400 text-sm">{f}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="h-1 w-12 bg-emerald-500 rounded-full" />
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-bold">
-                  Official Portal
-                </p>
+            <div>
+              <div className="pt-8 mb-6 border-t border-white/8">
+                <Image
+                  src="/logo/rawlogo.png"
+                  alt="CTS Africa"
+                  width={140}
+                  height={140}
+                  className="opacity-80 brightness-110"
+                />
               </div>
-              <Image
-                src="/logo/rawlogo.png"
-                alt="RIN Logo"
-                width={180}
-                height={180}
-                className="opacity-90 brightness-110"
-              />
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/10" />
+                <p className="text-[10px] font-bold tracking-[0.25em] text-slate-600 uppercase">Official Portal</p>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL: LOGIN FORM */}
-        <div className="flex-1 px-8 py-12 lg:px-16 flex flex-col justify-center">
-          <div className="max-w-sm mx-auto w-full">
-            <div className="mb-10">
-              <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
-                Login
-              </h2>
-              <p className="text-slate-500 mt-2 text-sm">
-                Welcome back! Please enter your details.
-              </p>
+        {/* ── Right form panel ── */}
+        <div className="flex-1 flex flex-col justify-center px-6 py-8 sm:px-8 lg:px-10 xl:px-12 min-h-[520px]">
+
+          {/* Mobile logo */}
+          <div className="flex lg:hidden items-center gap-3 mb-8">
+            <div className="p-2 bg-green-700 rounded-xl">
+              <ShieldCheck className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-slate-900 text-lg">RIN Registry</span>
+          </div>
+
+          <div className="w-full max-w-sm mx-auto">
+
+            <div className="mb-8">
+              <h2 className="text-xl xl:text-2xl font-black text-slate-900 tracking-tight">Welcome back</h2>
+              <p className="text-slate-500 text-sm mt-1.5">Sign in to access the registry portal.</p>
             </div>
 
-            {/* USER TYPE SELECTOR */}
-            <div className="grid grid-cols-2 p-1.5 bg-slate-100/80 rounded-xl mb-8 border border-slate-200/50">
-              <button
-                onClick={() => setUserType("operator")}
-                className={`py-2.5 text-sm font-bold rounded-lg transition-all ${
-                  userType === "operator"
-                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                Operator
-              </button>
-              <button
-                onClick={() => setUserType("admin")}
-                className={`py-2.5 text-sm font-bold rounded-lg transition-all ${
-                  userType === "admin"
-                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                Administrator
-              </button>
+            {/* Role tabs */}
+            <div className="grid grid-cols-2 gap-2 mb-8">
+              {([
+                { key: "operator", label: "Operator",      Icon: Users    },
+                { key: "admin",    label: "Administrator", Icon: Settings },
+              ] as { key: UserType; label: string; Icon: any }[]).map(({ key, label, Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => { setUserType(key); setError(""); }}
+                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold border transition-all ${
+                    userType === key
+                      ? "bg-green-700 text-white border-green-700 shadow-md shadow-green-900/20"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              ))}
             </div>
 
+            {/* Error */}
             {error && (
-              <Alert className="mb-6 bg-red-50 border-red-200 text-red-800 rounded-xl animate-in fade-in slide-in-from-top-1">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-xs font-medium">
-                  {error}
-                </AlertDescription>
-              </Alert>
+              <div className="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200 rounded-xl mb-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-xs font-semibold text-red-700 leading-snug">{error}</p>
+              </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">
+            {/* Form */}
+            <form onSubmit={handleLogin} className="space-y-4">
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div className="relative group">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-green-600 transition-colors pointer-events-none" />
                   <Input
                     type="email"
-                    placeholder="name@agency.gov.gh"
-                    className="pl-11 h-12 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                    placeholder="you@agency.gov.gh"
+                    className="pl-10 h-11 bg-slate-50 border-slate-200 rounded-xl text-sm focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:border-green-500 transition-all"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="email"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                   Password
                 </label>
                 <div className="relative group">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-green-600 transition-colors pointer-events-none" />
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••••••"
-                    className="pl-11 pr-11 h-12 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                    className="pl-10 pr-11 h-11 bg-slate-50 border-slate-200 rounded-xl text-sm focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:border-green-500 transition-all"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between px-1">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
-                  />
-                  <span className="text-xs font-medium text-slate-500 group-hover:text-slate-700 transition-colors">
-                    Remember device
-                  </span>
+              <div className="flex items-center justify-between pt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="w-3.5 h-3.5 rounded border-slate-300 accent-green-600" />
+                  <span className="text-xs text-slate-500">Remember me</span>
                 </label>
                 <button
                   type="button"
-                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
+                  className="text-xs font-bold text-green-700 hover:text-green-800 transition-colors"
                 >
-                  Forgot Password?
+                  Forgot password?
                 </button>
               </div>
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                className="w-full h-11 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl shadow-lg shadow-green-900/15 transition-all active:scale-[0.98] gap-2 mt-1"
               >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    Sign In to Portal
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                {loading
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <><span>Sign In</span><ArrowRight className="h-4 w-4" /></>
+                }
               </Button>
             </form>
 
-            <div className="mt-10 pt-8 border-t border-slate-100 text-center">
-              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">
-                &copy; 2026 Ghana RIN Registry • v2.4.0
+            <div className="mt-10 pt-6 border-t border-slate-100 text-center">
+              <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
+                © 2026 CTS Africa · RIN Registry · v2.4.0
               </p>
             </div>
           </div>

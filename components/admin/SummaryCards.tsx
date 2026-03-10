@@ -67,61 +67,62 @@ function SuperAdminCards({ users }: { users: AdminUser[] }) {
 // ── District Admin view — scoped to their entity ─────────────────────────────
 // useUsers already filters by entity for District Admins, so `users` here
 // contains only members of their district.
-function DistrictAdminCards({
-  users,
-  entity,
-}: {
-  users: AdminUser[];
-  entity: string;
-}) {
-  const districtAdminCount = users.filter((u) => u.role === "District Admin").length;
-  const operatorCount      = users.filter((u) => u.role === "Operator").length;
-  const activeCount        = users.filter((u) => u.status === "Active").length;
-  const total              = users.length;
+function DistrictAdminCards({ users, entity }: { users: AdminUser[]; entity: string }) {
+  const stats = {
+    total: users.length,
+    admins: users.filter(u => u.role === "District Admin").length,
+    operators: users.filter(u => u.role === "Operator").length,
+    active: users.filter(u => u.status === "Active").length,
+  };
 
   return (
     <div className="grid md:grid-cols-3 gap-4">
-      <Card className="bg-slate-900 text-white border-none shadow-xl">
+      {/* Primary Context Card */}
+      <Card className="bg-slate-900 text-white border-none shadow-xl relative overflow-hidden">
         <CardHeader className="pb-2">
-          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
-            <Building2 className="h-3.5 w-3.5" />
-            {entity}
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+            Current Entity
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-black">{total}</div>
-          <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-tighter">
-            Total accounts
-          </p>
+          <div className="text-2xl font-black truncate">{entity}</div>
+          <div className="flex items-center gap-2 mt-2">
+             <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+             <p className="text-[10px] text-slate-400 font-bold uppercase">System Operational</p>
+          </div>
         </CardContent>
       </Card>
 
+      {/* Breakdown Card */}
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
             <ShieldCheck className="h-3.5 w-3.5" />
-            District Admins
+            Staff Composition
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-black text-slate-900">{districtAdminCount}</div>
-          <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-tighter">
-            {operatorCount} operator{operatorCount !== 1 ? "s" : ""}
+          <div className="text-3xl font-black text-slate-900">{stats.total}</div>
+          <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase">
+            {stats.admins} Admins • {stats.operators} Operators
           </p>
         </CardContent>
       </Card>
 
+      {/* Status Card */}
       <Card className="border-green-100 bg-green-50/40 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-green-600 flex items-center gap-2">
             <Users className="h-3.5 w-3.5" />
-            Active Accounts
+            Account Health
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-black text-green-700">{activeCount}</div>
-          <p className="text-[10px] text-green-600 font-bold mt-1 uppercase tracking-tighter">
-            {total - activeCount} suspended
+          <div className="text-3xl font-black text-green-700">
+            {Math.round((stats.active / stats.total) * 100 || 0)}%
+          </div>
+          <p className="text-[10px] text-green-600 font-bold mt-1 uppercase">
+            {stats.active} of {stats.total} accounts active
           </p>
         </CardContent>
       </Card>

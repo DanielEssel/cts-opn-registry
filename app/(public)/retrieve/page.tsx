@@ -59,17 +59,6 @@ export default function RetrieveRIN() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex flex-col">
-      {/* NAVBAR */}
-      <nav className="border-b border-green-200/30 bg-white/40 backdrop-blur-lg px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center">
-              <BadgeIcon className="h-5 w-5 text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-gray-900">RIN Registry</h1>
-          </Link>
-        </div>
-      </nav>
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex items-center justify-center p-4 py-12">

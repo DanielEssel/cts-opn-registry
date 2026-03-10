@@ -91,7 +91,7 @@ export function UsersTable({ users, adminProfile }: UsersTableProps) {
     try {
       await updateDoc(doc(db, "admin_users", user.id), { status: newStatus });
       toast.success(
-        `${user.name} has been ${newStatus === "Active" ? "activated" : "suspended"}.`
+        `${user.name} has been ${newStatus === "Active" ? "activated" : "suspended"}.`,
       );
     } catch {
       toast.error("Failed to update status. Check your permissions.");
@@ -129,7 +129,7 @@ export function UsersTable({ users, adminProfile }: UsersTableProps) {
     try {
       await sendPasswordResetEmail(auth, resetTarget.email);
       toast.success(
-        `Reset link sent to ${resetTarget.email}. They have 1 hour to use it.`
+        `Reset link sent to ${resetTarget.email}. They have 1 hour to use it.`,
       );
     } catch (err: any) {
       // auth/user-not-found means the email isn't in Firebase Auth
@@ -165,7 +165,9 @@ export function UsersTable({ users, adminProfile }: UsersTableProps) {
         <CardHeader className="border-b bg-slate-50/30">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-lg font-bold">
-              {isSuperAdmin ? "All Administrative Accounts" : `${adminProfile.entity ?? "District"} Accounts`}
+              {isSuperAdmin
+                ? "All Administrative Accounts"
+                : `${adminProfile.entity ?? "District"} Accounts`}
             </CardTitle>
 
             <div className="flex items-center gap-2">
@@ -203,10 +205,16 @@ export function UsersTable({ users, adminProfile }: UsersTableProps) {
                 <TableHead className="font-bold text-slate-700">User</TableHead>
                 <TableHead className="font-bold text-slate-700">Role</TableHead>
                 {isSuperAdmin && (
-                  <TableHead className="font-bold text-slate-700">Entity</TableHead>
+                  <TableHead className="font-bold text-slate-700">
+                    Entity
+                  </TableHead>
                 )}
-                <TableHead className="font-bold text-slate-700">Status</TableHead>
-                <TableHead className="font-bold text-slate-700">Created</TableHead>
+                <TableHead className="font-bold text-slate-700">
+                  Status
+                </TableHead>
+                <TableHead className="font-bold text-slate-700">
+                  Created
+                </TableHead>
                 <TableHead className="text-right font-bold text-slate-700 pr-6">
                   Actions
                 </TableHead>
@@ -226,7 +234,12 @@ export function UsersTable({ users, adminProfile }: UsersTableProps) {
                       </div>
                       <div>
                         <p className="font-semibold text-sm text-slate-900">
-                          {user.name}
+                          {user.name}{" "}
+                          {adminProfile.uid === user.id && (
+                            <span className="ml-2 text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase">
+                              You
+                            </span>
+                          )}
                         </p>
                         <p className="text-[11px] text-slate-500 flex items-center gap-1">
                           <Mail className="h-3 w-3" /> {user.email}
@@ -294,7 +307,9 @@ export function UsersTable({ users, adminProfile }: UsersTableProps) {
                           Edit Details
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
+                        <DropdownMenuItem
+                          onClick={() => handleToggleStatus(user)}
+                        >
                           <Shield className="mr-2 h-4 w-4" />
                           {user.status === "Active"
                             ? "Suspend Account"
@@ -304,7 +319,9 @@ export function UsersTable({ users, adminProfile }: UsersTableProps) {
                         {/* Password reset — only shown when the current admin
                             has permission to reset this particular user */}
                         {canResetPassword(user) && (
-                          <DropdownMenuItem onClick={() => setResetTarget(user)}>
+                          <DropdownMenuItem
+                            onClick={() => setResetTarget(user)}
+                          >
                             <KeyRound className="mr-2 h-4 w-4" />
                             Send Password Reset
                           </DropdownMenuItem>
@@ -331,10 +348,13 @@ export function UsersTable({ users, adminProfile }: UsersTableProps) {
           </Table>
 
           {filtered.length === 0 && (
-            <div className="py-16 text-center text-slate-400 text-sm">
-              {search || roleFilter !== "All"
-                ? "No users match your search or filter."
-                : "No administrative accounts found."}
+            <div className="py-16 text-center">
+              <p className="text-slate-400 text-sm">No accounts found.</p>
+              {!isSuperAdmin && (
+                <p className="text-xs text-blue-600 mt-2 font-medium">
+                  Click "Add User" to start building your district team.
+                </p>
+              )}
             </div>
           )}
         </CardContent>
