@@ -30,49 +30,56 @@ interface RiderData {
 
 const STATUS_CONFIG = {
   Active: {
-    label:   "ACTIVE",
-    icon:    CheckCircle2,
-    dot:     "#22c55e",
-    ping:    "#bbf7d0",
-    accent:  "#166534",
-    chip:    "bg-emerald-100 text-emerald-800 border border-emerald-200",
+    label:      "ACTIVE — VALID PERMIT",
+    icon:       CheckCircle2,
+    dot:        "#16a34a",
+    ping:       "#bbf7d0",
+    bannerBg:   "#f0fdf4",
+    bannerBorder: "#bbf7d0",
+    bannerText: "#166534",
+    chip:       "bg-emerald-100 text-emerald-800 border border-emerald-200",
+    ringColor:  "#16a34a",
   },
   Expired: {
-    label:   "EXPIRED",
-    icon:    XCircle,
-    dot:     "#ef4444",
-    ping:    "#fecaca",
-    accent:  "#991b1b",
-    chip:    "bg-red-100 text-red-800 border border-red-200",
+    label:      "EXPIRED — NOT VALID",
+    icon:       XCircle,
+    dot:        "#dc2626",
+    ping:       "#fecaca",
+    bannerBg:   "#fef2f2",
+    bannerBorder: "#fecaca",
+    bannerText: "#991b1b",
+    chip:       "bg-red-100 text-red-800 border border-red-200",
+    ringColor:  "#dc2626",
   },
   Suspended: {
-    label:   "SUSPENDED",
-    icon:    Shield,
-    dot:     "#f97316",
-    ping:    "#fed7aa",
-    accent:  "#9a3412",
-    chip:    "bg-orange-100 text-orange-800 border border-orange-200",
+    label:      "SUSPENDED — NOT VALID",
+    icon:       Shield,
+    dot:        "#ea580c",
+    ping:       "#fed7aa",
+    bannerBg:   "#fff7ed",
+    bannerBorder: "#fed7aa",
+    bannerText: "#9a3412",
+    chip:       "bg-orange-100 text-orange-800 border border-orange-200",
+    ringColor:  "#ea580c",
   },
   Pending: {
-    label:   "PENDING",
-    icon:    Clock,
-    dot:     "#eab308",
-    ping:    "#fef08a",
-    accent:  "#854d0e",
-    chip:    "bg-yellow-100 text-yellow-800 border border-yellow-200",
+    label:      "PENDING APPROVAL",
+    icon:       Clock,
+    dot:        "#ca8a04",
+    ping:       "#fef08a",
+    bannerBg:   "#fefce8",
+    bannerBorder: "#fde68a",
+    bannerText: "#854d0e",
+    chip:       "bg-yellow-100 text-yellow-800 border border-yellow-200",
+    ringColor:  "#ca8a04",
   },
 };
 
-function Col({ label, value }: { label: string; value?: string }) {
+function Field({ label, value }: { label: string; value?: string }) {
   return (
     <div>
-      <p style={{ fontSize: "8px", letterSpacing: "0.16em" }}
-        className="font-black uppercase text-slate-400 mb-0.5">
-        {label}
-      </p>
-      <p className="text-[11px] font-bold text-slate-800 uppercase leading-snug">
-        {value || "—"}
-      </p>
+      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{label}</p>
+      <p className="text-xs font-bold text-slate-800 uppercase leading-snug">{value || "—"}</p>
     </div>
   );
 }
@@ -99,37 +106,41 @@ export default function VerifyPage() {
     if (RIN) fetchRider(); else setLoading(false);
   }, [RIN]);
 
+  // ── Loading ───────────────────────────────────────────────────────────────
+
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0f1a" }}>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="flex flex-col items-center gap-4">
         <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-2 border-emerald-900" />
-          <Loader2 className="w-12 h-12 text-emerald-500 animate-spin absolute" />
+          <div className="absolute inset-0 rounded-full border-2 border-emerald-200" />
+          <Loader2 className="w-12 h-12 text-emerald-600 animate-spin absolute" />
         </div>
-        <p style={{ fontSize: "9px", letterSpacing: "0.3em" }} className="font-black uppercase text-slate-600">
-          Verifying...
+        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">
+          Verifying Permit...
         </p>
       </div>
     </div>
   );
 
+  // ── Not found ─────────────────────────────────────────────────────────────
+
   if (!rider) return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "#0a0f1a" }}>
-      <div className="text-center max-w-xs">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <AlertTriangle className="h-7 w-7 text-red-500" />
-        </div>
-        <h1 className="text-lg font-black text-red-400 tracking-widest">INVALID PERMIT</h1>
-        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-          RIN <span className="font-mono font-black text-red-400">{RIN}</span> was not
-          found in the national registry.
-        </p>
-        <div className="mt-4 py-2 px-4 rounded-lg text-[10px] font-black uppercase tracking-wider text-red-400"
-          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
-          Do not allow rider to operate
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-red-50 p-6 text-center">
+      <div className="w-20 h-20 rounded-full bg-red-100 border-2 border-red-200 flex items-center justify-center mb-5">
+        <AlertTriangle className="h-9 w-9 text-red-600" />
       </div>
+      <h1 className="text-2xl font-black text-red-900 tracking-tight">INVALID PERMIT</h1>
+      <p className="text-sm text-red-600 mt-2 max-w-xs leading-relaxed">
+        RIN <span className="font-mono font-black">{RIN}</span> not found
+        in the national registry.
+      </p>
+      <div className="mt-5 px-5 py-3 bg-red-600 rounded-2xl text-xs font-black text-white uppercase tracking-wider shadow-lg shadow-red-200">
+        ⚠ Do not allow this rider to operate
+      </div>
+      <button onClick={() => window.location.reload()}
+        className="mt-4 text-xs font-bold text-red-400 underline underline-offset-2">
+        Retry
+      </button>
     </div>
   );
 
@@ -142,168 +153,192 @@ export default function VerifyPage() {
     : "—";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8"
-      style={{ background: "#0a0f1a" }}>
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-start py-4 px-3 md:justify-center md:py-8 md:px-4">
+      <div className="w-full" style={{ maxWidth: 700 }}>
 
-      {/* ── THE CARD ──────────────────────────────────────────────────────── */}
-      <div className="w-full" style={{ maxWidth: "680px" }}>
-
-        {/* Card shell */}
-        <div className="relative rounded-2xl overflow-hidden"
+        {/* ── STATUS BANNER — big and clear for officers ─────────────────── */}
+        <div
+          className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3 border"
           style={{
-            background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.9)",
-          }}>
+            background:   cfg.bannerBg,
+            borderColor:  cfg.bannerBorder,
+          }}
+        >
+          <span className="relative flex h-3 w-3 shrink-0">
+            {isActive && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
+                style={{ background: cfg.ping }} />
+            )}
+            <span className="relative inline-flex rounded-full h-3 w-3"
+              style={{ background: cfg.dot }} />
+          </span>
+          <p className="text-sm font-black uppercase tracking-widest" style={{ color: cfg.bannerText }}>
+            {cfg.label}
+          </p>
+          <StatusIcon className="h-5 w-5 ml-auto shrink-0" style={{ color: cfg.dot }} />
+        </div>
 
-          {/* Subtle watermark pattern */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.025]"
-            style={{
-              backgroundImage: `repeating-linear-gradient(45deg, #166534 0px, #166534 1px, transparent 1px, transparent 12px)`,
-            }} />
+        {/* ── CARD ───────────────────────────────────────────────────────── */}
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{
+            background:  "#ffffff",
+            boxShadow:   "0 8px 40px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.8)",
+            border:      "1px solid #e2e8f0",
+          }}
+        >
+          {/* Green top stripe */}
+          <div style={{ height: 5, background: "linear-gradient(90deg,#166534,#15803d)" }} />
 
-          {/* ── Left green stripe ───────────────────────────────────────── */}
-          <div className="absolute left-0 top-0 bottom-0 w-2"
-            style={{ background: "linear-gradient(180deg, #166534 0%, #15803d 100%)" }} />
+          {/* ── MOBILE layout (stacked) / DESKTOP layout (horizontal) ──── */}
+          <div className="flex flex-col md:flex-row">
 
-          {/* ── Card content ────────────────────────────────────────────── */}
-          <div className="flex items-stretch pl-4">
-
-            {/* PHOTO COLUMN */}
-            <div className="flex flex-col items-center justify-center gap-3 px-5 py-5 shrink-0"
-              style={{ borderRight: "1px solid #e2e8f0" }}>
-
+            {/* ── LEFT: Photo + QR ─────────────────────────────────────── */}
+            <div
+              className="flex flex-row md:flex-col items-center justify-center gap-4 md:gap-4 px-5 py-5 md:py-6"
+              style={{ borderBottom: "1px solid #e2e8f0", borderRight: "none" }}
+            >
               {/* Photo */}
-              <div className="overflow-hidden rounded-xl"
+              <div
+                className="rounded-xl overflow-hidden shrink-0"
                 style={{
-                  width: 72, height: 88,
-                  boxShadow: `0 0 0 3px ${cfg.dot}, 0 4px 12px rgba(0,0,0,0.15)`,
-                }}>
+                  width: 80, height: 96,
+                  boxShadow: `0 0 0 3px ${cfg.ringColor}, 0 4px 16px rgba(0,0,0,0.12)`,
+                }}
+              >
                 {rider.passportPhotoUrl ? (
                   <img src={rider.passportPhotoUrl} alt="Photo"
                     className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                    <User className="h-7 w-7 text-slate-300" />
+                    <User className="h-8 w-8 text-slate-300" />
                   </div>
                 )}
               </div>
 
-              {/* QR Code */}
-              {rider.qrCodeUrl ? (
-                <div className="rounded-lg overflow-hidden p-1.5 bg-white"
-                  style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.12)", border: "1px solid #e2e8f0" }}>
-                  <img src={rider.qrCodeUrl} alt="QR" style={{ width: 56, height: 56, display: "block" }} />
+              {/* Name visible on mobile next to photo */}
+              <div className="md:hidden flex-1 min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-widest text-green-700 mb-0.5">
+                  Full Legal Name
+                </p>
+                <p className="text-lg font-black text-slate-900 uppercase leading-tight">
+                  {rider.fullName}
+                </p>
+                {rider.phoneNumber && (
+                  <p className="text-xs text-slate-400 font-semibold mt-1">{rider.phoneNumber}</p>
+                )}
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
+                  style={{ background: cfg.bannerBg, borderColor: cfg.bannerBorder, color: cfg.bannerText }}>
+                  <span className="relative flex h-1.5 w-1.5">
+                    {isActive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: cfg.ping }} />}
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: cfg.dot }} />
+                  </span>
+                  {rider.status}
                 </div>
-              ) : (
-                <div style={{ width: 64, height: 64, background: "#f1f5f9", borderRadius: 8 }} />
+              </div>
+
+              {/* QR — hidden on mobile, shown on desktop */}
+              {rider.qrCodeUrl && (
+                <div className="hidden md:block p-1.5 bg-white rounded-xl border border-slate-200 shadow-sm mt-1">
+                  <img src={rider.qrCodeUrl} alt="QR" style={{ width: 64, height: 64, display: "block" }} />
+                </div>
               )}
             </div>
 
-            {/* CENTER — name + details */}
-            <div className="flex-1 px-5 py-5 flex flex-col justify-between min-w-0">
+            {/* ── CENTER: Name (desktop) + details ─────────────────────── */}
+            <div className="flex-1 px-5 py-5 min-w-0"
+              style={{ borderBottom: "1px solid #e2e8f0" }}>
 
-              {/* Header row */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  {/* Authority label */}
-                  <p style={{ fontSize: "8px", letterSpacing: "0.2em", color: "#166534" }}
-                    className="font-black uppercase mb-0.5">
-                    Ghana Transport Authority
-                  </p>
-                  {/* Name */}
-                  <h1 className="font-black text-slate-900 uppercase leading-tight truncate"
-                    style={{ fontSize: "18px" }}>
-                    {rider.fullName}
-                  </h1>
-                  {rider.phoneNumber && (
-                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{rider.phoneNumber}</p>
-                  )}
-                </div>
-
-                {/* Status chip */}
-                <div className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${cfg.chip}`}>
+              {/* Name — desktop only */}
+              <div className="hidden md:block mb-4">
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-green-700 mb-0.5">
+                  Full Legal Name
+                </p>
+                <h1 className="text-xl font-black text-slate-900 uppercase leading-tight">
+                  {rider.fullName}
+                </h1>
+                {rider.phoneNumber && (
+                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{rider.phoneNumber}</p>
+                )}
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
+                  style={{ background: cfg.bannerBg, borderColor: cfg.bannerBorder, color: cfg.bannerText }}>
                   <span className="relative flex h-1.5 w-1.5">
-                    {isActive && (
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                        style={{ background: cfg.ping }} />
-                    )}
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5"
-                      style={{ background: cfg.dot }} />
+                    {isActive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: cfg.ping }} />}
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: cfg.dot }} />
                   </span>
-                  {cfg.label}
+                  {rider.status}
                 </div>
               </div>
 
-              {/* Details grid */}
-              <div className="mt-4 grid grid-cols-3 gap-x-4 gap-y-3">
-                <Col label="District"   value={rider.districtMunicipality}     />
-                <Col label="Town"       value={rider.residentialTown}          />
-                <Col label="Gender"     value={rider.gender}                   />
-                <Col label="ID Type"    value={rider.idType?.replace("_"," ")} />
-                <Col label="ID Number"  value={rider.idNumber}                 />
-                <Col label="Vehicle"    value={rider.vehicleCategory}          />
+              {/* Details — 2 cols on mobile, 3 cols on desktop */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4">
+                <Field label="District"   value={rider.districtMunicipality}      />
+                <Field label="Town"       value={rider.residentialTown}           />
+                <Field label="Gender"     value={rider.gender}                    />
+                <Field label="ID Type"    value={rider.idType?.replace("_", " ")} />
+                <Field label="ID Number"  value={rider.idNumber}                  />
+                <Field label="Vehicle"    value={rider.vehicleCategory}           />
               </div>
             </div>
 
-            {/* RIGHT — RIN + dates */}
-            <div className="shrink-0 flex flex-col justify-between px-5 py-5"
-              style={{ width: 148, borderLeft: "1px solid #e2e8f0" }}>
-
+            {/* ── RIGHT: RIN + dates ───────────────────────────────────── */}
+            <div
+              className="grid grid-cols-2 md:flex md:flex-col md:justify-between gap-4 px-5 py-5 md:w-44 md:shrink-0"
+              style={{ borderTop: "none", borderLeft: "none", background: "#fafafa" }}
+            >
               {/* RIN */}
-              <div>
-                <p style={{ fontSize: "8px", letterSpacing: "0.16em", color: "#166534" }}
-                  className="font-black uppercase mb-1">
+              <div className="col-span-2 md:col-span-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-green-700 mb-0.5">
                   Rider ID No.
                 </p>
-                <p className="font-mono font-black text-slate-900"
-                  style={{ fontSize: "13px", letterSpacing: "0.1em" }}>
+                <p className="font-mono font-black text-slate-900 text-sm tracking-widest">
                   {rider.RIN}
                 </p>
               </div>
 
-              <div className="space-y-2.5 mt-3">
-                <Col label="Plate No."  value={rider.plateNumber}   />
-                <Col label="Issued"     value={fmt(rider.issueDate)} />
-                <Col label="Expires"    value={fmt(rider.expiryDate)} />
-              </div>
+              <Field label="Plate No."  value={rider.plateNumber}    />
+              <Field label="Issued"     value={fmt(rider.issueDate)}  />
+              <Field label="Expires"    value={fmt(rider.expiryDate)} />
 
-              {/* GH crest placeholder */}
-              <div className="mt-3 flex items-center gap-1.5 opacity-30">
-                <Shield className="h-4 w-4 text-slate-600" />
-                <p style={{ fontSize: "7px", letterSpacing: "0.15em" }}
-                  className="font-black uppercase text-slate-600">
-                  Official
-                </p>
-              </div>
+              {/* QR on mobile — shown in right column */}
+              {rider.qrCodeUrl && (
+                <div className="md:hidden col-span-1">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">QR Code</p>
+                  <div className="p-1 bg-white rounded-lg border border-slate-200 shadow-sm inline-block">
+                    <img src={rider.qrCodeUrl} alt="QR" style={{ width: 52, height: 52, display: "block" }} />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* ── Bottom bar ──────────────────────────────────────────────── */}
-          <div className="flex items-center justify-between px-5 py-2"
-            style={{ borderTop: "1px solid #e2e8f0", background: "#f8fafc" }}>
-            <div className="flex items-center gap-2">
-              <StatusIcon className="h-3 w-3" style={{ color: cfg.dot }} />
-              <p style={{ fontSize: "9px", letterSpacing: "0.12em", color: cfg.accent }}
-                className="font-bold uppercase">
+          <div
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-5 py-2.5"
+            style={{ borderTop: "1px solid #e2e8f0", background: "#f8fafc" }}
+          >
+            <div className="flex items-center gap-1.5">
+              <StatusIcon className="h-3 w-3 shrink-0" style={{ color: cfg.dot }} />
+              <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: cfg.bannerText }}>
                 {isActive
-                  ? "Verified · Authenticated record from the Ghana Commercial Rider Registry"
-                  : `${cfg.label} · This permit is not currently valid`}
+                  ? "Authenticated record · Ghana Commercial Rider Registry"
+                  : `${rider.status} · This permit is not currently valid`}
               </p>
             </div>
-            <p style={{ fontSize: "8px" }} className="font-mono text-slate-400 shrink-0 ml-4">
-              {time}
+            <p className="text-[8px] font-mono text-slate-400 shrink-0">
+              Verified · {time}
             </p>
           </div>
         </div>
 
-        {/* Law enforcement note below card */}
-        <div className="mt-3 flex items-center justify-center gap-2">
-          <Shield className="h-3 w-3 text-slate-600 shrink-0" />
-          <p style={{ fontSize: "9px", letterSpacing: "0.15em" }}
-            className="font-bold uppercase text-slate-600 text-center">
-            Law Enforcement: Always verify physical ID against name &amp; ID number above
+        {/* Law enforcement note */}
+        <div className="mt-3 flex items-start gap-2 px-1">
+          <Shield className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />
+          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 leading-relaxed">
+            Law Enforcement: Always verify physical ID card against the name and ID number shown above.
           </p>
         </div>
+
       </div>
     </div>
   );
