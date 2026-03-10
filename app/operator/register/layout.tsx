@@ -1,5 +1,3 @@
-"use client";
-
 import { AuthGuard } from "@/app/components/auth-guard";
 import { ReactNode } from "react";
 

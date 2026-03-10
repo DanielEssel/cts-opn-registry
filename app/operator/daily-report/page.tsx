@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { auth } from "@/lib/firebase";
 import { getRidersByOperator, RiderRecord } from "@/lib/rider-service";
 import { format, isToday, subDays } from "date-fns";
 
@@ -38,18 +37,24 @@ export default function DailyReportPage() {
   const [search,  setSearch]  = useState("");
 
   useEffect(() => {
-    (async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) return;
-        setRiders(await getRidersByOperator(user.uid));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  const load = async () => {
+    try {
+      const { auth } = await import("@/lib/firebase");
+
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const data = await getRidersByOperator(user.uid);
+      setRiders(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, []);
 
   // ── Derived stats ─────────────────────────────────────────────────────────
 
