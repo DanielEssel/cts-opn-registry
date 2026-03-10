@@ -6,83 +6,73 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
 import {
   User, AlertTriangle, Loader2, Shield,
-  CheckCircle2, XCircle, Clock,
+  CheckCircle2, XCircle, Clock, BadgeCheck,
 } from "lucide-react";
 
 interface RiderData {
   id: string;
   RIN: string;
   fullName: string;
-  phoneNumber?: string;
   status: "Active" | "Expired" | "Suspended" | "Pending";
   districtMunicipality?: string;
-  residentialTown?: string;
   idNumber?: string;
   idType?: string;
   vehicleCategory?: string;
   plateNumber?: string;
-  issueDate?: string;
   expiryDate?: string;
-  gender?: string;
   passportPhotoUrl?: string;
-  qrCodeUrl?: string;
 }
 
-const STATUS_CONFIG = {
+const STATUS = {
   Active: {
-    label:      "ACTIVE — VALID PERMIT",
-    icon:       CheckCircle2,
-    dot:        "#16a34a",
-    ping:       "#bbf7d0",
-    bannerBg:   "#f0fdf4",
-    bannerBorder: "#bbf7d0",
-    bannerText: "#166534",
-    chip:       "bg-emerald-100 text-emerald-800 border border-emerald-200",
-    ringColor:  "#16a34a",
+    label:  "VALID PERMIT",
+    sub:    "Rider is authorised to operate",
+    icon:   CheckCircle2,
+    dot:    "#16a34a",
+    ping:   "#bbf7d0",
+    bg:     "#f0fdf4",
+    border: "#86efac",
+    text:   "#166534",
+    stripe: "linear-gradient(90deg,#166534,#15803d)",
+    ring:   "#16a34a",
   },
   Expired: {
-    label:      "EXPIRED — NOT VALID",
-    icon:       XCircle,
-    dot:        "#dc2626",
-    ping:       "#fecaca",
-    bannerBg:   "#fef2f2",
-    bannerBorder: "#fecaca",
-    bannerText: "#991b1b",
-    chip:       "bg-red-100 text-red-800 border border-red-200",
-    ringColor:  "#dc2626",
+    label:  "EXPIRED PERMIT",
+    sub:    "Rider must not operate",
+    icon:   XCircle,
+    dot:    "#dc2626",
+    ping:   "#fecaca",
+    bg:     "#fef2f2",
+    border: "#fca5a5",
+    text:   "#991b1b",
+    stripe: "linear-gradient(90deg,#991b1b,#dc2626)",
+    ring:   "#dc2626",
   },
   Suspended: {
-    label:      "SUSPENDED — NOT VALID",
-    icon:       Shield,
-    dot:        "#ea580c",
-    ping:       "#fed7aa",
-    bannerBg:   "#fff7ed",
-    bannerBorder: "#fed7aa",
-    bannerText: "#9a3412",
-    chip:       "bg-orange-100 text-orange-800 border border-orange-200",
-    ringColor:  "#ea580c",
+    label:  "SUSPENDED",
+    sub:    "Rider must not operate",
+    icon:   Shield,
+    dot:    "#ea580c",
+    ping:   "#fed7aa",
+    bg:     "#fff7ed",
+    border: "#fdba74",
+    text:   "#9a3412",
+    stripe: "linear-gradient(90deg,#9a3412,#ea580c)",
+    ring:   "#ea580c",
   },
   Pending: {
-    label:      "PENDING APPROVAL",
-    icon:       Clock,
-    dot:        "#ca8a04",
-    ping:       "#fef08a",
-    bannerBg:   "#fefce8",
-    bannerBorder: "#fde68a",
-    bannerText: "#854d0e",
-    chip:       "bg-yellow-100 text-yellow-800 border border-yellow-200",
-    ringColor:  "#ca8a04",
+    label:  "PENDING APPROVAL",
+    sub:    "Permit not yet active",
+    icon:   Clock,
+    dot:    "#ca8a04",
+    ping:   "#fef08a",
+    bg:     "#fefce8",
+    border: "#fde047",
+    text:   "#854d0e",
+    stripe: "linear-gradient(90deg,#854d0e,#ca8a04)",
+    ring:   "#ca8a04",
   },
 };
-
-function Field({ label, value }: { label: string; value?: string }) {
-  return (
-    <div>
-      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{label}</p>
-      <p className="text-xs font-bold text-slate-800 uppercase leading-snug">{value || "—"}</p>
-    </div>
-  );
-}
 
 export default function VerifyPage() {
   const params = useParams();
@@ -116,7 +106,7 @@ export default function VerifyPage() {
           <Loader2 className="w-12 h-12 text-emerald-600 animate-spin absolute" />
         </div>
         <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">
-          Verifying Permit...
+          Verifying...
         </p>
       </div>
     </div>
@@ -131,211 +121,210 @@ export default function VerifyPage() {
       </div>
       <h1 className="text-2xl font-black text-red-900 tracking-tight">INVALID PERMIT</h1>
       <p className="text-sm text-red-600 mt-2 max-w-xs leading-relaxed">
-        RIN <span className="font-mono font-black">{RIN}</span> not found
+        RIN <span className="font-mono font-black">{RIN}</span> was not found
         in the national registry.
       </p>
-      <div className="mt-5 px-5 py-3 bg-red-600 rounded-2xl text-xs font-black text-white uppercase tracking-wider shadow-lg shadow-red-200">
+      <div className="mt-5 px-6 py-3 bg-red-600 rounded-2xl text-sm font-black text-white uppercase tracking-wider shadow-lg shadow-red-200">
         ⚠ Do not allow this rider to operate
       </div>
-      <button onClick={() => window.location.reload()}
-        className="mt-4 text-xs font-bold text-red-400 underline underline-offset-2">
-        Retry
-      </button>
     </div>
   );
 
-  const cfg        = STATUS_CONFIG[rider.status] ?? STATUS_CONFIG.Pending;
+  // ── Found ─────────────────────────────────────────────────────────────────
+
+  const cfg        = STATUS[rider.status] ?? STATUS.Pending;
   const StatusIcon = cfg.icon;
   const isActive   = rider.status === "Active";
 
-  const fmt = (d?: string) => d
-    ? new Date(d).toLocaleDateString("en-GH", { day: "2-digit", month: "short", year: "numeric" })
+  const expiry = rider.expiryDate
+    ? new Date(rider.expiryDate).toLocaleDateString("en-GH", {
+        day: "2-digit", month: "long", year: "numeric",
+      })
     : "—";
 
-  return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-start py-4 px-3 md:justify-center md:py-8 md:px-4">
-      <div className="w-full" style={{ maxWidth: 700 }}>
+  // Check if expiring within 30 days
+  const expiringSOon = rider.expiryDate && isActive
+    ? (new Date(rider.expiryDate).getTime() - Date.now()) < 1000 * 60 * 60 * 24 * 30
+    : false;
 
-        {/* ── STATUS BANNER — big and clear for officers ─────────────────── */}
+  return (
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center px-3 py-6">
+      <div className="w-full" style={{ maxWidth: 560 }}>
+
+        {/* ── STATUS HERO — the first thing an officer sees ──────────────── */}
         <div
-          className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3 border"
-          style={{
-            background:   cfg.bannerBg,
-            borderColor:  cfg.bannerBorder,
-          }}
+          className="rounded-2xl p-4 mb-3 flex items-center gap-4 border-2"
+          style={{ background: cfg.bg, borderColor: cfg.border }}
         >
-          <span className="relative flex h-3 w-3 shrink-0">
+          {/* Big pulse dot */}
+          <span className="relative flex h-5 w-5 shrink-0">
             {isActive && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
-                style={{ background: cfg.ping }} />
+              <span
+                className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
+                style={{ background: cfg.ping }}
+              />
             )}
-            <span className="relative inline-flex rounded-full h-3 w-3"
-              style={{ background: cfg.dot }} />
+            <span
+              className="relative inline-flex rounded-full h-5 w-5"
+              style={{ background: cfg.dot }}
+            />
           </span>
-          <p className="text-sm font-black uppercase tracking-widest" style={{ color: cfg.bannerText }}>
-            {cfg.label}
-          </p>
-          <StatusIcon className="h-5 w-5 ml-auto shrink-0" style={{ color: cfg.dot }} />
+
+          <div className="flex-1 min-w-0">
+            <p className="text-lg font-black uppercase tracking-wider leading-none" style={{ color: cfg.text }}>
+              {cfg.label}
+            </p>
+            <p className="text-xs font-semibold mt-0.5" style={{ color: cfg.text, opacity: 0.7 }}>
+              {cfg.sub}
+            </p>
+          </div>
+
+          <StatusIcon className="h-8 w-8 shrink-0" style={{ color: cfg.dot }} />
         </div>
 
         {/* ── CARD ───────────────────────────────────────────────────────── */}
         <div
-          className="rounded-2xl overflow-hidden"
+          className="rounded-2xl overflow-hidden bg-white"
           style={{
-            background:  "#ffffff",
-            boxShadow:   "0 8px 40px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.8)",
-            border:      "1px solid #e2e8f0",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.8)",
+            border: "1px solid #e2e8f0",
           }}
         >
-          {/* Green top stripe */}
-          <div style={{ height: 5, background: "linear-gradient(90deg,#166534,#15803d)" }} />
+          {/* Colour stripe */}
+          <div style={{ height: 5, background: cfg.stripe }} />
 
-          {/* ── MOBILE layout (stacked) / DESKTOP layout (horizontal) ──── */}
-          <div className="flex flex-col md:flex-row">
+          {/* ── BODY ─────────────────────────────────────────────────────── */}
+          <div className="flex gap-0">
 
-            {/* ── LEFT: Photo + QR ─────────────────────────────────────── */}
+            {/* Photo column */}
             <div
-              className="flex flex-row md:flex-col items-center justify-center gap-4 md:gap-4 px-5 py-5 md:py-6"
-              style={{ borderBottom: "1px solid #e2e8f0", borderRight: "none" }}
+              className="flex items-start justify-center pt-5 pb-5 px-4 shrink-0"
+              style={{ borderRight: "1px solid #f1f5f9" }}
             >
-              {/* Photo */}
               <div
-                className="rounded-xl overflow-hidden shrink-0"
+                className="rounded-xl overflow-hidden"
                 style={{
-                  width: 80, height: 96,
-                  boxShadow: `0 0 0 3px ${cfg.ringColor}, 0 4px 16px rgba(0,0,0,0.12)`,
+                  width: 88,
+                  height: 108,
+                  boxShadow: `0 0 0 3px ${cfg.ring}, 0 4px 16px rgba(0,0,0,0.10)`,
                 }}
               >
                 {rider.passportPhotoUrl ? (
-                  <img src={rider.passportPhotoUrl} alt="Photo"
-                    className="w-full h-full object-cover" />
+                  <img
+                    src={rider.passportPhotoUrl}
+                    alt="Rider photo"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                    <User className="h-8 w-8 text-slate-300" />
+                    <User className="h-9 w-9 text-slate-300" />
                   </div>
                 )}
               </div>
-
-              {/* Name visible on mobile next to photo */}
-              <div className="md:hidden flex-1 min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-widest text-green-700 mb-0.5">
-                  Full Legal Name
-                </p>
-                <p className="text-lg font-black text-slate-900 uppercase leading-tight">
-                  {rider.fullName}
-                </p>
-                {rider.phoneNumber && (
-                  <p className="text-xs text-slate-400 font-semibold mt-1">{rider.phoneNumber}</p>
-                )}
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
-                  style={{ background: cfg.bannerBg, borderColor: cfg.bannerBorder, color: cfg.bannerText }}>
-                  <span className="relative flex h-1.5 w-1.5">
-                    {isActive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: cfg.ping }} />}
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: cfg.dot }} />
-                  </span>
-                  {rider.status}
-                </div>
-              </div>
-
-              {/* QR — hidden on mobile, shown on desktop */}
-              {rider.qrCodeUrl && (
-                <div className="hidden md:block p-1.5 bg-white rounded-xl border border-slate-200 shadow-sm mt-1">
-                  <img src={rider.qrCodeUrl} alt="QR" style={{ width: 64, height: 64, display: "block" }} />
-                </div>
-              )}
             </div>
 
-            {/* ── CENTER: Name (desktop) + details ─────────────────────── */}
-            <div className="flex-1 px-5 py-5 min-w-0"
-              style={{ borderBottom: "1px solid #e2e8f0" }}>
+            {/* Details */}
+            <div className="flex-1 px-5 py-5 min-w-0">
 
-              {/* Name — desktop only */}
-              <div className="hidden md:block mb-4">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-green-700 mb-0.5">
-                  Full Legal Name
+              {/* Name — largest text, top priority */}
+              <div className="mb-4">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                  Full Name
                 </p>
                 <h1 className="text-xl font-black text-slate-900 uppercase leading-tight">
                   {rider.fullName}
                 </h1>
-                {rider.phoneNumber && (
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{rider.phoneNumber}</p>
-                )}
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
-                  style={{ background: cfg.bannerBg, borderColor: cfg.bannerBorder, color: cfg.bannerText }}>
-                  <span className="relative flex h-1.5 w-1.5">
-                    {isActive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: cfg.ping }} />}
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: cfg.dot }} />
-                  </span>
-                  {rider.status}
+              </div>
+
+              {/* 2-col grid of essential fields */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
+
+                {/* RIN */}
+                <div className="col-span-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-green-700 mb-0.5">
+                    Rider ID (RIN)
+                  </p>
+                  <p className="font-mono text-base font-black text-slate-900 tracking-widest">
+                    {rider.RIN}
+                  </p>
                 </div>
-              </div>
 
-              {/* Details — 2 cols on mobile, 3 cols on desktop */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4">
-                <Field label="District"   value={rider.districtMunicipality}      />
-                <Field label="Town"       value={rider.residentialTown}           />
-                <Field label="Gender"     value={rider.gender}                    />
-                <Field label="ID Type"    value={rider.idType?.replace("_", " ")} />
-                <Field label="ID Number"  value={rider.idNumber}                  />
-                <Field label="Vehicle"    value={rider.vehicleCategory}           />
-              </div>
-            </div>
+                {/* ID */}
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                    {rider.idType?.replace("_", " ") || "ID Type"}
+                  </p>
+                  <p className="text-sm font-bold text-slate-800 uppercase">{rider.idNumber || "—"}</p>
+                </div>
 
-            {/* ── RIGHT: RIN + dates ───────────────────────────────────── */}
-            <div
-              className="grid grid-cols-2 md:flex md:flex-col md:justify-between gap-4 px-5 py-5 md:w-44 md:shrink-0"
-              style={{ borderTop: "none", borderLeft: "none", background: "#fafafa" }}
-            >
-              {/* RIN */}
-              <div className="col-span-2 md:col-span-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-green-700 mb-0.5">
-                  Rider ID No.
-                </p>
-                <p className="font-mono font-black text-slate-900 text-sm tracking-widest">
-                  {rider.RIN}
-                </p>
-              </div>
+                {/* District */}
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                    District
+                  </p>
+                  <p className="text-sm font-bold text-slate-800 uppercase">{rider.districtMunicipality || "—"}</p>
+                </div>
 
-              <Field label="Plate No."  value={rider.plateNumber}    />
-              <Field label="Issued"     value={fmt(rider.issueDate)}  />
-              <Field label="Expires"    value={fmt(rider.expiryDate)} />
+                {/* Vehicle */}
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                    Vehicle
+                  </p>
+                  <p className="text-sm font-bold text-slate-800 uppercase">{rider.vehicleCategory || "—"}</p>
+                </div>
 
-              {/* QR on mobile — shown in right column */}
-              {rider.qrCodeUrl && (
-                <div className="md:hidden col-span-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">QR Code</p>
-                  <div className="p-1 bg-white rounded-lg border border-slate-200 shadow-sm inline-block">
-                    <img src={rider.qrCodeUrl} alt="QR" style={{ width: 52, height: 52, display: "block" }} />
+                {/* Plate */}
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                    Plate No.
+                  </p>
+                  <p className="font-mono text-sm font-black text-slate-900 uppercase">{rider.plateNumber || "—"}</p>
+                </div>
+
+                {/* Expiry — full width, highlighted */}
+                <div className="col-span-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                    Permit Expires
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <p
+                      className="text-sm font-black uppercase"
+                      style={{ color: expiringSOon ? "#ca8a04" : isActive ? "#166534" : "#dc2626" }}
+                    >
+                      {expiry}
+                    </p>
+                    {expiringSOon && (
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-100 text-yellow-700 border border-yellow-200 px-1.5 py-0.5 rounded-full">
+                        Expiring Soon
+                      </span>
+                    )}
                   </div>
                 </div>
-              )}
+
+              </div>
             </div>
           </div>
 
-          {/* ── Bottom bar ──────────────────────────────────────────────── */}
+          {/* ── Footer ─────────────────────────────────────────────────── */}
           <div
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-5 py-2.5"
-            style={{ borderTop: "1px solid #e2e8f0", background: "#f8fafc" }}
+            className="flex items-center justify-between px-5 py-2.5"
+            style={{ borderTop: "1px solid #f1f5f9", background: "#f8fafc" }}
           >
             <div className="flex items-center gap-1.5">
-              <StatusIcon className="h-3 w-3 shrink-0" style={{ color: cfg.dot }} />
-              <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: cfg.bannerText }}>
-                {isActive
-                  ? "Authenticated record · Ghana Commercial Rider Registry"
-                  : `${rider.status} · This permit is not currently valid`}
+              <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: cfg.dot }} />
+              <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: cfg.text }}>
+                Ghana Commercial Rider Registry
               </p>
             </div>
-            <p className="text-[8px] font-mono text-slate-400 shrink-0">
-              Verified · {time}
-            </p>
+            <p className="text-[8px] font-mono text-slate-400">{time}</p>
           </div>
         </div>
 
-        {/* Law enforcement note */}
+        {/* Officer note */}
         <div className="mt-3 flex items-start gap-2 px-1">
           <Shield className="h-3 w-3 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 leading-relaxed">
-            Law Enforcement: Always verify physical ID card against the name and ID number shown above.
+            Verify physical ID card against the name and ID number shown above before proceeding.
           </p>
         </div>
 
