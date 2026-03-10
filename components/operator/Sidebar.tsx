@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import {
   FileText, MapPin, Truck, Shield,
   BarChart3, Menu, X, Home, CheckCircle2,
@@ -11,26 +11,27 @@ import {
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
 
 const STEPS = [
-  { id: 1, title: "Bio Data",    description: "Personal info",       icon: FileText },
-  { id: 2, title: "Location",    description: "Residential details", icon: MapPin   },
-  { id: 3, title: "Vehicle",     description: "Vehicle information", icon: Truck    },
-  { id: 4, title: "Compliance",  description: "Documents & licence", icon: Shield   },
+  { id: 1, title: "Bio Data",   description: "Personal info",       icon: FileText },
+  { id: 2, title: "Location",   description: "Residential details", icon: MapPin   },
+  { id: 3, title: "Vehicle",    description: "Vehicle information", icon: Truck    },
+  { id: 4, title: "Compliance", description: "Documents & licence", icon: Shield   },
 ];
 
 const NAV = [
-  { title: "Register Rider", icon: Home,    href: "/operator/register"     },
+  { title: "Register Rider", icon: Home,     href: "/operator/register"     },
   { title: "Daily Report",   icon: BarChart3, href: "/operator/daily-report" },
 ];
 
-export function OperatorSidebar() {
+// ── Inner component — uses useSearchParams (must be inside Suspense) ──────────
+
+function SidebarInner({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
   const pathname     = usePathname();
   const searchParams = useSearchParams();
   const router       = useRouter();
   const currentStep  = parseInt(searchParams.get("step") || "1", 10);
-  const [open, setOpen] = useState(false);
+  const onRegisterPage = pathname.includes("/register");
 
   useEffect(() => { setOpen(false); }, [pathname, searchParams]);
 
@@ -39,20 +40,9 @@ export function OperatorSidebar() {
     router.replace("/login");
   };
 
-  const onRegisterPage = pathname.includes("/register");
-
   return (
     <>
-      {/* ── Mobile FAB ── */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-green-700 text-white shadow-xl shadow-green-900/30 flex items-center justify-center transition-transform active:scale-95"
-        aria-label="Toggle menu"
-      >
-        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
-
-      {/* ── Backdrop ── */}
+      {/* Backdrop */}
       {open && (
         <div
           onClick={() => setOpen(false)}
@@ -60,7 +50,7 @@ export function OperatorSidebar() {
         />
       )}
 
-      {/* ── Sidebar ── */}
+      {/* Sidebar */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-100 flex flex-col transition-transform duration-300 ease-in-out",
         "lg:translate-x-0 lg:static lg:flex",
@@ -68,13 +58,13 @@ export function OperatorSidebar() {
       )}>
 
         {/* Logo */}
-        <div className="px-4 py-3.5 border-b border-slate-100">
+        <div className="px-5 py-5 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-              <Image src="/logo/rinlogo2.png" alt="RIN" width={46} height={46} className="object-contain brightness-200 " />
+            <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0 shadow-sm">
+              <Image src="/logo/rinlogo2.png" alt="RIN" width={26} height={26} className="object-contain brightness-200" />
             </div>
             <div>
-              <p className="text-sm font-black text-slate-900 leading-none">Rider Registry</p>
+              <p className="text-sm font-black text-slate-900 leading-none">RIN Registry</p>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Operator Portal</p>
             </div>
           </div>
@@ -108,19 +98,85 @@ export function OperatorSidebar() {
               })}
             </div>
           </div>
-          </div>
 
+          {/* Registration steps */}
+          {onRegisterPage && (
+            <div>
+              <p className="px-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.22em] mb-3">
+                Registration Steps
+              </p>
+
+              <div className="relative">
+                <div className="absolute left-[22px] top-5 bottom-5 w-px bg-slate-100" />
+                <div className="space-y-0.5">
+                  {STEPS.map((step) => {
+                    const Icon      = step.icon;
+                    const isCurrent = currentStep === step.id;
+                    const isDone    = currentStep > step.id;
+
+                    return (
+                      <div
+                        key={step.id}
+                        className={cn(
+                          "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all",
+                          isCurrent ? "bg-green-50" : isDone ? "" : "opacity-50"
+                        )}
+                      >
+                        <div className={cn(
+                          "relative z-10 w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 transition-all",
+                          isCurrent ? "bg-white border-green-600 shadow-sm"  :
+                          isDone    ? "bg-green-700 border-green-700"        :
+                                      "bg-white border-slate-200"
+                        )}>
+                          {isDone    ? <CheckCircle2 className="h-4 w-4 text-white" />              :
+                           isCurrent ? <Icon className="h-3.5 w-3.5 text-green-700" />              :
+                                       <span className="text-[10px] font-black text-slate-400">{step.id}</span>}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className={cn(
+                            "text-sm font-bold leading-none",
+                            isCurrent ? "text-green-800" :
+                            isDone    ? "text-slate-600"  : "text-slate-400"
+                          )}>
+                            {step.title}
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{step.description}</p>
+                        </div>
+
+                        {isCurrent && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-green-600 shrink-0" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Progress */}
+              <div className="mt-4 mx-1">
+                <div className="flex justify-between text-[9px] font-bold text-slate-400 mb-1.5">
+                  <span>Step {currentStep} of {STEPS.length}</span>
+                  <span>{Math.round(((currentStep - 1) / STEPS.length) * 100)}%</span>
+                </div>
+                <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-600 rounded-full transition-all duration-500"
+                    style={{ width: `${((currentStep - 1) / STEPS.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="px-3 py-3 border-t border-slate-100 space-y-1.5">
-          {/* Status */}
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
             <span className="text-xs font-semibold text-slate-500">System Online</span>
             <span className="ml-auto text-[10px] font-bold text-slate-400">v2.4.0</span>
           </div>
-
-          {/* Sign out */}
           <button
             onClick={handleSignOut}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all group"
@@ -130,6 +186,32 @@ export function OperatorSidebar() {
           </button>
         </div>
       </aside>
+    </>
+  );
+}
+
+// ── Public export — wraps inner in Suspense ───────────────────────────────────
+
+export function OperatorSidebar() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile FAB — outside Suspense so it always renders */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-green-700 text-white shadow-xl shadow-green-900/30 flex items-center justify-center transition-transform active:scale-95"
+        aria-label="Toggle menu"
+      >
+        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
+
+      {/* Suspense required because SidebarInner uses useSearchParams */}
+      <Suspense fallback={
+        <aside className="hidden lg:flex w-64 bg-white border-r border-slate-100 flex-col" />
+      }>
+        <SidebarInner open={open} setOpen={setOpen} />
+      </Suspense>
     </>
   );
 }
