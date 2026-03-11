@@ -1,314 +1,337 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Search, 
-  ArrowLeft, 
-  CheckCircle2, 
-  Loader2, 
-  BadgeIcon,
-  Calendar,
-  Phone,
-  FileText,
-  Copy,
-  Download,
-} from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { Search, ArrowLeft, Copy, CheckCircle2, XCircle, Clock, Loader2, Shield } from "lucide-react";
 import Link from "next/link";
 
+interface RiderResult {
+  RIN:                  string;
+  fullName:             string;
+  status:               "Active" | "Expired" | "Suspended" | "Pending";
+  expiryDate:           string;
+  issueDate:            string;
+  vehicleCategory:      string;
+  districtMunicipality: string;
+}
+
+const STATUS_CONFIG = {
+  Active:    { icon: CheckCircle2, color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", text: "Valid & Active"         },
+  Expired:   { icon: XCircle,      color: "#dc2626", bg: "#fef2f2", border: "#fecaca", text: "Permit Expired"         },
+  Suspended: { icon: Shield,       color: "#ea580c", bg: "#fff7ed", border: "#fed7aa", text: "Permit Suspended"       },
+  Pending:   { icon: Clock,        color: "#ca8a04", bg: "#fefce8", border: "#fde047", text: "Pending Approval"       },
+};
+
 export default function RetrieveRIN() {
-  const [phone, setPhone] = useState("");
-  const [id, setId] = useState("");
+  const [phone,   setPhone]   = useState("");
+  const [idNum,   setIdNum]   = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<null | { 
-    RIN: string; 
-    expiry: string;
-    status: "Active" | "Expired" | "Pending";
-    name: string;
-    registeredDate: string;
-  }>(null);
-  const [copied, setCopied] = useState(false);
+  const [result,  setResult]  = useState<RiderResult | null>(null);
+  const [error,   setError]   = useState("");
+  const [copied,  setCopied]  = useState(false);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API Call
-    setTimeout(() => {
-      setResult({
-        RIN: "KS-1001-02-2026",
-        expiry: "August 10, 2026",
-        status: "Active",
-        name: "John Doe",
-        registeredDate: "August 10, 2024",
-      });
-      setLoading(false);
-    }, 1500);
-  };
+    setError("");
+    setResult(null);
 
-  const handleCopyRIN = () => {
-    if (result?.RIN) {
-      navigator.clipboard.writeText(result.RIN);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    try {
+      // Search by phone number + ID number
+      const snap = await getDocs(
+        query(
+          collection(db, "riders"),
+          where("phoneNumber", "==", phone.trim()),
+          where("idNumber",    "==", idNum.trim()),
+          limit(1)
+        )
+      );
+
+      if (snap.empty) {
+        setError("No rider found with those details. Please check your phone number and ID number.");
+      } else {
+        const data = snap.docs[0].data();
+        setResult({
+          RIN:                  data.RIN,
+          fullName:             data.fullName,
+          status:               data.status,
+          expiryDate:           data.expiryDate,
+          issueDate:            data.issueDate,
+          vehicleCategory:      data.vehicleCategory,
+          districtMunicipality: data.districtMunicipality,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const copyRIN = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(result.RIN);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const fmt = (d: string) =>
+    d ? new Date(d).toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" }) : "—";
+
+  const cfg = result ? STATUS_CONFIG[result.status] ?? STATUS_CONFIG.Pending : null;
+  const StatusIcon = cfg?.icon;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: "#0c1117" }}>
 
-      {/* MAIN CONTENT */}
-      <div className="flex-1 flex items-center justify-center p-4 py-12">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-green-200/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-pulse" />
-        </div>
+      {/* ── Top nav ──────────────────────────────────────────────────────── */}
+      <div className="px-6 pt-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back
+        </Link>
+      </div>
 
-        <div className="max-w-md w-full relative z-10">
-          {/* BACK LINK */}
-          <Link 
-            href="/" 
-            className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-700 mb-6 transition-colors group"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> 
-            Back to Home
-          </Link>
+      {/* ── Main ─────────────────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+        <div className="w-full" style={{ maxWidth: 440 }}>
 
-          {/* HEADER */}
+          {/* Header */}
           {!result && (
-            <div className="text-center mb-8 animate-in fade-in duration-700">
-              <div className="inline-flex items-center justify-center mb-4">
-                <div className="p-4 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl shadow-lg shadow-green-200">
-                  <Search className="h-8 w-8 text-white" />
-                </div>
+            <div className="mb-10 text-center">
+              <div
+                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5"
+                style={{ background: "linear-gradient(135deg,#166534,#15803d)", boxShadow: "0 8px 24px rgba(22,101,52,0.4)" }}
+              >
+                <Search className="h-6 w-6 text-white" />
               </div>
-              <h2 className="text-3xl font-black text-gray-900 mb-2">
+              <h1
+                className="font-black text-white mb-2"
+                style={{ fontSize: 28, letterSpacing: "-0.02em" }}
+              >
                 Find Your RIN
-              </h2>
-              <p className="text-gray-600">
-                Look up your Rider Identification Number instantly
+              </h1>
+              <p className="text-sm text-slate-400">
+                Enter your registered phone number and ID to retrieve your permit.
               </p>
             </div>
           )}
 
-          {/* CARD */}
-          <Card className="border-green-200/50 bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {!result ? (
-              <>
-                {/* FORM HEADER */}
-                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200/30 px-8 py-6">
-                  <CardTitle className="text-xl font-bold text-gray-900">
-                    Retrieve Your Permit
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 mt-2">
-                    Provide your phone number and ID to find your RIN
-                  </CardDescription>
-                </CardHeader>
+          {/* ── Form ─────────────────────────────────────────────────────── */}
+          {!result ? (
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{
+                background: "#161b22",
+                border: "1px solid #21262d",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
+              }}
+            >
+              <form onSubmit={handleLookup} className="p-7 space-y-5">
 
-                {/* FORM CONTENT */}
-                <CardContent className="p-8">
-                  <form onSubmit={handleLookup} className="space-y-5">
-                    {/* PHONE FIELD */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700">
-                        Phone Number
-                      </label>
-                      <div className="relative group">
-                        <Phone className="absolute left-4 top-4 h-5 w-5 text-green-600 transition-colors group-focus-within:text-green-700" />
-                        <Input
-                          type="tel"
-                          placeholder="024 XXX XXXX"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          disabled={loading}
-                          required
-                          className="pl-12 h-12 bg-gradient-to-br from-slate-50 to-green-50/30 border-2 border-green-200/50 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
-                        />
-                      </div>
-                    </div>
+                {/* Phone */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="024 XXX XXXX"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-white placeholder-slate-600 outline-none transition-all"
+                    style={{
+                      background: "#0d1117",
+                      border: "1px solid #30363d",
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = "#16a34a"}
+                    onBlur={(e)  => e.target.style.borderColor = "#30363d"}
+                  />
+                </div>
 
-                    {/* ID FIELD */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700">
-                        License / National ID
-                      </label>
-                      <div className="relative group">
-                        <FileText className="absolute left-4 top-4 h-5 w-5 text-green-600 transition-colors group-focus-within:text-green-700" />
-                        <Input
-                          placeholder="Enter your ID number"
-                          value={id}
-                          onChange={(e) => setId(e.target.value)}
-                          disabled={loading}
-                          required
-                          className="pl-12 h-12 bg-gradient-to-br from-slate-50 to-green-50/30 border-2 border-green-200/50 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
-                        />
-                      </div>
-                    </div>
+                {/* ID Number */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    ID Number (Ghana Card / Voter ID / Passport)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="GHA-XXXXXXXXX-X"
+                    value={idNum}
+                    onChange={(e) => setIdNum(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-white placeholder-slate-600 outline-none transition-all"
+                    style={{
+                      background: "#0d1117",
+                      border: "1px solid #30363d",
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = "#16a34a"}
+                    onBlur={(e)  => e.target.style.borderColor = "#30363d"}
+                  />
+                </div>
 
-                    {/* SEARCH BUTTON */}
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                {/* Error */}
+                {error && (
+                  <div
+                    className="px-4 py-3 rounded-xl text-xs font-semibold text-red-400"
+                    style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)" }}
+                  >
+                    {error}
+                  </div>
+                )}
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={loading || !phone || !idNum}
+                  className="w-full py-3.5 rounded-xl text-sm font-black text-white uppercase tracking-widest transition-all disabled:opacity-40"
+                  style={{
+                    background: "linear-gradient(135deg,#166534,#15803d)",
+                    boxShadow: loading ? "none" : "0 4px 20px rgba(22,101,52,0.4)",
+                  }}
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Searching...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <Search className="h-4 w-4" />
+                      Find My RIN
+                    </span>
+                  )}
+                </button>
+              </form>
+
+              {/* Bottom note */}
+              <div
+                className="px-7 py-4 flex items-center gap-2"
+                style={{ borderTop: "1px solid #21262d" }}
+              >
+                <Shield className="h-3.5 w-3.5 text-slate-600 shrink-0" />
+                <p className="text-[10px] text-slate-600 font-medium">
+                  Your details are only used to retrieve your permit and are never stored by this page.
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* ── Result ──────────────────────────────────────────────────── */
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{
+                background: "#161b22",
+                border: "1px solid #21262d",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
+              }}
+            >
+              {/* Status banner */}
+              <div
+                className="px-6 py-4 flex items-center gap-3"
+                style={{ background: cfg!.bg, borderBottom: `1px solid ${cfg!.border}` }}
+              >
+                {StatusIcon && <StatusIcon className="h-5 w-5 shrink-0" style={{ color: cfg!.color }} />}
+                <div>
+                  <p className="text-sm font-black uppercase tracking-wider" style={{ color: cfg!.color }}>
+                    {cfg!.text}
+                  </p>
+                  <p className="text-[10px] font-semibold" style={{ color: cfg!.color, opacity: 0.7 }}>
+                    {result.fullName}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-7 space-y-5">
+
+                {/* RIN display */}
+                <div
+                  className="rounded-xl p-5 text-center"
+                  style={{ background: "#0d1117", border: "1px solid #30363d" }}
+                >
+                  <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-500 mb-2">
+                    Rider Identification Number
+                  </p>
+                  <div className="flex items-center justify-center gap-3">
+                    <p
+                      className="font-mono font-black text-white"
+                      style={{ fontSize: 26, letterSpacing: "0.08em" }}
                     >
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                          Searching...
-                        </>
-                      ) : (
-                        <>
-                          <Search className="h-5 w-5 mr-2" />
-                          Find My RIN
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </>
-            ) : (
-              <>
-                {/* RESULT HEADER */}
-                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200/30 px-8 py-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    </div>
-                    <CardTitle className="text-xl font-bold text-gray-900">
-                      RIN Found
-                    </CardTitle>
-                  </div>
-                  <CardDescription>
-                    Here are your permi details
-                  </CardDescription>
-                </CardHeader>
-
-                {/* RESULT CONTENT */}
-                <CardContent className="p-8 space-y-6">
-                  {/* RIN DISPLAY */}
-                  <div className="animate-in fade-in zoom-in duration-500">
-                    <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl text-center group">
-                      <p className="text-xs font-bold text-green-700 uppercase tracking-widest mb-3">
-                        Rider Identification Number
-                      </p>
-                      <div className="flex items-center justify-center gap-3">
-                        <p className="text-3xl font-mono font-black text-gray-900">
-                          {result.RIN}
-                        </p>
-                        <button
-                          onClick={handleCopyRIN}
-                          className="p-2 hover:bg-green-100 rounded-lg transition-colors"
-                          title="Copy RIN"
-                        >
-                          <Copy className={`h-5 w-5 transition-colors ${
-                            copied ? "text-green-600" : "text-gray-400"
-                          }`} />
-                        </button>
-                      </div>
-                      {copied && (
-                        <p className="text-xs text-green-600 font-semibold mt-2">
-                          Copied to clipboard!
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* DETAILS GRID */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Name */}
-                    <div className="p-4 bg-white border border-slate-200/50 rounded-xl">
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">
-                        Name
-                      </p>
-                      <p className="font-semibold text-gray-900">
-                        {result.name}
-                      </p>
-                    </div>
-
-                    {/* Status */}
-                    <div className="p-4 bg-white border border-slate-200/50 rounded-xl">
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">
-                        Status
-                      </p>
-                      <Badge className={`${
-                        result.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : result.status === "Expired"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      } border-none`}>
-                        {result.status}
-                      </Badge>
-                    </div>
-
-                    {/* Registered Date */}
-                    <div className="p-4 bg-white border border-slate-200/50 rounded-xl col-span-2">
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">
-                        Registered Date
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-green-600" />
-                        <p className="font-semibold text-gray-900">
-                          {result.registeredDate}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Expiry Date */}
-                    <div className="p-4 bg-white border border-slate-200/50 rounded-xl col-span-2">
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">
-                        Expiry Date
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-green-600" />
-                        <p className="font-semibold text-gray-900">
-                          {result.expiry}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* INFO ALERT */}
-                  <Alert className="bg-blue-50 border-blue-200 rounded-xl">
-                    <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                    <AlertDescription className="text-blue-700 font-medium ml-3">
-                      Your Rider Identification Number is valid and active. Always carry your RIN during operations.
-                    </AlertDescription>
-                  </Alert>
-
-                  {/* ACTION BUTTONS */}
-                  <div className="grid grid-cols-2 gap-3 pt-4">
-                    <Button
-                      variant="outline"
-                      className="h-11 border-2 border-green-200 text-green-600 hover:bg-green-50 font-semibold rounded-xl"
-                      onClick={() => setResult(null)}
+                      {result.RIN}
+                    </p>
+                    <button
+                      onClick={copyRIN}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ background: copied ? "rgba(22,163,74,0.15)" : "rgba(255,255,255,0.05)" }}
                     >
-                      Search Again
-                    </Button>
-                    <Button
-                      className="h-11 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-lg shadow-green-200"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
+                      <Copy className="h-4 w-4" style={{ color: copied ? "#16a34a" : "#64748b" }} />
+                    </button>
                   </div>
-                </CardContent>
-              </>
-            )}
-          </Card>
+                  {copied && (
+                    <p className="text-[10px] text-green-500 font-bold mt-1">Copied!</p>
+                  )}
+                </div>
+
+                {/* Details */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Vehicle",  value: result.vehicleCategory      },
+                    { label: "District", value: result.districtMunicipality },
+                    { label: "Issued",   value: fmt(result.issueDate)        },
+                    { label: "Expires",  value: fmt(result.expiryDate)       },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="rounded-xl px-4 py-3"
+                      style={{ background: "#0d1117", border: "1px solid #21262d" }}
+                    >
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">
+                        {label}
+                      </p>
+                      <p className="text-xs font-bold text-white uppercase">{value || "—"}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => { setResult(null); setPhone(""); setIdNum(""); setError(""); }}
+                    className="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-white"
+                    style={{ background: "#0d1117", border: "1px solid #30363d" }}
+                  >
+                    Search Again
+                  </button>
+                  <Link
+                    href={`/verify/${result.RIN}`}
+                    className="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-white text-center transition-all"
+                    style={{
+                      background: "linear-gradient(135deg,#166534,#15803d)",
+                      boxShadow: "0 4px 16px rgba(22,101,52,0.35)",
+                    }}
+                  >
+                    View Full Permit
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* FOOTER */}
-      <footer className="border-t border-green-200/30 bg-white/40 backdrop-blur-lg mt-auto">
-        <div className="max-w-7xl mx-auto px-6 py-6 text-center text-sm text-gray-600">
-          <p>&copy; 2024 Rider Identification Number Registry. All rights reserved.</p>
-        </div>
-      </footer>
+      {/* Footer */}
+      <div className="text-center pb-6">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
+          Ghana Commercial Rider Registry
+        </p>
+      </div>
     </div>
   );
 }
