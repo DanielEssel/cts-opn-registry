@@ -84,7 +84,7 @@ export default function RetrieveRIN() {
   const StatusIcon = cfg?.icon;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#0c1117" }}>
+    <div className="min-h-screen flex flex-col items-center" style={{ background: "#0c1117" }}>
 
       {/* ── Top nav ──────────────────────────────────────────────────────── */}
       <div className="px-6 pt-6">
@@ -104,12 +104,6 @@ export default function RetrieveRIN() {
           {/* Header */}
           {!result && (
             <div className="mb-10 text-center">
-              <div
-                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5"
-                style={{ background: "linear-gradient(135deg,#166534,#15803d)", boxShadow: "0 8px 24px rgba(22,101,52,0.4)" }}
-              >
-                <Search className="h-6 w-6 text-white" />
-              </div>
               <h1
                 className="font-black text-white mb-2"
                 style={{ fontSize: 28, letterSpacing: "-0.02em" }}
