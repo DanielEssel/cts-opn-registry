@@ -1,5 +1,6 @@
 "use client";
 
+import { toasts } from "@/lib/toast-utils";
 import { useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -29,40 +30,64 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const { user } = await signInWithEmailAndPassword(auth, email, password);
-      const snap      = await getDoc(doc(db, "admin_users", user.uid));
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  toasts.loginLoading(); // ✅ uses TOAST_IDS.LOGIN
 
-      if (!snap.exists()) {
-        setError("User profile not found. Contact your Super Admin.");
-        await auth.signOut(); return;
-      }
+  try {
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
+    const snap = await getDoc(doc(db, "admin_users", user.uid));
 
-      const data   = snap.data();
-      const role   = data?.role   as string | undefined;
-      const status = data?.status as string | undefined;
-
-      if (status && status !== "Active") {
-        setError("Account is inactive. Contact your Super Admin.");
-        await auth.signOut(); return;
-      }
-
-      if (userType === "admin") {
-        if (role && ADMIN_ROLES.includes(role as any)) router.push("/dashboard");
-        else { setError("Access denied: Administrator privileges required."); await auth.signOut(); }
-      } else {
-        if (role && OPERATOR_ROLES.includes(role as any)) router.push("/operator/register");
-        else { setError("Access denied: Invalid role for operator login."); await auth.signOut(); }
-      }
-    } catch {
-      setError("Invalid email or password. Please try again.");
-    } finally {
-      setLoading(false);
+    if (!snap.exists()) {
+      const msg = "User profile not found. Contact your Super Admin.";
+      setError(msg);
+      toasts.loginError(msg); // ✅ replaces loading toast via LOGIN id
+      await auth.signOut();
+      return;
     }
-  };
+
+    const data = snap.data();
+    const role = data?.role as string | undefined;
+    const status = data?.status as string | undefined;
+
+    if (status && status !== "Active") {
+      const msg = "Account is inactive. Contact your Super Admin.";
+      setError(msg);
+      toasts.loginError(msg); // ✅
+      await auth.signOut();
+      return;
+    }
+
+    if (userType === "admin") {
+      if (role && ADMIN_ROLES.includes(role as any)) {
+        toasts.loginSuccess();
+        router.push("/dashboard");
+      } else {
+        const msg = "Administrator privileges required.";
+        setError("Access denied: " + msg);
+        toasts.loginError(msg); // ✅
+        await auth.signOut();
+      }
+    } else {
+      if (role && OPERATOR_ROLES.includes(role as any)) {
+        toasts.loginSuccess();
+        router.push("/operator/register");
+      } else {
+        const msg = "Invalid role for operator login.";
+        setError("Access denied: " + msg);
+        toasts.loginError(msg); // ✅
+        await auth.signOut();
+      }
+    }
+  } catch (err: any) {
+    const msg = "Invalid email or password. Please try again.";
+    setError(msg);
+    toasts.loginError(msg); // ✅
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 lg:p-8">

@@ -14,7 +14,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toasts } from "@/lib/toast-utils";
 import {
   riderRegistrationSchema,
   type RiderRegistrationData,
@@ -39,8 +39,7 @@ const STEPS = [
   { id: 5, title: "Review", description: "Verify Information" },
 ];
 
-const STEP_SCHEMAS: Record<number, object> = {
-  1: bioDataSchema.shape,
+const STEP_SCHEMAS: Record<number, Record<string, unknown>> = {  1: bioDataSchema.shape,
   2: locationSchema.shape,
   3: vehicleInfoSchema.shape,
   4: complianceSchema.shape,
@@ -61,8 +60,7 @@ function printCertificate(
 ) {
   const w = window.open("", "_blank", "width=900,height=1200");
   if (!w) {
-    alert("Please allow popups to print.");
-    return;
+    return false; // signal failure to caller
   }
 
   const issuedDate = new Date().toLocaleDateString("en-GH", {
@@ -232,6 +230,7 @@ function printCertificate(
 </script>
 </body></html>`);
   w.document.close();
+  return true; // signal success to caller
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -240,10 +239,11 @@ export function RegistrationForm({
   compact = false,
   onSuccess,
 }: RegistrationFormProps) {
+
+
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
   const [generatedRIN, setGeneratedRIN] = useState<string>("");
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
@@ -296,41 +296,42 @@ export function RegistrationForm({
     if (step === 5) return form.formState.isValid;
     const schema = STEP_SCHEMAS[step];
     if (!schema) return true;
+
     const fields = Object.keys(schema) as (keyof RiderRegistrationData)[];
     const valid = await form.trigger(fields);
+
     if (!valid) {
       const errors = form.formState.errors;
-      const failedFields = fields
+      const failedMessages = fields
         .filter((f) => errors[f])
         .map((f) => (errors[f] as { message?: string })?.message || String(f));
-      setError(
-        failedFields.length > 0
-          ? `Please fix: ${failedFields.join(", ")}`
-          : "Please complete all required fields before continuing.",
-      );
+
+      toasts.error(
+  "Complete required fields",
+  failedMessages.slice(0, 3).join(" · ")
+);
     }
+
     return valid;
   };
 
   const handleNext = async () => {
-    setError("");
     const valid = await validateStep(currentStep);
     if (valid) {
-      setCompletedSteps((prev) => [...new Set([...prev, currentStep])]);
-      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
+setCompletedSteps((prev) =>
+  prev.includes(currentStep) ? prev : [...prev, currentStep]
+);      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleBack = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
-    setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const onSubmit = async (data: RiderRegistrationData) => {
     setIsSubmitting(true);
-    setError("");
     try {
       const result = await saveRiderRegistration(data);
       if (result.success) {
@@ -340,12 +341,18 @@ export function RegistrationForm({
         setCompletedSteps((prev) => [...new Set([...prev, currentStep])]);
         onSuccess?.(result.RIN);
         window.scrollTo({ top: 0, behavior: "smooth" });
+        toasts.registrationSuccess(result.RIN);
       } else {
-        setError(result.error || "Failed to register rider.");
+        toasts.registrationError(
+  result.error || "Registration failed. Please try again."
+);
       }
     } catch (err) {
       console.error("Registration error:", err);
-      setError("An unexpected error occurred. Please try again.");
+      toasts.error(
+  "Unexpected error",
+  "Something went wrong. Please try again."
+);
     } finally {
       setIsSubmitting(false);
     }
@@ -379,6 +386,30 @@ export function RegistrationForm({
     setQrCodeUrl("");
     form.reset();
   };
+
+  const handlePrint = () => {
+  const data = form.getValues();
+
+  const opened = printCertificate(
+    data,
+    generatedRIN,
+    qrCodeUrl,
+    photoPreview
+  );
+
+  if (!opened) {
+    toasts.error(
+      "Popups blocked",
+      "Allow popups in your browser to print the certificate."
+    );
+    return;
+  }
+
+  toasts.success(
+    "Print dialog opened",
+    "Your certificate is ready to print."
+  );
+};
 
   // ── Success screen ─────────────────────────────────────────────────────────
 
@@ -533,9 +564,7 @@ export function RegistrationForm({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button
             size="lg"
-            onClick={() =>
-              printCertificate(data, generatedRIN, qrCodeUrl, photoPreview)
-            }
+            onClick={handlePrint}
             className="bg-green-700 hover:bg-green-800 text-white gap-2 shadow"
           >
             <Printer className="h-4 w-4" /> Print Certificate
@@ -680,12 +709,6 @@ export function RegistrationForm({
             </div>
           )}
 
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
@@ -699,30 +722,30 @@ export function RegistrationForm({
               }}
             >
               <div>{renderStep()}</div>
-
               <div className="h-16" />
             </form>
           </Form>
         </Card>
       </div>
+
       {showFloatingNav && (
         <div
           className="
-      fixed bottom-6 right-1/4 -translate-x-1/2
-      z-50
-      animate-in slide-in-from-bottom-4 fade-in
-      duration-300
-    "
+            fixed bottom-6 right-1/4 -translate-x-1/2
+            z-50
+            animate-in slide-in-from-bottom-4 fade-in
+            duration-300
+          "
         >
           <div
             className="
-      flex items-center gap-3
-      bg-white/90 backdrop-blur-xl
-      border border-slate-200
-      shadow-2xl
-      rounded-full
-      px-5 py-3
-    "
+              flex items-center gap-3
+              bg-white/90 backdrop-blur-xl
+              border border-slate-200
+              shadow-2xl
+              rounded-full
+              px-5 py-3
+            "
           >
             <Button
               type="button"
