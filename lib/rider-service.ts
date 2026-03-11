@@ -130,8 +130,7 @@ async function generateAndUploadQRCode(
 ): Promise<string | null> {
   try {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const verifyUrl = `https://opn-registry.vercel.app/verify/${RIN}`;
-    // const verifyUrl = `https://rin.thectsafrica.com/verify/${RIN}`;
+    const verifyUrl = `https://rin.thectsafrica.com/verify/${RIN}`;
     console.log(`🔲 Generating QR for: ${verifyUrl}`);
 
     // Generate as data URL then convert to blob
