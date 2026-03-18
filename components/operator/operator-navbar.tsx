@@ -6,6 +6,7 @@ import { doc, getDoc, collection, query, where, onSnapshot } from "firebase/fire
 import { signOut } from "firebase/auth";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   BadgeIcon,
   LogOut,
@@ -190,9 +191,15 @@ export default function OperatorNavbar() {
               href="/operator/register"
               className="flex items-center gap-3 flex-shrink-0 group"
             >
-              <div className="h-10 w-10 rounded-lg bg-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                <BadgeIcon className="h-5 w-5 text-white" />
-              </div>
+              <div className="w-21.5 h-21.5 flex items-center justify-center">
+                            <Image
+                              src="/logo/ctslogo.png"
+                              alt="RIN"
+                              width={86}
+                              height={86}
+                              className="object-contain brightness-200"
+                            />
+                          </div>
               <div className="hidden sm:block">
                 <h1 className="text-base font-bold text-slate-900">RIN Registry</h1>
                 <p className="text-xs text-slate-500 font-medium">Operator</p>

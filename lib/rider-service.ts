@@ -2,7 +2,10 @@
  * lib/rider-service.ts
  * Flow: upload photo → call registerRider CF → generate QR → save QR URL back to rider doc
  */
-
+import {
+  getPreRegistrationByPhone,
+  markPreRegistrationAsIssued,
+} from "./pre-registration-service";
 import { db, auth, functions, storage } from "./firebase";
 import {
   collection,
@@ -130,7 +133,7 @@ async function generateAndUploadQRCode(
 ): Promise<string | null> {
   try {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const verifyUrl = `https://rin.thectsafrica.com/verify/${RIN}`;
+   const verifyUrl = `https://rin.thectsafrica.com/verify/${RIN}?t=${Date.now()}`;
     console.log(`🔲 Generating QR for: ${verifyUrl}`);
 
     // Generate as data URL then convert to blob
@@ -218,8 +221,22 @@ export async function saveRiderRegistration(
       }
     }
 
+     // ✅ 5. Bridge: mark pre-registration as issued if one exists
+    try {
+      const pre = await getPreRegistrationByPhone(data.phoneNumber);
+      if (pre && pre.status !== "rin_issued") {
+        await markPreRegistrationAsIssued(pre.id, RIN);
+        console.log(`🔗 Pre-registration ${pre.preRegId} marked as issued → ${RIN}`);
+      }
+    } catch (err) {
+      // Non-fatal — don't fail the registration if the bridge fails
+      console.warn("⚠️ Pre-registration bridge failed (non-fatal):", err);
+    }
+
     return { success: true, RIN, riderId, qrCodeUrl: qrCodeUrl ?? "" };
   } catch (err: any) {
+
+
     console.error("❌ Registration error:", err);
     const message =
       err?.details?.message ??

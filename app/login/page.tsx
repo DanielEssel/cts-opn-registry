@@ -137,18 +137,18 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div className="pt-8 mb-6 border-t border-white/8">
-                <Image
-                  src="/logo/rawlogo.png"
-                  alt="CTS Africa"
-                  width={140}
-                  height={140}
-                  className="opacity-80 brightness-110"
-                />
-              </div>
+             <div className="w-21.5 h-21.5 flex items-center justify-center">
+                           <Image
+                             src="/logo/ctslogo.png"
+                             alt="RIN"
+                             width={86}
+                             height={86}
+                             className="object-contain brightness-200"
+                           />
+                         </div>
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-white/10" />
-                <p className="text-[10px] font-bold tracking-[0.25em] text-slate-600 uppercase">Official Portal</p>
+                <p className="text-[10px] font-bold tracking-[0.25em] text-slate-600 uppercase">CTS Official Portal</p>
                 <div className="h-px flex-1 bg-white/10" />
               </div>
             </div>

@@ -57,18 +57,33 @@ function SidebarInner({ open, setOpen }: { open: boolean; setOpen: (v: boolean) 
         open ? "translate-x-0" : "-translate-x-full"
       )}>
 
-        {/* Logo */}
-        <div className="px-5 py-5 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0 shadow-sm">
-              <Image src="/logo/rinlogo2.png" alt="RIN" width={26} height={26} className="object-contain brightness-200" />
-            </div>
-            <div>
-              <p className="text-sm font-black text-slate-900 leading-none">RIN Registry</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Operator Portal</p>
-            </div>
-          </div>
-        </div>
+{/* Logo */}
+<div className="px-5 py-5 border-b border-slate-100">
+  <div className="flex items-center gap-3">
+    
+    {/* Logo Image */}
+    <div className="w-14 h-14 flex items-center justify-center shrink-0">
+      <Image
+        src="/logo/ctslogo.png"
+        alt="RIN"
+        width={56}
+        height={56}
+        className="object-contain brightness-200"
+      />
+    </div>
+
+    {/* Text */}
+    <div className="leading-tight">
+      <p className="text-sm font-black text-slate-900">
+        RIN Registry
+      </p>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        Operator Portal
+      </p>
+    </div>
+
+  </div>
+</div>
 
         {/* Nav */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">

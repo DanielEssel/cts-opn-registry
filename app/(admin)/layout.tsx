@@ -149,14 +149,15 @@ export default function AdminLayout({
             {/* Logo */}
             <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
               <Link href="/dashboard" className="flex items-center space-x-3">
-                <div>
-                  <Image
-                    src="/logo/rinlogo2.png"
-                    alt="RIN Logo"
-                    width={80}
-                    height={80}
-                  />
-                </div>
+                <div className="w-21.5 h-21.5 flex items-center justify-center">
+                              <Image
+                                src="/logo/ctslogo.png"
+                                alt="RIN"
+                                width={86}
+                                height={86}
+                                className="object-contain brightness-200"
+                              />
+                            </div>
 
                 <div>
                   <h1 className="font-bold text-gray-900 text-sm">

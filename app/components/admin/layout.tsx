@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Image from "next/image";
 import {
   LayoutDashboard,
   Users,
@@ -88,9 +89,15 @@ export default function AdminLayout({
             {/* Logo Section */}
             <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
               <Link href="/dashboard" className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
+                <div className="w-21.5 h-21.5 flex items-center justify-center">
+                              <Image
+                                src="/logo/ctslogo.png"
+                                alt="RIN"
+                                width={86}
+                                height={86}
+                                className="object-contain brightness-200"
+                              />
+                            </div>
                 <div>
                   <h1 className="font-bold text-gray-900 text-sm">Rider Identification Number</h1>
                   <p className="text-xs text-gray-500">Operator Portal</p>
