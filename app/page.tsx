@@ -14,6 +14,7 @@ import {
   Lock,
   Zap,
   QrCode,
+  Plus
 } from "lucide-react";
 import Image from "next/image";
 
@@ -43,46 +44,54 @@ export default function HomePage() {
         }
       `}</style>
 
-      {/* ── HEADER ──────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-21.5 h-21.5 flex items-center justify-center">
-              <Image
-                src="/logo/ctslogo.png"
-                alt="RIN"
-                width={86}
-                height={86}
-                className="object-contain brightness-200"
-              />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">
-                CTS Africa
-              </p>
-              <p className="text-sm font-black text-slate-900 leading-tight">
-                RIN Registry
-              </p>
-            </div>
-          </Link>
+     {/* ── HEADER ──────────────────────────────────────────────────────── */}
+<header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
+  <div className="max-w-7xl mx-auto px-6 flex h-16 items-center justify-between">
+    <Link href="/" className="flex items-center gap-3">
+      <div className="w-21.5 h-21.5 flex items-center justify-center">
+        <Image
+          src="/logo/ctslogo.png"
+          alt="RIN"
+          width={86}
+          height={86}
+          className="object-contain brightness-200"
+        />
+      </div>
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">
+          CTS Africa
+        </p>
+        <p className="text-sm font-black text-slate-900 leading-tight">
+          RIN Registry
+        </p>
+      </div>
+    </Link>
 
-          <nav className="flex items-center gap-2">
-            <Link href="/retrieve">
-              <Button
-                variant="ghost"
-                className="hidden sm:flex gap-2 text-slate-600 hover:text-slate-900 font-semibold"
-              >
-                <Search className="h-4 w-4" /> Find RIN
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button className="bg-green-700 hover:bg-green-800 text-white font-bold gap-2 shadow-sm">
-                <Lock className="h-4 w-4" /> Officer Login
-              </Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <nav className="flex items-center gap-2">
+      <Link href="/retrieve">
+        <Button
+          variant="ghost"
+          className="hidden sm:flex gap-2 text-slate-600 hover:text-slate-900 font-semibold"
+        >
+          <Search className="h-4 w-4" /> Find RIN
+        </Button>
+      </Link>
+
+      {/* New Register button */}
+      <Link href="/pre-register">
+        <Button className="bg-white hover:bg-green-200 text-green-950 font-bold gap-2 shadow-sm">
+          <Plus className="h-4 w-4" /> Register
+        </Button>
+      </Link>
+
+      <Link href="/login">
+        <Button className="bg-green-700 hover:bg-green-800 text-white font-bold gap-2 shadow-sm">
+          <Lock className="h-4 w-4" /> Officer Login
+        </Button>
+      </Link>
+    </nav>
+  </div>
+</header>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative bg-gradient-to-b from-green-50 to-white overflow-hidden py-16 md:py-20">
@@ -111,12 +120,12 @@ export default function HomePage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-12">
-                <Link href="/retrieve">
+                <Link href="/pre-register">
                   <Button
                     size="lg"
                     className="bg-green-700 hover:bg-green-800 text-white font-bold gap-2 px-7 shadow-lg shadow-green-200 h-12"
                   >
-                    <Search className="h-4 w-4" /> Check My Rider Status
+                     Register
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -406,84 +415,91 @@ export default function HomePage() {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
-      <footer style={{ background: "#0c1117" }} className="py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 bg-green-700 rounded-xl flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-white" />
-                </div>
-                <span className="font-black text-white text-lg">CTS RIN</span>
-              </div>
-              <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-                Official CTS Rider Registration System. Ensuring safe,
-                legal, and regulated commercial transport across Greater Accra.
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
-                For Riders
-              </p>
-              <ul className="space-y-2.5">
-                {[
-                  ["Find My RIN", "/retrieve"],
-                  ["Check Status", "/retrieve"],
-                ].map(([label, href]) => (
-                  <li key={label}>
-                    <Link
-                      href={href}
-                      className="text-sm text-slate-400 hover:text-white transition flex items-center gap-2"
-                    >
-                      <ArrowRight className="h-3.5 w-3.5" /> {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
-                For Operators
-              </p>
-              <ul className="space-y-2.5">
-                {[
-                  ["Operator Login", "/login"],
-                  ["Register Riders", "/login"],
-                ].map(([label, href]) => (
-                  <li key={label}>
-                    <Link
-                      href={href}
-                      className="text-sm text-slate-400 hover:text-white transition flex items-center gap-2"
-                    >
-                      <ArrowRight className="h-3.5 w-3.5" /> {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-slate-600">
-              © {new Date().getFullYear()} CTS Africa · Rider Identification
-              Number Registry
-            </p>
-            <div className="flex gap-6">
-              {["Privacy", "Terms", "Contact"].map((l) => (
-                <Link
-                  key={l}
-                  href="#"
-                  className="text-xs text-slate-600 hover:text-white transition"
-                >
-                  {l}
-                </Link>
-              ))}
-            </div>
-          </div>
+<footer style={{ background: "#0c1117" }} className="py-16">
+  <div className="max-w-6xl mx-auto px-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+      <div className="md:col-span-2">
+        <div className="flex items-center gap-3 mb-4">
+          {/* Updated logo */}
+          <img src="/ctslogo.png" alt="CTS Logo" className="w-9 h-9 object-contain" />
+          <span className="font-black text-white text-lg">CTS Africa</span>
         </div>
-      </footer>
+        <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
+          Official CTS Rider Registration System. Ensuring safe, legal, and regulated commercial transport across Greater Accra.
+        </p>
+      </div>
+
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
+          For Riders
+        </p>
+        <ul className="space-y-2.5">
+          {[
+            ["Find My RIN", "/retrieve"],
+            ["Check Status", "/retrieve"],
+          ].map(([label, href]) => (
+            <li key={label}>
+              <Link
+                href={href}
+                className="text-sm text-slate-400 hover:text-white transition flex items-center gap-2"
+              >
+                <ArrowRight className="h-3.5 w-3.5" /> {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
+          For Operators
+        </p>
+        <ul className="space-y-2.5">
+          {[
+            ["Operator Login", "/login"],
+            ["Register Riders", "/login"],
+          ].map(([label, href]) => (
+            <li key={label}>
+              <Link
+                href={href}
+                className="text-sm text-slate-400 hover:text-white transition flex items-center gap-2"
+              >
+                <ArrowRight className="h-3.5 w-3.5" /> {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p className="text-xs text-slate-600">
+        © {new Date().getFullYear()} CTS Africa · Rider Identification Number Registry
+      </p>
+      <div className="flex gap-6">
+        {/* Updated Privacy link */}
+        <Link
+          href="/privacy-policy"
+          className="text-xs text-slate-600 hover:text-white transition"
+        >
+          Privacy Policy
+        </Link>
+        <Link
+          href="#"
+          className="text-xs text-slate-600 hover:text-white transition"
+        >
+          Terms
+        </Link>
+        <Link
+          href="#"
+          className="text-xs text-slate-600 hover:text-white transition"
+        >
+          Contact
+        </Link>
+      </div>
+    </div>
+  </div>
+</footer>
     </div>
   );
 }
