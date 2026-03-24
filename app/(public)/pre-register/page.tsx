@@ -1,4 +1,4 @@
-import { PreRegistrationForm } from "@/app/components/pre-registration/page";
+import PreRegistrationForm from "@/app/components/pre-registration/page";
 
 // This is a PUBLIC page — no auth wrapper needed.
 // Add to your Next.js routes at: app/(public)/pre-register/page.tsx

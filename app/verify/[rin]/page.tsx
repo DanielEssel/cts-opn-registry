@@ -129,29 +129,7 @@ export default function VerifyPage() {
       </div>
     </div>
   );
-
-  const isExpired =
-  rider.expiryDate &&
-  new Date(rider.expiryDate).getTime() < Date.now();
-
-const isActive =
-  rider.status?.toLowerCase() === "active";
-
-if (!isActive || isExpired) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-red-50 p-6 text-center">
-      <h1 className="text-2xl font-black text-red-900">
-        INVALID PERMIT
-      </h1>
-      <p className="text-sm text-red-600 mt-2">
-        This rider is not allowed to operate.
-      </p>
-      <p className="text-xs mt-2 text-red-400">
-        Status: {rider.status}
-      </p>
-    </div>
-  );
-}
+  
 
   // ── Found ─────────────────────────────────────────────────────────────────
 
