@@ -77,13 +77,6 @@ export default function HomePage() {
         </Button>
       </Link>
 
-      {/* New Register button */}
-      <Link href="/pre-register">
-        <Button className="bg-white hover:bg-green-200 text-green-950 font-bold gap-2 shadow-sm">
-          <Plus className="h-4 w-4" /> Register
-        </Button>
-      </Link>
-
       <Link href="/login">
         <Button className="bg-green-700 hover:bg-green-800 text-white font-bold gap-2 shadow-sm">
           <Lock className="h-4 w-4" /> Officer Login
