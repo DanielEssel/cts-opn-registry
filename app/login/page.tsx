@@ -118,7 +118,7 @@ export default function LoginPage() {
               </h1>
 
               <p className="text-slate-400 text-sm xl:text-base leading-relaxed max-w-xs">
-                Ghana's official secure portal for commercial motor rider
+                CTS's official secure portal for commercial motor rider
                 registration and permit issuance.
               </p>
 

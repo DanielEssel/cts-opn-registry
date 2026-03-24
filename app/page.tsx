@@ -106,7 +106,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg text-slate-500 mb-8 max-w-md leading-relaxed">
-                Official digital platform for commercial transport rider
+                Official CTS digital platform for commercial transport rider
                 identification in Ghana.
               </p>
 
@@ -216,7 +216,7 @@ export default function HomePage() {
               Why This System
             </p>
             <h2 className="text-4xl font-black text-white leading-tight">
-              Built for Ghana's
+              Built for CTS's
               <br />
               <span className="text-green-500">commercial riders.</span>
             </h2>
@@ -414,10 +414,10 @@ export default function HomePage() {
                 <div className="w-9 h-9 bg-green-700 rounded-xl flex items-center justify-center">
                   <Shield className="h-5 w-5 text-white" />
                 </div>
-                <span className="font-black text-white text-lg">Ghana RIN</span>
+                <span className="font-black text-white text-lg">CTS RIN</span>
               </div>
               <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-                Official Rider Registration System for Ghana. Ensuring safe,
+                Official CTS Rider Registration System. Ensuring safe,
                 legal, and regulated commercial transport across Greater Accra.
               </p>
             </div>

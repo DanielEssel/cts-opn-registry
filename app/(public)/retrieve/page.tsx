@@ -323,7 +323,7 @@ export default function RetrieveRIN() {
       {/* Footer */}
       <div className="text-center pb-6">
         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
-          Ghana Commercial Rider Registry
+          CTS Commercial Rider Registry
         </p>
       </div>
     </div>

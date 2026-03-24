@@ -203,7 +203,7 @@ export default function AdminLayout({
                     Operator Name
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    operator@ghana.gov
+                    operator@cts.gh
                   </p>
                 </div>
                 <Button

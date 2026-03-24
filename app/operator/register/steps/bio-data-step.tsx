@@ -195,13 +195,13 @@ export function BioDataStep({ form }: BioDataStepProps) {
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="GHANA_CARD">
-                    🆔 Ghana Card
+                    Ghana Card
                   </SelectItem>
                   <SelectItem value="VOTERS_ID">
-                    🗳️ Voter's ID
+                    Voter's ID
                   </SelectItem>
                   <SelectItem value="PASSPORT">
-                    📕 Passport
+                    Passport
                   </SelectItem>
                 </SelectContent>
               </Select>

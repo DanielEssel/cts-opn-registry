@@ -90,7 +90,9 @@ export default function VerifyPage() {
           query(collection(db, "riders"), where("RIN", "==", RIN), limit(1))
         );
         if (!snap.empty) setRider({ id: snap.docs[0].id, ...snap.docs[0].data() } as RiderData);
-      } catch (err) { console.error(err); }
+      } catch (err: any) {
+  console.error("Firestore error:", err?.code, err?.message);
+}
       finally { setLoading(false); }
     }
     if (RIN) fetchRider(); else setLoading(false);
@@ -314,7 +316,7 @@ export default function VerifyPage() {
             <div className="flex items-center gap-1.5">
               <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: cfg.dot }} />
               <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: cfg.text }}>
-                Ghana Commercial Rider Registry
+                CTS Commercial Rider Registry
               </p>
             </div>
             <p className="text-[8px] font-mono text-slate-400">{time}</p>
