@@ -1,18 +1,10 @@
-import PreRegistrationForm from "@/app/components/pre-registration/page";
-
-// This is a PUBLIC page — no auth wrapper needed.
-// Add to your Next.js routes at: app/(public)/pre-register/page.tsx
+import { PreRegistrationForm } from "@/app/components/pre-registration/PreRegistrationForm";
 
 export const metadata = {
   title: "Rider Pre-Registration | CTS Africa",
-  description:
-    "Register before your training session. Your RIN will be issued after training is passed.",
+  description: "Register as a commercial rider in Greater Accra. Pay GHS 150 to secure your training slot.",
 };
 
-export default function PreRegisterPage() {
-  return (
-    <main className="min-h-screen bg-slate-50 py-10 px-4">
-      <PreRegistrationForm />
-    </main>
-  );
+export default function PreRegistrationPage() {
+  return <PreRegistrationForm />;
 }
