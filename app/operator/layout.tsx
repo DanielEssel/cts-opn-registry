@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import { OperatorSidebar } from "@/components/operator/Sidebar";
 import { OperatorHeader } from "@/components/operator/Header";
 
@@ -16,7 +16,9 @@ export default function OperatorLayout({ children }: OperatorLayoutProps) {
   return (
     <div className="flex h-screen bg-slate-50">
       {/* SIDEBAR */}
-      <OperatorSidebar />
+      <Suspense fallback={<div className="hidden lg:flex w-64 bg-white border-r border-slate-100 flex-col" />}>
+        <OperatorSidebar />
+      </Suspense>
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col overflow-hidden">

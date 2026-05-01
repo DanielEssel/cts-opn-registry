@@ -168,3 +168,14 @@ html {
     transform: scale(1.1);
   }
 }
+
+@media print {
+  body {
+    background: white;
+  }
+
+  #receipt {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

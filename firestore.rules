@@ -117,6 +117,15 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if false;
     }
+    
+    
+    match /riders/{riderId} {
+  // Public can read for QR verification — no auth required
+  allow read: if true;
+
+  // Only authenticated operators can write
+  allow create, update, delete: if request.auth != null;
+}
 
     // ── Health check ─────────────────────────────────────────────────────────
 
@@ -137,6 +146,28 @@ service cloud.firestore {
   allow read:        if isAnyAdmin();
   // Super Admin can read and write all profiles
   allow read, write: if isSuperAdmin() && isActive();
+}
+
+
+// ── /pre_registrations ─────────────────────────────────────────────────────
+// Public can create (unauthenticated riders submitting the form)
+// Only admins can read
+
+match /pre_registrations/{docId} {
+  allow create: if true;
+
+  // Needed for duplicate phone check
+  allow read: if true;
+  allow update: if false;
+  allow delete: if false;
+}
+
+// ── /payments ─────────────────────────────────────────────────────────────
+// Written by Cloud Functions via Admin SDK — no direct client access
+
+match /payments/{docId} {
+  allow read:  if isAnyAdmin();
+  allow write: if false;
 }
   }
 }

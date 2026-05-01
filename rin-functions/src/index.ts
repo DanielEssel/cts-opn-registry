@@ -46,6 +46,11 @@ interface RegisterRiderInput {
   nextOfKinName: string;
   nextOfKinContact: string;
   passportPhotoUrl?: string | null;
+  qrCodeUrl?: string | null; 
+  paymentReference?: string | null;
+  paymentTxnId?: string | null;
+  paymentStatus?: string | null;
+  paymentAmount?: number | null;
 }
 
 const PERMIT_VALIDITY_MONTHS = 6;
@@ -58,17 +63,31 @@ function addMonths(date: Date, months: number): Date {
 
 async function checkDuplicates(input: RegisterRiderInput): Promise<void> {
   const ridersRef = db.collection("riders");
-  const [byId, byPlate, byChassis] = await Promise.all([
+
+  const checks: Promise<admin.firestore.QuerySnapshot>[] = [
     ridersRef.where("idNumber", "==", input.idNumber.trim()).limit(1).get(),
-    ridersRef
-      .where("plateNumber", "==", input.plateNumber.trim().toUpperCase())
-      .limit(1)
-      .get(),
-    ridersRef
-      .where("chassisNumber", "==", input.chassisNumber.trim().toUpperCase())
-      .limit(1)
-      .get(),
-  ]);
+  ];
+
+  // Only check plate/chassis if they were actually provided
+  if (input.plateNumber?.trim()) {
+    checks.push(
+      ridersRef
+        .where("plateNumber", "==", input.plateNumber.trim().toUpperCase())
+        .limit(1)
+        .get(),
+    );
+  }
+
+  if (input.chassisNumber?.trim()) {
+    checks.push(
+      ridersRef
+        .where("chassisNumber", "==", input.chassisNumber.trim().toUpperCase())
+        .limit(1)
+        .get(),
+    );
+  }
+
+  const [byId, byPlate, byChassis] = await Promise.all(checks);
 
   if (!byId.empty) {
     throw new HttpsError(
@@ -76,13 +95,13 @@ async function checkDuplicates(input: RegisterRiderInput): Promise<void> {
       `ID number ${input.idNumber} is already registered under RIN ${byId.docs[0].data().RIN}.`,
     );
   }
-  if (!byPlate.empty) {
+  if (byPlate && !byPlate.empty) {
     throw new HttpsError(
       "already-exists",
       `Plate number ${input.plateNumber} is already registered under RIN ${byPlate.docs[0].data().RIN}.`,
     );
   }
-  if (!byChassis.empty) {
+  if (byChassis && !byChassis.empty) {
     throw new HttpsError(
       "already-exists",
       `Chassis number ${input.chassisNumber} is already registered under RIN ${byChassis.docs[0].data().RIN}.`,
@@ -99,34 +118,41 @@ export const registerRider = onCall(
     enforceAppCheck: false,
   },
   async (req) => {
+
     // 1. Auth guard
-    if (!req.auth)
-      throw new HttpsError("unauthenticated", "You must be signed in.");
+if (!req.auth)
+  throw new HttpsError("unauthenticated", "You must be signed in.");
 
-    const uid = req.auth.uid;
-    const input = req.data as RegisterRiderInput;
+const uid = req.auth.uid;
+const input = req.data as RegisterRiderInput;
+const isAnonymous = req.auth.token?.firebase?.sign_in_provider === "anonymous";
 
-    // 2. Load caller profile
-    const profileSnap = await db.doc(`admin_users/${uid}`).get();
-    if (!profileSnap.exists)
-      throw new HttpsError("permission-denied", "User profile not found.");
+// 2. Load caller profile — skip for anonymous (pre-registration)
+let role: Role = "Operator";
+let entity = "";
 
-    const profile = profileSnap.data() as {
-      role: Role;
-      entity?: string;
-      status?: string;
-    };
+if (!isAnonymous) {
+  const profileSnap = await db.doc(`admin_users/${uid}`).get();
+  if (!profileSnap.exists)
+    throw new HttpsError("permission-denied", "User profile not found.");
 
-    if (profile.status && profile.status !== "Active") {
-      throw new HttpsError("permission-denied", "Your account is not active.");
-    }
+  const profile = profileSnap.data() as {
+    role: Role;
+    entity?: string;
+    status?: string;
+  };
 
-    const role = profile.role;
-    const entity = profile.entity ?? "";
+  if (profile.status && profile.status !== "Active") {
+    throw new HttpsError("permission-denied", "Your account is not active.");
+  }
 
-    if (!["Super Admin", "District Admin", "Operator"].includes(role)) {
-      throw new HttpsError("permission-denied", "Insufficient permissions.");
-    }
+  role = profile.role;
+  entity = profile.entity ?? "";
+
+  if (!["Super Admin", "District Admin", "Operator"].includes(role)) {
+    throw new HttpsError("permission-denied", "Insufficient permissions.");
+  }
+}
 
     // 3. Validate inputs
     const region = (input.region ?? "").trim();
@@ -142,10 +168,10 @@ export const registerRider = onCall(
     }
     if (!input.idNumber?.trim())
       throw new HttpsError("invalid-argument", "idNumber is required.");
-    if (!input.plateNumber?.trim())
-      throw new HttpsError("invalid-argument", "plateNumber is required.");
-    if (!input.chassisNumber?.trim())
-      throw new HttpsError("invalid-argument", "chassisNumber is required.");
+    // if (!input.plateNumber?.trim())
+    //   throw new HttpsError("invalid-argument", "plateNumber is required.");
+    // if (!input.chassisNumber?.trim())
+    //   throw new HttpsError("invalid-argument", "chassisNumber is required.");
 
     // ── District locking:
     //   District Admin → locked to their entity
@@ -184,12 +210,13 @@ export const registerRider = onCall(
       );
     }
 
-    // 5. Duplicate check
+    
+    // Step 5. Duplicate check
     await checkDuplicates({
       ...input,
       idNumber: input.idNumber.trim(),
-      plateNumber: input.plateNumber.trim().toUpperCase(),
-      chassisNumber: input.chassisNumber.trim().toUpperCase(),
+      plateNumber: input.plateNumber?.trim().toUpperCase() ?? "",
+      chassisNumber: input.chassisNumber?.trim().toUpperCase() ?? "",
     });
 
     // 6. Atomic transaction — per-district counter
@@ -238,6 +265,9 @@ export const registerRider = onCall(
         nextOfKinContact: (input.nextOfKinContact ?? "").trim(),
         // Photo
         passportPhotoUrl: input.passportPhotoUrl ?? null,
+
+        // QR Code
+        qrCodeUrl: input.qrCodeUrl ?? null,
         // RIN metadata
         RIN,
         RINPrefix: `${regionCode}${vehicleCode}`,
@@ -250,9 +280,13 @@ export const registerRider = onCall(
         expiryDate,
         status: "Pending",
         // Audit
-        createdBy: uid,
+        createdBy: uid ?? "pre-registration",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        paymentReference: input.paymentReference ?? null,
+        paymentTxnId: input.paymentTxnId ?? null,
+        paymentStatus: input.paymentStatus ?? null,
+        paymentAmount: input.paymentAmount ?? null,
       });
 
       // Increment district counter
@@ -286,6 +320,51 @@ export const registerRider = onCall(
 
     return result;
   },
+);
+
+// ─── uploadRiderFiles ─────────────────────────────────────────────────────────
+export const uploadRiderFiles = onCall(
+  {
+    region: "europe-west2",
+    timeoutSeconds: 60,
+    memory: "512MiB",
+    enforceAppCheck: false,
+  },
+  async (req) => {
+    const { base64Photo, base64QR, idNumber, RIN, riderId } = req.data as {
+      base64Photo?: string;
+      base64QR?: string;
+      idNumber: string;
+      RIN: string;
+      riderId: string;
+    };
+
+    const bucket = admin.storage().bucket();
+    const result: { photoUrl?: string; qrCodeUrl?: string } = {};
+
+    if (base64Photo) {
+      const safeId = idNumber.replace(/[^a-zA-Z0-9]/g, "_");
+      const photoFile = bucket.file(`riders/photos/${safeId}_${Date.now()}.jpg`);
+      await photoFile.save(
+        Buffer.from(base64Photo.replace(/^data:image\/\w+;base64,/, ""), "base64"),
+        { contentType: "image/jpeg" }
+      );
+      await photoFile.makePublic();
+      result.photoUrl = `https://storage.googleapis.com/${bucket.name}/${photoFile.name}`;
+    }
+
+    if (base64QR) {
+      const qrFile = bucket.file(`riders/qrcodes/${riderId}_${RIN}.png`);
+      await qrFile.save(
+        Buffer.from(base64QR.replace(/^data:image\/\w+;base64,/, ""), "base64"),
+        { contentType: "image/png" }
+      );
+      await qrFile.makePublic();
+      result.qrCodeUrl = `https://storage.googleapis.com/${bucket.name}/${qrFile.name}`;
+    }
+
+    return result;
+  }
 );
 
 // ─── updateRiderStatus ────────────────────────────────────────────────────────
@@ -595,4 +674,31 @@ export const checkMomoStatus = onCall(
       return { status: "pending", transactionId: "", reference };
     }
   },
+);
+
+// ─── updateRiderQR ────────────────────────────────────────────────────────────
+export const updateRiderQR = onCall(
+  {
+    region: "europe-west2",
+    timeoutSeconds: 15,
+    memory: "256MiB",
+    enforceAppCheck: false,
+  },
+  async (req) => {
+    const { riderId, qrCodeUrl } = req.data as {
+      riderId: string;
+      qrCodeUrl: string;
+    };
+
+    if (!riderId || !qrCodeUrl) {
+      throw new HttpsError("invalid-argument", "riderId and qrCodeUrl are required.");
+    }
+
+    await db.doc(`riders/${riderId}`).update({
+      qrCodeUrl,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { success: true };
+  }
 );

@@ -80,6 +80,11 @@ interface RegisterRiderPayload {
   nextOfKinName: string;
   nextOfKinContact: string;
   passportPhotoUrl: string | null;
+  qrCodeUrl: string | null;
+  paymentReference?: string | null;
+  paymentTxnId?: string | null;
+  paymentStatus?: string | null;
+  paymentAmount?: number | null;
 }
 
 // ─── CF CALLABLES ─────────────────────────────────────────────────────────────
@@ -88,6 +93,8 @@ const registerRiderFn = httpsCallable<
   RegisterRiderPayload,
   { RIN: string; riderId: string }
 >(functions, "registerRider");
+
+const updateRiderQRFn = httpsCallable(functions, "updateRiderQR");
 
 const updateRiderStatusFn = httpsCallable<
   { riderId: string; status: string },
@@ -133,7 +140,7 @@ async function generateAndUploadQRCode(
 ): Promise<string | null> {
   try {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-   const verifyUrl = `https://rin.thectsafrica.com/verify/${RIN}?t=${Date.now()}`;
+    const verifyUrl = `https://rin.thectsafrica.com/verify/${RIN}?t=${Date.now()}`;
     console.log(`🔲 Generating QR for: ${verifyUrl}`);
 
     // Generate as data URL then convert to blob
@@ -167,10 +174,23 @@ async function generateAndUploadQRCode(
 
 export async function saveRiderRegistration(
   data: RiderRegistrationData,
+  payment?: {
+    paymentReference?: string;
+    paymentTxnId?: string;
+    paymentStatus?: string;
+    paymentAmount?: number;
+  },
+  options?: {
+    requireAuth?: boolean; // defaults to true
+  }
 ): Promise<RegisterResult> {
   try {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated.");
+    const requireAuth = options?.requireAuth ?? true;
+
+    if (requireAuth) {
+      const user = auth.currentUser;
+      if (!user) throw new Error("User not authenticated.");
+    }
 
     // 1. Upload photo
     let passportPhotoUrl: string | null = null;
@@ -182,51 +202,53 @@ export async function saveRiderRegistration(
     } else {
       console.warn("⚠️ No photo file found in form data.");
     }
+// 1. Call Cloud Function first to get RIN and riderId
+const response = await registerRiderFn({
+  fullName: data.fullName,
+  phoneNumber: data.phoneNumber,
+  idType: data.idType,
+  idNumber: data.idNumber,
+  dateOfBirth: data.dateOfBirth,
+  gender: data.gender,
+  region: data.region,
+  districtMunicipality: data.districtMunicipality,
+  residentialTown: data.residentialTown,
+  vehicleCategory: data.vehicleCategory,
+  plateNumber: data.plateNumber,
+  chassisNumber: data.chassisNumber,
+  driversLicenseNumber: data.driversLicenseNumber,
+  licenseExpiryDate: data.licenseExpiryDate,
+  nextOfKinName: data.nextOfKinName,
+  nextOfKinContact: data.nextOfKinContact,
+  passportPhotoUrl,
+  qrCodeUrl: null,                        // null on first save
+  paymentReference: payment?.paymentReference ?? null,
+  paymentTxnId: payment?.paymentTxnId ?? null,
+  paymentStatus: payment?.paymentStatus ?? null,
+  paymentAmount: payment?.paymentAmount ?? null,
+});
 
-    // 2. Call Cloud Function
-    const response = await registerRiderFn({
-      fullName: data.fullName,
-      phoneNumber: data.phoneNumber,
-      idType: data.idType,
-      idNumber: data.idNumber,
-      dateOfBirth: data.dateOfBirth,
-      gender: data.gender,
-      region: data.region,
-      districtMunicipality: data.districtMunicipality,
-      residentialTown: data.residentialTown,
-      vehicleCategory: data.vehicleCategory,
-      plateNumber: data.plateNumber,
-      chassisNumber: data.chassisNumber,
-      driversLicenseNumber: data.driversLicenseNumber,
-      licenseExpiryDate: data.licenseExpiryDate,
-      nextOfKinName: data.nextOfKinName,
-      nextOfKinContact: data.nextOfKinContact,
-      passportPhotoUrl,
-    });
+const { RIN, riderId } = response.data;
 
-    const { RIN, riderId } = response.data;
+// 2. Generate QR using the RIN we just got back
+const qrCodeUrl = await generateAndUploadQRCode(RIN, riderId);
 
-    // 3. Generate QR code and upload
-    const qrCodeUrl = await generateAndUploadQRCode(RIN, riderId);
+// 3. Patch QR URL back using a dedicated Cloud Function or keep client update
+//    but use Admin SDK approach — or just accept it's a best-effort update
+if (qrCodeUrl) {
+  await updateRiderQRFn({ riderId, qrCodeUrl }); // separate lightweight function
+}
 
-    // 4. Patch QR URL back onto the rider document
-    if (qrCodeUrl) {
-      try {
-        await updateDoc(doc(db, "riders", riderId), {
-          qrCodeUrl,
-          updatedAt: serverTimestamp(),
-        });
-      } catch (err) {
-        console.warn("⚠️ Could not save QR URL to Firestore:", err);
-      }
-    }
+    
 
-     // ✅ 5. Bridge: mark pre-registration as issued if one exists
+    // ✅ 5. Bridge: mark pre-registration as issued if one exists
     try {
       const pre = await getPreRegistrationByPhone(data.phoneNumber);
       if (pre && pre.status !== "rin_issued") {
         await markPreRegistrationAsIssued(pre.id, RIN);
-        console.log(`🔗 Pre-registration ${pre.preRegId} marked as issued → ${RIN}`);
+        console.log(
+          `🔗 Pre-registration ${pre.preRegId} marked as issued → ${RIN}`,
+        );
       }
     } catch (err) {
       // Non-fatal — don't fail the registration if the bridge fails
@@ -235,8 +257,6 @@ export async function saveRiderRegistration(
 
     return { success: true, RIN, riderId, qrCodeUrl: qrCodeUrl ?? "" };
   } catch (err: any) {
-
-
     console.error("❌ Registration error:", err);
     const message =
       err?.details?.message ??
