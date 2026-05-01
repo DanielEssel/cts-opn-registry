@@ -9,6 +9,7 @@ import Link from "next/link";
 import {
   CheckCircle2,
   Loader2,
+  Info,
   Phone,
   User,
   MapPin,
@@ -67,8 +68,10 @@ import {
 } from "@/lib/paystack-service";
 import { DISTRICT_CODES, CATEGORY_CODES } from "@/lib/rin-constants";
 
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type MomoNetwork = "MTN" | "VODAFONE" | "AIRTELTIGO";
+
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const DISTRICTS = Object.keys(DISTRICT_CODES);
@@ -1199,175 +1202,182 @@ function ConfirmationReceipt({
         </p>
       </div>
 
-      {/* ── Receipt Card ── */}
-      <div
-        id="receipt"
-        className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden print:shadow-none print:border-slate-300"
-      >
-        {/* Receipt header band */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #064e3b 0%, #065f46 100%)",
-          }}
-          className="px-5 sm:px-8 py-5 sm:py-6 text-white"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300 mb-1">
-                CTS Africa · Greater Accra Pilot
-              </p>
-              <h3
-                className="text-lg sm:text-xl font-bold leading-tight"
-                style={FONT_DISPLAY}
-              >
-                Training Registration Receipt
-              </h3>
-              <p
-                className="text-xs sm:text-sm text-emerald-200 mt-1"
-                style={FONT_BODY}
-              >
-                Commercial Rider Training & Certification
-              </p>
-            </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-emerald-400/40 flex items-center justify-center shrink-0">
-              <ClipboardCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-200" />
-            </div>
-          </div>
+     {/* ── Receipt Card ── */}
+<div
+  id="receipt"
+  className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden print:shadow-none print:border-slate-300"
+>
+  {/* Receipt header band */}
+  <div
+    style={{
+      background: "linear-gradient(135deg, #064e3b 0%, #065f46 100%)",
+    }}
+    className="px-6 sm:px-8 py-6 sm:py-7 text-white"
+  >
+    <div className="flex items-start justify-between gap-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-300/90 mb-2">
+          CTS Africa · Greater Accra Pilot
+        </p>
+        <h3 className="text-xl sm:text-2xl font-bold leading-tight tracking-tight mb-1">
+          Training Registration Receipt
+        </h3>
+        <p className="text-sm sm:text-base text-emerald-200/90 font-medium">
+          Commercial Rider Training & Certification
+        </p>
+      </div>
+      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center shrink-0">
+        <ClipboardCheck className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-200" />
+      </div>
+    </div>
+  </div>
+
+  {/* Booking reference highlight */}
+  <div className="bg-slate-50 border-b border-slate-200 px-6 sm:px-8 py-5 sm:py-6 flex flex-col sm:flex-row items-start gap-5">
+    <div className="flex-1 w-full bg-white border-2 border-emerald-600 rounded-xl px-5 sm:px-6 py-4">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700 mb-1.5">
+        Booking Reference
+      </p>
+      <p className="text-2xl sm:text-3xl font-mono font-bold tracking-wider text-emerald-900 select-all break-all">
+        {bookingRef}
+      </p>
+      <p className="text-xs text-emerald-700/70 mt-2 font-medium">
+        Issued {issuedDate} at {issuedTime}
+      </p>
+    </div>
+
+    {photo && (
+      <div className="flex flex-col items-center gap-2 shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photo}
+          alt="Passport photo"
+          className="w-16 h-20 sm:w-18 sm:h-22 rounded-lg object-cover border-2 border-slate-200 shadow-md"
+        />
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Photo ID
+        </p>
+      </div>
+    )}
+  </div>
+
+  {/* Applicant details */}
+  <div className="px-6 sm:px-8 py-6 sm:py-7 space-y-6">
+    {/* Personal */}
+    <div>
+      <div className="flex items-center gap-2 pb-2 border-b border-emerald-200 mb-4">
+        <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center">
+          <User className="h-3 w-3 text-emerald-700" />
         </div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-800">
+          Applicant Details
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+        <ReceiptField label="Full Name" value={data.fullName} highlight />
+        <ReceiptField label="Phone Number" value={data.phoneNumber} />
+        <ReceiptField label="Date of Birth" value={data.dateOfBirth} />
+        <ReceiptField label="Gender" value={data.gender} />
+      </div>
+    </div>
 
-        {/* Booking reference highlight */}
-        <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-8 py-4 sm:py-5 flex flex-col xs:flex-row items-start gap-4 sm:gap-5">
-          <div className="flex-1 w-full bg-white border-2 border-emerald-500 rounded-xl px-4 sm:px-6 py-3 sm:py-4">
-            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-700 mb-1">
-              Booking Reference
-            </p>
-            <p className="text-xl sm:text-2xl font-black font-mono tracking-widest text-emerald-900 select-all break-all">
-              {bookingRef}
-            </p>
-            <p
-              className="text-xs text-emerald-600 mt-1 italic"
-              style={FONT_BODY}
-            >
-              Issued {issuedDate} at {issuedTime}
-            </p>
-          </div>
-
-          {photo && (
-            <div className="flex flex-col items-center gap-1.5 shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photo}
-                alt="Passport"
-                className="w-14 h-18 sm:w-16 sm:h-20 rounded-lg object-cover border-2 border-slate-200 shadow"
-              />
-              <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                Photo
-              </p>
-            </div>
-          )}
+    {/* Location & Vehicle */}
+    <div>
+      <div className="flex items-center gap-2 pb-2 border-b border-emerald-200 mb-4">
+        <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center">
+          <MapPin className="h-3 w-3 text-emerald-700" />
         </div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-800">
+          Location & Vehicle
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+        <ReceiptField label="District" value={data.districtMunicipality} />
+        <ReceiptField label="Town / Area" value={data.residentialTown} />
+        <ReceiptField 
+          label="Vehicle Category" 
+          value={data.vehicleCategory}
+          highlight
+        />
+      </div>
+    </div>
 
-        {/* Applicant details */}
-        <div className="px-4 sm:px-8 py-5 sm:py-6 space-y-4 sm:space-y-5">
-          {/* Personal */}
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-700 pb-2 border-b border-emerald-100 mb-3">
-              Applicant Details
-            </p>
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-6 sm:gap-x-8 gap-y-3 text-sm">
-              <ReceiptField label="Full Name" value={data.fullName} />
-              <ReceiptField label="Phone Number" value={data.phoneNumber} />
-              <ReceiptField label="Date of Birth" value={data.dateOfBirth} />
-              <ReceiptField label="Gender" value={data.gender} />
-            </div>
-          </div>
-
-          {/* Location & Vehicle */}
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-700 pb-2 border-b border-emerald-100 mb-3">
-              Location & Vehicle
-            </p>
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-6 sm:gap-x-8 gap-y-3 text-sm">
-              <ReceiptField
-                label="District"
-                value={data.districtMunicipality}
-              />
-              <ReceiptField label="Town / Area" value={data.residentialTown} />
-              <ReceiptField
-                label="Vehicle Category"
-                value={data.vehicleCategory}
-              />
-            </div>
-          </div>
-
-          {/* Payment */}
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-700 pb-2 border-b border-emerald-100 mb-3">
-              Payment Details
-            </p>
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-6 sm:gap-x-8 gap-y-3 text-sm">
-              <ReceiptField
-                label="Amount Paid"
-                value={`GHS ${REGISTRATION_FEE_GHS}.00`}
-              />
-              <ReceiptField label="Transaction ID" value={txnId || "—"} />
-              <ReceiptField label="Payment Date" value={issuedDate} />
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
-                  Status
-                </p>
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5">
-                  <CheckCircle2 className="h-3 w-3" /> Paid · Confirmed
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Next steps callout */}
-          <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 sm:p-4 flex items-start gap-3">
-            <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-              <ClipboardCheck className="h-3.5 w-3.5 text-blue-600" />
-            </div>
-            <div>
-              <p
-                className="text-sm font-semibold text-blue-900 mb-1"
-                style={FONT_BODY}
-              >
-                What happens next?
-              </p>
-              <ul className="space-y-1">
-                {[
-                  "You will be contacted with your assigned training date and location.",
-                  "Attend training and present this receipt to the CTS Africa official.",
-                  "Upon successful completion, your Rider ID card will be issued.",
-                ].map((step, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-xs text-blue-700"
-                    style={FONT_BODY}
-                  >
-                    <span className="mt-0.5 w-3.5 h-3.5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center flex-shrink-0 text-[9px] font-bold">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+    {/* Payment */}
+    <div>
+      <div className="flex items-center gap-2 pb-2 border-b border-emerald-200 mb-4">
+        <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center">
+          <CreditCard className="h-3 w-3 text-emerald-700" />
         </div>
-
-        {/* Footer */}
-        <div className="px-4 sm:px-8 py-4 border-t border-slate-100 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 bg-slate-50">
-          <p className="text-[10px] text-slate-400 max-w-xs" style={FONT_BODY}>
-            This receipt confirms your payment and registration. Present it at
-            your assigned training centre.
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-800">
+          Payment Details
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+        <ReceiptField 
+          label="Amount Paid" 
+          value={`GHS ${REGISTRATION_FEE_GHS}.00`}
+          highlight
+          valueClassName="text-emerald-700 font-bold"
+        />
+        <ReceiptField label="Transaction ID" value={txnId || "—"} />
+        <ReceiptField label="Payment Date" value={issuedDate} />
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            Status
           </p>
-          <p className="text-xs font-mono font-bold text-slate-400 shrink-0">
-            {bookingRef}
-          </p>
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 rounded-full px-3 py-1.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> 
+            Paid · Confirmed
+          </span>
         </div>
       </div>
+    </div>
+
+    {/* Next steps callout */}
+    <div className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/70 border border-blue-200 p-4 sm:p-5">
+      <div className="flex items-start gap-4">
+        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+          <ClipboardCheck className="h-4 w-4 text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold text-blue-900 mb-2">
+            What happens next?
+          </p>
+          <ul className="space-y-2">
+            {[
+              "You will be contacted with your assigned training date and location.",
+              "Attend training and present this receipt to the CTS Africa official.",
+              "Upon successful completion, your Rider ID card will be issued.",
+            ].map((step, i) => (
+              <li
+                key={i}
+                className="flex items-start gap-3 text-sm text-blue-800"
+              >
+                <span className="mt-0.5 w-5 h-5 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center flex-shrink-0 text-xs font-bold">
+                  {i + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Footer */}
+  <div className="px-6 sm:px-8 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50/80">
+    <p className="text-[11px] text-slate-600 max-w-md font-medium">
+      This receipt confirms your payment and registration. Please present it at your assigned training centre.
+    </p>
+    <div className="flex items-center gap-3">
+      <div className="h-5 w-px bg-slate-300 hidden sm:block" />
+      <p className="text-sm font-mono font-bold text-slate-500 bg-white px-3 py-1 rounded border border-slate-200">
+        {bookingRef}
+      </p>
+    </div>
+  </div>
+</div>
 
       {/* Action buttons */}
       <div className="flex flex-col xs:flex-row gap-3 mt-5 sm:mt-6 print:hidden">
@@ -1399,17 +1409,21 @@ function ConfirmationReceipt({
 function ReceiptField({
   label,
   value,
+  highlight = false,
+  valueClassName = "",
 }: {
   label: string;
   value?: string | null;
+  highlight?: boolean;
+  valueClassName?: string;
 }) {
   return (
-    <div>
-      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+    <div className={`${highlight ? 'bg-emerald-50/50 -mx-2 px-2 py-1.5 rounded' : ''}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 mb-1">
         {label}
       </p>
-      <p className="text-sm font-semibold text-slate-800">
-        {value || <span className="text-slate-300 font-normal italic">—</span>}
+      <p className={`text-base font-semibold text-slate-800 ${valueClassName}`}>
+        {value || <span className="text-slate-400 font-normal italic">—</span>}
       </p>
     </div>
   );
@@ -1502,23 +1516,23 @@ export function PreRegistrationForm({
   const [showNav, setShowNav] = useState(false);
 
   const form = useForm<PreRegistrationData>({
-    resolver: zodResolver(preRegistrationSchema),
-    mode: "onChange",
-    defaultValues: {
-      fullName: "",
-      phoneNumber: "",
-      dateOfBirth: "",
-      gender: undefined,
-      idType: undefined,
-      idNumber: "",
-      region: "Greater Accra",
-      districtMunicipality: undefined,
-      residentialTown: "",
-      vehicleCategory: undefined,
-      nextOfKinName: "",
-      nextOfKinContact: "",
-    },
-  });
+  resolver: zodResolver(preRegistrationSchema),
+  mode: "onChange",
+  defaultValues: {
+    fullName: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    gender: undefined,
+    idType: undefined, 
+    idNumber: "",
+    region: "Greater Accra",
+    districtMunicipality: "",
+    residentialTown: "",
+    vehicleCategory: "",
+    nextOfKinName: "",
+    nextOfKinContact: "",
+  },
+});
 
   // Inside PreRegistrationForm, add this useEffect:
 useEffect(() => {
@@ -1604,6 +1618,8 @@ async function handlePaymentSuccess(
       licenseExpiryDate: "",
       passportPhoto,
     };
+
+    
 
     const result = await saveRiderRegistration(
       riderData,
@@ -1719,17 +1735,27 @@ async function handlePaymentSuccess(
           }}
         />
 
-        {/* Back to home */}
-        <div className="absolute top-4 sm:top-5 left-4 sm:left-6 z-20">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-white/60 hover:text-white text-xs font-semibold uppercase tracking-widest transition-colors"
-            style={FONT_BODY}
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Home
-          </Link>
-        </div>
+        {/* Back to home & Navigation - Right aligned */}
+{/* Navigation Buttons - Card Style */}
+<div className="absolute top-4 sm:top-5 left-4 sm:left-6 right-4 sm:right-6 z-20 flex justify-between items-center">
+  <Link
+    href="/"
+    className="inline-flex items-center gap-2 text-white/80 hover:text-white text-xs font-bold uppercase tracking-widest transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-2 rounded-xl"
+    style={FONT_BODY}
+  >
+    <ArrowLeft className="h-3.5 w-3.5" />
+    Home
+  </Link>
+  
+  <Link
+    href="/training-details"
+    className="inline-flex items-center gap-2 text-white/80 hover:text-white text-xs font-bold uppercase tracking-widest transition-all bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-2 rounded-xl"
+    style={FONT_BODY}
+  >
+    Training Info
+    <Info className="h-3.5 w-3.5" />
+  </Link>
+</div>
 
         {/* Content */}
         <div className="relative z-10 max-w-3xl mx-auto">
@@ -1880,14 +1906,44 @@ async function handlePaymentSuccess(
           </div>
         </div>
 
-        {/* Footer */}
-        <p
-          className="text-center text-xs text-slate-400 mt-6 sm:mt-8 flex items-center justify-center gap-2"
-          style={FONT_BODY}
-        >
-          <Shield className="h-3 w-3 shrink-0" />
-          Secured by PayStack · CTS Africa Limited · All rights reserved
-        </p>
+       
+       {/* Footer */}
+<div className="text-center mt-6 sm:mt-8 space-y-3">
+  <p
+    className="text-xs text-slate-400 flex items-center justify-center gap-2"
+    style={FONT_BODY}
+  >
+    <Shield className="h-3 w-3 shrink-0" />
+    Secured by PayStack · CTS Africa Limited · All rights reserved
+  </p>
+  
+  {/* Privacy Policy Link */}
+  <div className="flex items-center justify-center gap-4 text-xs">
+    <Link
+      href="/privacy-policy"
+      className="text-slate-400 hover:text-emerald-600 transition-colors"
+      style={FONT_BODY}
+    >
+      Privacy Policy
+    </Link>
+    <span className="text-slate-300">•</span>
+    <Link
+      href="/terms"
+      className="text-slate-400 hover:text-emerald-600 transition-colors"
+      style={FONT_BODY}
+    >
+      Terms & Conditions
+    </Link>
+    <span className="text-slate-300">•</span>
+    <Link
+      href="/data-protection"
+      className="text-slate-400 hover:text-emerald-600 transition-colors"
+      style={FONT_BODY}
+    >
+      Data Protection
+    </Link>
+  </div>
+</div>
       </div>
 
       {/* ── Floating navigation ── */}

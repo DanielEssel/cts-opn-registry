@@ -158,13 +158,24 @@ export default function LoginPage() {
         {/* ── Right form panel ── */}
         <div className="flex-1 flex flex-col justify-center px-6 py-8 sm:px-8 lg:px-10 xl:px-12 min-h-[520px]">
 
-          {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-3 mb-8">
-            <div className="p-2 bg-green-700 rounded-xl">
-              <ShieldCheck className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-slate-900 text-lg">RIN Registry</span>
-          </div>
+         {/* Mobile logo - Horizontal */}
+<div className="flex items-center mb-2 justify-center gap-3 py-3 px-4 bg-gradient-to-r">
+  <div className="w-24 h-14 rounded-full bg-gradient-to-br from-emerald-700 to-emerald-600 p-0.5 shadow-md">
+    <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+      <Image
+        src="/logo/ctslogo.png"
+        alt="CTS Africa Logo"
+        width={50}
+        height={50}
+        className="object-contain p-1.5 "
+      />
+    </div>
+  </div>
+  <div>
+    <p className="text-sm font-black text-emerald-800">CTS Africa</p>
+    <p className="text-[10px] font-semibold text-slate-500">Rider Identification Number</p>
+  </div>
+</div>
 
           <div className="w-full max-w-sm mx-auto">
 
