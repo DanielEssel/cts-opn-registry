@@ -11,13 +11,13 @@ import {
   Users,
   CreditCard,
   Phone,
-  Camera,
+  
   FileText,
   Calendar,
   Award,
-  Gift,
-  MapPin,
+ 
   AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import Image from "next/image";
 const FONT_BODY = { fontFamily: "'DM Sans', sans-serif" };
@@ -47,8 +47,8 @@ export default function TrainingDetailsPage() {
               <Image
                 src="/logo/pcraa.png"
                 alt="PCRAA"
-                width={40}
-                height={40}
+                width={60}
+                height={60}
                 className="object-contain"
               />
             </div>
@@ -93,11 +93,11 @@ export default function TrainingDetailsPage() {
         {/* Quick Info Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {[
-            { icon: Clock, label: "Duration", value: "3 Weeks", color: "blue" },
+            { icon: Clock, label: "Duration", value: "3 Days", color: "blue" },
             {
               icon: Calendar,
               label: "Schedule",
-              value: "Weekends",
+              value: "Weekdays",
               color: "green",
             },
             {
@@ -160,99 +160,127 @@ export default function TrainingDetailsPage() {
             <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-linear-to-b from-green-600 via-green-100 to-transparent hidden sm:block" />
 
             <div className="space-y-12">
-              {[
-                {
-                  step: "01",
-                  title: "Access the Portal",
-                  desc: "Visit the official PCRAA website to begin your application.",
-                  icon: "🌐",
-                  color: "bg-green-700",
-                },
-                {
-                  step: "02",
-                  title: "Initiate Registration",
-                  desc: "Select the 'Commercial Rider Training' option from our service menu.",
-                  icon: "🖱️",
-                  color: "bg-green-600",
-                },
-                {
-                  step: "03",
-                  title: "Personnel Documentation",
-                  desc: "Provide your accurate details for the official Rider ID database.",
-                  subItems: [
-                    "Full Legal Name",
-                    "Date of Birth",
-                    "Digital Passport Photo",
-                    "Residential Address",
-                  ],
-                  icon: "📝",
-                  color: "bg-green-600",
-                },
-                {
-                  step: "04",
-                  title: "Secure Fee Settlement",
-                  desc: "Process your GHS 400.00 registration fee via our secure payment gateway.",
-                  subItems: [
-                    "MTN Momo / Telecel Cash",
-                    "Automated Payment Prompt",
-                    "Instant Digital Receipt",
-                  ],
-                  icon: "💳",
-                  color: "bg-green-500",
-                },
-                {
-                  step: "05",
-                  title: "Verify & Complete",
-                  desc: "Your credentials will be generated and training schedule sent via SMS.",
-                  subItems: [
-                    "SMS Schedule Notification",
-                    "Digital Training Booklet",
-                    "Official PCRAA Activation",
-                  ],
-                  icon: "📧",
-                  color: "bg-emerald-500",
-                },
-              ].map(({ step, title, desc, subItems, icon, color }) => (
-                <div
-                  key={step}
-                  className="group relative flex flex-col sm:flex-row gap-6 sm:gap-10"
-                >
-                  {/* Step Indicator */}
-                  <div
-                    className={`relative z-10 shrink-0 w-10 h-10 rounded-full ${color} text-white flex items-center justify-center font-black text-xs shadow-lg shadow-green-200 group-hover:scale-110 transition-transform`}
-                  >
-                    {step}
-                  </div>
+  {[
+    {
+  step: "01",
+  title: "Visit the PCRAA Portal",
+  desc: "Open the official PCRAA registration portal to begin your membership application.",
+  link: "https://rin.thectsafrica.com/pre-register",
+  linkText: "Visit Registration Portal",
+  subItems: [
+    "Access the official registration portal",
+    "Review the eligibility requirements",
+  ],
+  icon: "🌐",
+  color: "bg-green-700",
+},
+    {
+      step: "02",
+      title: "Create Your Account",
+      desc: "Click 'Register' and create your account using your email address or mobile number.",
+      subItems: [
+        "Email or Mobile Number",
+        "Create a Secure Password",
+      ],
+      icon: "👤",
+      color: "bg-green-600",
+    },
+    {
+      step: "03",
+      title: "Complete Your Profile",
+      desc: "Provide accurate personal information and upload the required supporting documents.",
+      subItems: [
+        "Full Name",
+        "Date of Birth",
+        "Ghana Card",
+        "Driver's Licence",
+        "Vehicle Registration",
+        "Passport Photograph",
+      ],
+      icon: "📝",
+      color: "bg-green-600",
+    },
+    {
+      step: "04",
+      title: "Pay the Membership Fee",
+      desc: "Complete the one-time membership payment securely through the available payment options.",
+      subItems: [
+        "MTN MoMo",
+        "Telecel Cash",
+        "Instant Payment Confirmation",
+        "Digital Receipt",
+      ],
+      icon: "💳",
+      color: "bg-green-500",
+    },
+    {
+      step: "05",
+      title: "Submit & Get Verified",
+      desc: "Submit your application for review. Once approved, you'll receive your PCRAA Membership Certificate and training details.",
+      subItems: [
+        "Application Review",
+        "QR Code Membership Certificate",
+        "Training Schedule Notification",
+      ],
+      icon: "✅",
+      color: "bg-emerald-500",
+    },
+  ].map(
+  ({ step, title, desc, subItems, icon, color, link, linkText }) => (
+    <div
+      key={step}
+      className="group relative flex flex-col sm:flex-row gap-6 sm:gap-10"
+    >
+      {/* Step Indicator */}
+      <div
+        className={`relative z-10 shrink-0 w-10 h-10 rounded-full ${color} text-white flex items-center justify-center font-black text-xs shadow-lg shadow-green-200 group-hover:scale-110 transition-transform`}
+      >
+        {step}
+      </div>
 
-                  <div className="flex-1 bg-slate-50/50 rounded-2xl p-6 border border-transparent hover:border-green-100 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{icon}</span>
-                      <h3 className="font-extrabold text-xl text-slate-900 tracking-tight">
-                        {title}
-                      </h3>
-                    </div>
+      <div className="flex-1 bg-slate-50/50 rounded-2xl p-6 border border-transparent hover:border-green-100 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-2xl">{icon}</span>
+          <h3 className="font-extrabold text-xl text-slate-900 tracking-tight">
+            {title}
+          </h3>
+        </div>
 
-                    <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                      {desc}
-                    </p>
+        <p className="text-slate-600 text-sm leading-relaxed">
+  {desc}
+</p>
 
-                    {subItems && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/50 rounded-xl p-4 border border-slate-100">
-                        {subItems.map((item) => (
-                          <div
-                            key={item}
-                            className="flex items-center gap-2 text-xs font-bold text-slate-500"
-                          >
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                            {item}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+{link && (
+  <div className="mt-4 mb-4">
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-bold text-white hover:bg-green-800 transition-all duration-300"
+    >
+      {linkText}
+      <ExternalLink className="h-4 w-4" />
+    </a>
+  </div>
+)}
+
+        {subItems && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/50 rounded-xl p-4 border border-slate-100">
+            {subItems.map((item) => (
+              <div
+                key={item}
+                className="flex items-center gap-2 text-xs font-bold text-slate-500"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                {item}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  ))}
+</div>
           </div>
         </section>
 
@@ -268,7 +296,7 @@ export default function TrainingDetailsPage() {
                 GHS 400.00
               </p>
               <p className="text-sm text-slate-600">
-                One-time registration fee
+                One-time membership registration fee
               </p>
               <ul className="mt-4 space-y-2">
                 {[
@@ -288,10 +316,9 @@ export default function TrainingDetailsPage() {
               <p className="font-bold text-slate-900 mb-2">What's included:</p>
               <ul className="space-y-2">
                 {[
-                  "✓ Training materials & booklets",
+                 
                   "✓ Personal Protective Equipment (PPE)",
                   "✓ Official Rider ID Card",
-                  "✓ Digital Certificate",
                   "✓ 6-month registration validity",
                 ].map((item) => (
                   <li key={item} className="text-sm text-slate-600">
@@ -367,8 +394,8 @@ export default function TrainingDetailsPage() {
               <ul className="space-y-2">
                 {[
                   "PCRAA number is issued AFTER successful completion of training",
-                  "Training lasts for 3 weeks maximum",
-                  "PPE and learning materials provided to all registered applicants",
+                  "Training lasts for 3 days maximum",
+                  "PPE will be provided to all registered applicants",
                   "Bring your registration receipt to the training center",
                   "Limited slots available - register early",
                 ].map((item) => (

@@ -8,9 +8,10 @@ import {
   CheckCircle,
   FileText,
   ArrowRight,
-  MapPin,
+  ClipboardCheck,
+  Award,
   AlertCircle,
-  Users,
+  UserPlus,
   Lock,
   Zap,
   QrCode,
@@ -52,8 +53,8 @@ export default function HomePage() {
               <Image
                 src="/logo/pcraa.png"
                 alt="PCRAA"
-                width={40}
-                height={40}
+                width={60}
+                height={60}
                 className="object-contain"
               />
             </div>
@@ -282,9 +283,8 @@ export default function HomePage() {
           <ul className="space-y-3">
             {[
               "Personal Protective Equipment (PPE)",
-              "Training learning materials & booklets",
-              "Official Rider ID Card upon completion",
-              "Digital certificate of completion"
+              "Training Activity Fliers",
+              "Official Rider ID Card upon completion"
             ].map((item) => (
               <li key={item} className="flex items-center gap-3 text-slate-700">
                 <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
@@ -299,10 +299,8 @@ export default function HomePage() {
           </h3>
           <ul className="space-y-3">
             {[
-              "3 weeks intensive training program",
-              "Mix of theory and practical sessions",
-              "Weekend classes available",
-              "Final assessment & certification"
+              "3 days intensive training program",
+              "Refresher training sessions",
             ].map((item) => (
               <li key={item} className="flex items-center gap-3 text-slate-700">
                 <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
@@ -321,7 +319,7 @@ export default function HomePage() {
         {[
           { step: "1", title: "Visit Website", desc: "Go to PCRAA portal" },
           { step: "2", title: "Fill Form", desc: "Submit personal details & photo" },
-          { step: "3", title: "Pay Fee", desc: "Mobile money payment" },
+          { step: "3", title: "Pay Registration Fee", desc: "Mobile money payment" },
           { step: "4", title: "Get Receipt", desc: "Instant confirmation" }
         ].map(({ step, title, desc }) => (
           <div key={step} className="text-center">
@@ -386,7 +384,7 @@ export default function HomePage() {
         {
           icon: Zap,
           title: "6-Month Permits",
-          body: "Each registration is valid for 6 months. Renew before expiry to stay compliant and operational.",
+          body: "Each registration is valid for 6 months. Renewal at your assembly every 6 months.",
           accent: "#b45309",
           light: "#fffbeb",
         },
@@ -416,18 +414,21 @@ export default function HomePage() {
   </div>
 </section>
 
-{/* ── HOW IT WORKS ── (Your original, preserved) */}
+{/* ── HOW IT WORKS ── */}
 <section className="py-24 bg-slate-50">
   <div className="max-w-4xl mx-auto px-6">
     <div className="text-center mb-14">
       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-green-700 mb-3">
         Registration Process
       </p>
-      <h2 className="text-4xl font-black text-slate-900">
-        How to get your PCRAA
+
+      <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight">
+        Become a Registered PCRAA Member
       </h2>
-      <p className="text-slate-500 mt-3">
-        Registration is done through authorized operators only.
+
+      <p className="text-lg text-slate-500 mt-4 max-w-2xl mx-auto leading-relaxed">
+        Complete your membership registration online in just a few simple
+        steps and enroll for upcoming PCRAA training programs.
       </p>
     </div>
 
@@ -435,49 +436,54 @@ export default function HomePage() {
       {[
         {
           step: "01",
-          icon: MapPin,
-          title: "Visit an Authorized Operator",
-          body: "Find a registered government operator in your district. List available at district offices.",
+          icon: UserPlus,
+          title: "Create Your Account",
+          body: "Sign up using your email address or mobile number to start your PCRAA membership application.",
         },
         {
           step: "02",
           icon: FileText,
-          title: "Bring Required Documents",
-          body: "Ghana Card, Driver's License, Vehicle Registration, and a passport photo.",
+          title: "Complete Your Profile",
+          body: "Provide your personal details and upload the required documents, including your Ghana Card, Driver's License, Vehicle Registration, and passport photograph.",
         },
         {
           step: "03",
-          icon: Users,
-          title: "Operator Registers You",
-          body: "The operator inputs your information into the system on your behalf. Takes about 5 minutes.",
+          icon: ClipboardCheck,
+          title: "Submit Your Application",
+          body: "Review your information carefully and submit your application for verification and approval.",
         },
         {
           step: "04",
-          icon: CheckCircle,
-          title: "Receive Your PCRAA Certificate",
-          body: "Get your Progressive Certified Riders of Africa Association instantly with a QR code. Keep it safe for checks.",
+          icon: Award,
+          title: "Receive Your Membership",
+          body: "Once approved, you'll receive your official PCRAA Membership Certificate with a unique QR code and can register for upcoming training programs.",
         },
       ].map(({ step, icon: Icon, title, body }, i) => (
         <div
           key={step}
-          className="flex gap-6 items-start bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+          className="flex gap-6 items-start bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300"
         >
           <div className="shrink-0 w-14 h-14 rounded-2xl bg-green-700 flex items-center justify-center shadow-md">
             <span className="mono text-sm font-black text-white">
               {step}
             </span>
           </div>
-          <div className="flex-1 pt-1">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Icon className="h-4 w-4 text-green-700 shrink-0" />
-              <h3 className="font-black text-slate-900">{title}</h3>
+
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Icon className="h-5 w-5 text-green-700 shrink-0" />
+              <h3 className="text-lg font-bold text-slate-900">
+                {title}
+              </h3>
             </div>
-            <p className="text-sm text-slate-500 leading-relaxed">
+
+            <p className="text-slate-600 leading-relaxed">
               {body}
             </p>
           </div>
+
           {i < 3 && (
-            <div className="hidden md:flex shrink-0 items-center self-center text-slate-200">
+            <div className="hidden md:flex items-center self-center text-slate-300">
               <ArrowRight className="h-5 w-5" />
             </div>
           )}

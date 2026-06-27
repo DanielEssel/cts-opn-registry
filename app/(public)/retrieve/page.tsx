@@ -362,11 +362,11 @@ export default function RetrievePCRAA() {
               className="font-black text-white mb-3"
               style={{ fontSize: 26, letterSpacing: "-0.02em" }}
             >
-              Retrieve Your PCRAA
+              Retrieve Your Rider Identification Number (RIN)
             </h1>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm mx-auto">
-              For your security, PCRAA retrieval is handled in person or through
-              our official contact channels. Please reach out to PCRAA
+              For your security, Rider Identification Number retrieval is handled in person or through
+              our official contact channels. Please reach out to PCRAA officials directly
               using any of the options below.
             </p>
           </div>
