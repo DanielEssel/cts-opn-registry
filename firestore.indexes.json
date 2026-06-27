@@ -43,7 +43,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "RINPrefix",
+          "fieldPath": "PCRAAPrefix",
           "order": "ASCENDING"
         },
         {

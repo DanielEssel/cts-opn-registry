@@ -11,7 +11,7 @@ import {
 
 interface RiderData {
   id: string;
-  RIN: string;
+  PCRAA: string;
   fullName: string;
   status: "Active" | "Expired" | "Suspended" | "Pending";
   districtMunicipality?: string;
@@ -76,7 +76,7 @@ const STATUS = {
 
 export default function VerifyPage() {
   const params = useParams();
-  const RIN    = (params.RIN as string ?? "").toUpperCase().trim();
+  const PCRAA    = (params.PCRAA as string ?? "").toUpperCase().trim();
 
   const [rider,   setRider]   = useState<RiderData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,7 +87,7 @@ export default function VerifyPage() {
     async function fetchRider() {
       try {
         const snap = await getDocs(
-          query(collection(db, "riders"), where("RIN", "==", RIN), limit(1))
+          query(collection(db, "riders"), where("PCRAA", "==", PCRAA), limit(1))
         );
         if (!snap.empty) setRider({ id: snap.docs[0].id, ...snap.docs[0].data() } as RiderData);
       } catch (err: any) {
@@ -95,8 +95,8 @@ export default function VerifyPage() {
 }
       finally { setLoading(false); }
     }
-    if (RIN) fetchRider(); else setLoading(false);
-  }, [RIN]);
+    if (PCRAA) fetchRider(); else setLoading(false);
+  }, [PCRAA]);
 
   // ── Loading ───────────────────────────────────────────────────────────────
 
@@ -123,7 +123,7 @@ export default function VerifyPage() {
       </div>
       <h1 className="text-2xl font-black text-red-900 tracking-tight">INVALID PERMIT</h1>
       <p className="text-sm text-red-600 mt-2 max-w-xs leading-relaxed">
-        RIN <span className="font-mono font-black">{RIN}</span> was not found
+        PCRAA <span className="font-mono font-black">{PCRAA}</span> was not found
         in the national registry.
       </p>
       <div className="mt-5 px-6 py-3 bg-red-600 rounded-2xl text-sm font-black text-white uppercase tracking-wider shadow-lg shadow-red-200">
@@ -242,13 +242,13 @@ export default function VerifyPage() {
               {/* 2-col grid of essential fields */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
 
-                {/* RIN */}
+                {/* PCRAA */}
                 <div className="col-span-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-green-700 mb-0.5">
-                    Rider ID (RIN)
+                    Rider ID (PCRAA)
                   </p>
                   <p className="font-mono text-base font-black text-slate-900 tracking-widest">
-                    {rider.RIN}
+                    {rider.PCRAA}
                   </p>
                 </div>
 

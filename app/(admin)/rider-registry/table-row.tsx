@@ -71,13 +71,13 @@ export function RiderTableRow({
         </div>
       </TableCell>
 
-      {/* RIN */}
+      {/* PCRAA */}
       <TableCell>
         <Badge
           variant="outline"
           className="font-mono bg-blue-50 text-blue-700 border-blue-100 px-3 py-1"
         >
-          {rider.RIN}
+          {rider.PCRAA}
         </Badge>
       </TableCell>
 
@@ -85,7 +85,7 @@ export function RiderTableRow({
       <TableCell>
         <div className="flex justify-center items-center">
           <div className="p-1.5 bg-white border border-slate-100 rounded-xl shadow-sm group-hover:border-blue-200 transition-colors">
-            <QRCodeSVG value={`${baseUrl}/verify/${rider.RIN}`} size={32} level="M" />
+            <QRCodeSVG value={`${baseUrl}/verify/${rider.PCRAA}`} size={32} level="M" />
           </div>
         </div>
       </TableCell>

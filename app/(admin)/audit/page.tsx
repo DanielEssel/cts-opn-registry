@@ -68,7 +68,7 @@ interface AuditLog {
   action: string;
   target: string;
   targetId?: string;
-  RIN?: string;
+  PCRAA?: string;
   district?: string;
   status: LogStatus;
   timestamp: any;
@@ -271,7 +271,7 @@ export default function AuditLogPage() {
         const adminName = adminMap[l.adminUid] ?? "";
         const matchSearch =
           !search ||
-          [l.target, l.RIN ?? "", adminName, l.action, l.district ?? ""].some(
+          [l.target, l.PCRAA ?? "", adminName, l.action, l.district ?? ""].some(
             (v) => v.toLowerCase().includes(search.toLowerCase()),
           );
         return matchType && matchSearch;
@@ -287,7 +287,7 @@ export default function AuditLogPage() {
       "Role",
       "Action",
       "Rider / Applicant",
-      "RIN",
+      "PCRAA",
       "District",
       "Status",
     ];
@@ -297,7 +297,7 @@ export default function AuditLogPage() {
       roleMap[l.adminUid] ?? l.adminRole ?? "",
       ACTION_META[l.type]?.label ?? l.type,
       l.target,
-      l.RIN ?? "",
+      l.PCRAA ?? "",
       l.district ?? "",
       l.status,
     ]);
@@ -402,7 +402,7 @@ export default function AuditLogPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           <Input
-            placeholder="Search by rider, RIN, registrar, district..."
+            placeholder="Search by rider, PCRAA, registrar, district..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-10"
@@ -532,9 +532,9 @@ export default function AuditLogPage() {
                             <p className="text-sm font-semibold text-slate-800 leading-none">
                               {log.target || "—"}
                             </p>
-                            {log.RIN && (
+                            {log.PCRAA && (
                               <p className="text-[10px] font-mono text-green-700 mt-1">
-                                {log.RIN}
+                                {log.PCRAA}
                               </p>
                             )}
                             {log.district && (

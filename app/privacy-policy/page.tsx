@@ -30,7 +30,7 @@ const PrivacyPolicyPage = () => {
 
       <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-r-xl">
         <p className="text-sm text-amber-800">
-          <strong>📢 Data Protection Notice:</strong> CTS Africa is committed to protecting your personal information 
+          <strong>📢 Data Protection Notice:</strong> PCRAA is committed to protecting your personal information 
           in compliance with the <strong>Data Protection Act 2012 (Act 843)</strong> of Ghana. Your data is collected, 
           processed, and stored securely.
         </p>
@@ -60,7 +60,7 @@ const PrivacyPolicyPage = () => {
           <ul className="list-disc ml-6 space-y-1 text-gray-700">
             <li>To provide and manage our training registration services</li>
             <li>To verify identity and eligibility for commercial rider training</li>
-            <li>To generate and issue Rider Identification Numbers (RIN)</li>
+            <li>To generate and issue Progressive Certified Riders of Africa Associations (PCRAA)</li>
             <li>To improve our website, products, and services</li>
             <li>To communicate important updates, training schedules, and notifications</li>
             <li>To comply with legal obligations under Ghanaian law</li>
@@ -82,7 +82,7 @@ const PrivacyPolicyPage = () => {
             Personal data may be shared with:
           </p>
           <ul className="list-disc ml-6 space-y-1 text-gray-700">
-            <li>Authorized CTS Africa employees for business purposes</li>
+            <li>Authorized PCRAA employees for business purposes</li>
             <li>Third-party payment processors (PayStack) for fee collection</li>
             <li>Regulatory authorities as required by law</li>
             <li>Training partners and certification bodies</li>
@@ -151,7 +151,7 @@ const PrivacyPolicyPage = () => {
             </p>
             <div className="mt-3">
               <p className="text-gray-800">
-                <strong>CTS Africa</strong><br />
+                <strong>PCRAA</strong><br />
                 Email: <a href="mailto:ctsofficical716@gmail.com" className="text-emerald-600 hover:underline">ctsofficial716@gmail.com</a><br />
                 Phone: <a href="tel:+233244267329" className="text-emerald-600 hover:underline">+233 244 267 329</a><br />
                 Location: Greater Accra, Ghana
@@ -164,7 +164,7 @@ const PrivacyPolicyPage = () => {
       {/* Footer with Back Button */}
       <div className="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
         <p className="text-sm text-gray-500">
-          © {new Date().getFullYear()} CTS Africa. All rights reserved.
+          © {new Date().getFullYear()} PCRAA. All rights reserved.
         </p>
         <div className="flex gap-3">
           <Link

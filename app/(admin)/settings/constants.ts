@@ -3,7 +3,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Single source of truth for UI dropdowns in the admin settings area.
  * Districts are derived directly from DISTRICT_CODES in rin-constants so
- * the dropdown and the RIN generator are ALWAYS in sync — no duplication.
+ * the dropdown and the PCRAA generator are ALWAYS in sync — no duplication.
  */
 
 import {

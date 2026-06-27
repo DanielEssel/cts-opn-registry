@@ -98,7 +98,7 @@ export default function DailyReportPage() {
       .filter((r) =>
         !q ||
         r.fullName.toLowerCase().includes(q)       ||
-        r.RIN.toLowerCase().includes(q)            ||
+        r.PCRAA.toLowerCase().includes(q)            ||
         r.vehicleCategory.toLowerCase().includes(q)||
         r.status.toLowerCase().includes(q)
       );
@@ -107,10 +107,10 @@ export default function DailyReportPage() {
   // ── Export ────────────────────────────────────────────────────────────────
 
   const handleExport = () => {
-    const headers = ["Rider Name","RIN","Vehicle","Status","Date Registered","Expiry Date"];
+    const headers = ["Rider Name","PCRAA","Vehicle","Status","Date Registered","Expiry Date"];
     const rows = filtered.map((r) => [
       `"${r.fullName}"`,
-      `"${r.RIN}"`,
+      `"${r.PCRAA}"`,
       `"${r.vehicleCategory}"`,
       `"${r.status}"`,
       `"${format(toDate(r.createdAt), "dd MMM yyyy")}"`,
@@ -278,7 +278,7 @@ export default function DailyReportPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search name, RIN, vehicle…"
+              placeholder="Search name, PCRAA, vehicle…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
@@ -321,7 +321,7 @@ export default function DailyReportPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {["Rider", "RIN", "Vehicle", "Date Registered", "Status"].map((h) => (
+                  {["Rider", "PCRAA", "Vehicle", "Date Registered", "Status"].map((h) => (
                     <th key={h} className="text-left py-3 px-5 text-[10px] font-black uppercase tracking-wider text-slate-500">
                       {h}
                     </th>
@@ -341,7 +341,7 @@ export default function DailyReportPage() {
                     </td>
                     <td className="py-3.5 px-5">
                       <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-lg">
-                        {r.RIN}
+                        {r.PCRAA}
                       </span>
                     </td>
                     <td className="py-3.5 px-5 text-slate-600">{r.vehicleCategory}</td>

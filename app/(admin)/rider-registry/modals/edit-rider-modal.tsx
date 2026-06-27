@@ -147,7 +147,7 @@ export function EditRiderModal({
               Edit Rider
             </p>
             <h2 className="text-xl font-bold leading-tight">{rider.fullName}</h2>
-            <p className="text-xs text-green-300 font-mono mt-0.5">{rider.RIN}</p>
+            <p className="text-xs text-green-300 font-mono mt-0.5">{rider.PCRAA}</p>
           </div>
           <button
             onClick={() => onOpenChange(false)}
@@ -267,7 +267,7 @@ export function EditRiderModal({
 
               {/* ── Location Details ── */}
               <Section title="Location Details">
-                {/* District — from DISTRICT_CODES, exact match required for RIN consistency */}
+                {/* District — from DISTRICT_CODES, exact match required for PCRAA consistency */}
                 <FormField control={form.control} name="districtMunicipality" render={({ field }) => (
                   <FormItem>
                     <FormLabel>District / Municipality *</FormLabel>
@@ -298,7 +298,7 @@ export function EditRiderModal({
 
               {/* ── Vehicle Information ── */}
               <Section title="Vehicle Information">
-                {/* Vehicle category — from CATEGORY_CODES, exact match for RIN prefix */}
+                {/* Vehicle category — from CATEGORY_CODES, exact match for PCRAA prefix */}
                 <FormField control={form.control} name="vehicleCategory" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Vehicle Category *</FormLabel>

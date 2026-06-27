@@ -1,11 +1,11 @@
-# OPN → RIN Migration & System Upgrade Guide
+# OPN → PCRAA Migration & System Upgrade Guide
 
 ## What Changed and Why
 
-| Area | Old (OPN) | New (RIN) |
+| Area | Old (OPN) | New (PCRAA) |
 |---|---|---|
-| Full name | Operating Permit Number | Rider Identification Number |
-| Short code | OPN | RIN |
+| Full name | Operating Permit Number | Progressive Certified Riders of Africa Association |
+| Short code | OPN | PCRAA |
 | Generation | Client-side (race-condition prone) | Cloud Function (atomic transaction) |
 | Counter scope | Per district prefix query | Single global counter (`rin_counters/global`) |
 | Duplicate check | None | ID number + plate + chassis enforced server-side |
@@ -14,7 +14,7 @@
 
 ---
 
-## RIN Format Reference
+## PCRAA Format Reference
 
 ```
 ASH - 0001 - TM 0226
@@ -36,7 +36,7 @@ ASH - 0001 - TM 0226
 
 | File | Purpose |
 |---|---|
-| `src/lib/rin-constants.ts` | Region codes, district codes, town code generator, RIN compose/parse |
+| `src/lib/rin-constants.ts` | Region codes, district codes, town code generator, PCRAA compose/parse |
 | `functions/src/index.ts` | Cloud Functions: `registerRider`, `updateRiderStatus` |
 | `src/lib/rider-service.ts` | Client service — calls CF, handles photo upload |
 | `src/lib/firebase.ts` | Updated — adds `functions` export |
@@ -91,20 +91,20 @@ grep -r "OPN\|opn\|operatingPermit\|permit_number\|permitNumber" src/ --include=
 
 | Search for | Replace with | Location |
 |---|---|---|
-| `OPN` | `RIN` | UI labels, strings, comments |
+| `OPN` | `PCRAA` | UI labels, strings, comments |
 | `opn` | `rin` | variable names |
 | `operatingPermitNumber` | `riderIdentificationNumber` | variable names |
-| `generateOPN` | `generateRIN` (now in CF) | function calls |
-| `OPN-certificate` | `RIN-certificate` | HTML IDs (already updated in registration page) |
+| `generateOPN` | `generatePCRAA` (now in CF) | function calls |
+| `OPN-certificate` | `PCRAA-certificate` | HTML IDs (already updated in registration page) |
 | `calculatePermitDates` | `calculateRegistrationDates` | internal naming |
 | `isPermitExpired` | `isRegistrationExpired` | already renamed in rider-service |
-| `"Operating Permit Number"` | `"Rider Identification Number"` | UI text |
+| `"Operating Permit Number"` | `"Progressive Certified Riders of Africa Association"` | UI text |
 
 **In your registration-page.tsx** — these are already correct:
-- ✅ `generatedRIN` state variable
-- ✅ `#RIN-certificate` div ID  
-- ✅ Print styles reference `#RIN-certificate`
-- ✅ Certificate header says "Rider Identification Number"
+- ✅ `generatedPCRAA` state variable
+- ✅ `#PCRAA-certificate` div ID  
+- ✅ Print styles reference `#PCRAA-certificate`
+- ✅ Certificate header says "Progressive Certified Riders of Africa Association"
 
 ---
 
@@ -130,11 +130,11 @@ async function migrate() {
   for (const doc of snap.docs) {
     const data = doc.data();
 
-    // Only process docs that don't yet have the new RIN fields
+    // Only process docs that don't yet have the new PCRAA fields
     if (!data.regionCode || !data.townCode) {
       batch.update(doc.ref, {
         // Add missing fields — adjust values to match your old data
-        regionCode:   data.RINPrefix ?? "",
+        regionCode:   data.PCRAAPrefix ?? "",
         districtCode: data.districtCode ?? "",
         townCode:     data.townCode ?? "XX",
         updatedAt:    admin.firestore.FieldValue.serverTimestamp(),
@@ -202,7 +202,7 @@ Client submits form
         │
         └─► ATOMIC TRANSACTION
                 ├─ Read rin_counters/global → next = N
-                ├─ Build RIN: RegionCode-N-TownCodeMMYY
+                ├─ Build PCRAA: RegionCode-N-TownCodeMMYY
                 ├─ Write riders/{newId}
                 ├─ Write rin_counters/global → next = N+1
                 └─ Write audit_logs/{newId}
@@ -228,7 +228,7 @@ riders ever get the same sequence number.
 | Delete rider | ✅ | ❌ | ❌ |
 | Manage users | ✅ | ❌ | ❌ |
 | View audit logs | ✅ All | ✅ Own district | ❌ |
-| View RIN counter | ✅ | ❌ | ❌ |
+| View PCRAA counter | ✅ | ❌ | ❌ |
 
 ---
 
@@ -236,8 +236,8 @@ riders ever get the same sequence number.
 
 | Error message | Cause | Fix |
 |---|---|---|
-| `ID number already registered` | Same Ghana Card / Voter ID submitted again | Look up existing RIN, show to operator |
-| `Plate number already registered` | Vehicle already has a RIN | Show existing RIN to operator |
+| `ID number already registered` | Same Ghana Card / Voter ID submitted again | Look up existing PCRAA, show to operator |
+| `Plate number already registered` | Vehicle already has a PCRAA | Show existing PCRAA to operator |
 | `Unknown region` | Region string doesn't match `REGION_CODES` keys exactly | Check spelling in form dropdown vs constants |
 | `Invalid districtCode` | District code not 2-4 chars | Add district to `DISTRICT_CODES` in rin-constants.ts |
 | `Account is not active` | User's `status` field in `admin_users` is not "Active" | Super Admin activates the user account |

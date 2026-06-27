@@ -22,7 +22,7 @@ import {
 export interface BulkRenewRider {
   id:                   string;
   fullName:             string;
-  RIN:                  string;
+  PCRAA:                  string;
   vehicleCategory:      string;
   districtMunicipality: string;
   expiryDate?:          string;
@@ -114,7 +114,7 @@ export function BulkRenewModal({
         await addDoc(collection(db, "renewals"), {
           riderId:        rider.id,
           riderName:      rider.fullName,
-          RIN:            rider.RIN,
+          PCRAA:            rider.PCRAA,
           district:       rider.districtMunicipality,
           previousExpiry: rider.expiryDate ?? null,
           newIssueDate,
@@ -132,7 +132,7 @@ export function BulkRenewModal({
           action:    `Bulk renewed permit`,
           target:    rider.fullName,
           targetId:  rider.id,
-          RIN:       rider.RIN,
+          PCRAA:       rider.PCRAA,
           district:  rider.districtMunicipality,
           status:    "success",
           timestamp: serverTimestamp(),
@@ -210,7 +210,7 @@ export function BulkRenewModal({
                 <p>• Each permit extended by <span className="font-semibold">12 months</span></p>
                 <p>• Active permits extended from their current expiry date</p>
                 <p>• Pending permits start from today</p>
-                <p>• RINs are never changed</p>
+                <p>• PCRAAs are never changed</p>
               </div>
 
               {/* Ineligible warning */}
@@ -296,7 +296,7 @@ export function BulkRenewModal({
                       ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                       : <XCircle     className="h-3.5 w-3.5 shrink-0" />}
                     <span className="font-medium truncate">{r.rider.fullName}</span>
-                    <span className="ml-auto font-mono shrink-0">{r.rider.RIN}</span>
+                    <span className="ml-auto font-mono shrink-0">{r.rider.PCRAA}</span>
                   </div>
                 ))}
               </div>

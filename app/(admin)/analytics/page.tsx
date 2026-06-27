@@ -20,7 +20,7 @@ type Role = "Super Admin" | "District Admin" | "Operator";
 interface Rider {
   id: string;
   fullName?: string;
-  RIN: string;
+  PCRAA: string;
   phoneNumber?: string;
   districtMunicipality?: string;
   residentialTown?: string;

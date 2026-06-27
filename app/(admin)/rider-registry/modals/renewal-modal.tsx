@@ -29,7 +29,7 @@ export interface RenewableRider {
   id:                   string;
   fullName:             string;
   phoneNumber:          string;
-  RIN:                  string;
+  PCRAA:                  string;
   vehicleCategory:      string;
   districtMunicipality: string;
   expiryDate?:          string;
@@ -93,7 +93,7 @@ export function RenewRiderModal({
     try {
       const newIssueDate = new Date();
 
-      // ── 1. Update rider: only dates + status. RIN and QR never change. ──
+      // ── 1. Update rider: only dates + status. PCRAA and QR never change. ──
       await updateDoc(doc(db, "riders", rider.id), {
         issueDate:  newIssueDate.toISOString(),
         expiryDate: newExpiryDate.toISOString(),
@@ -105,7 +105,7 @@ export function RenewRiderModal({
       await addDoc(collection(db, "renewals"), {
         riderId:        rider.id,
         riderName:      rider.fullName,
-        RIN:            rider.RIN,
+        PCRAA:            rider.PCRAA,
         paymentMethod,
         status:         "completed",
         renewedBy:      auth.currentUser.uid,
@@ -124,7 +124,7 @@ export function RenewRiderModal({
         action:    `Renewed — new expiry ${format(newExpiryDate, "dd MMM yyyy")}`,
         target:    rider.fullName,
         targetId:  rider.id,
-        RIN:       rider.RIN,
+        PCRAA:       rider.PCRAA,
         district:  rider.districtMunicipality,
         status:    "success",
         timestamp: serverTimestamp(),
@@ -154,7 +154,7 @@ export function RenewRiderModal({
             <RefreshCw className="h-4 w-4" />
             Renew Permit
           </DialogTitle>
-          <p className="text-xs text-green-200 mt-0.5 font-mono">{rider.RIN}</p>
+          <p className="text-xs text-green-200 mt-0.5 font-mono">{rider.PCRAA}</p>
         </div>
 
         <div className="p-5 space-y-4">
@@ -248,7 +248,7 @@ export function RenewRiderModal({
           </div>
 
           <p className="text-[11px] text-slate-400 italic">
-            RIN and QR code remain unchanged — only issue and expiry dates are updated.
+            PCRAA and QR code remain unchanged — only issue and expiry dates are updated.
           </p>
 
           <DialogFooter className="gap-2 pt-1">

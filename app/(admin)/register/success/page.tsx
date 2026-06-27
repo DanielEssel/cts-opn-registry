@@ -13,12 +13,12 @@ export default function SuccessPage() {
   const searchParams = useSearchParams()
   const permitRef = useRef<HTMLDivElement>(null)
 
-  const RIN        = searchParams.get("RIN")  || "PENDING";
+  const PCRAA        = searchParams.get("PCRAA")  || "PENDING";
   const riderName  = searchParams.get("name") || "Valued Rider";
   const town       = searchParams.get("town") || "N/A";
 
   const baseUrl         = typeof window !== "undefined" ? window.location.origin : "https://permittrack.gov.gh";
-  const verificationUrl = `${baseUrl}/verify/${RIN}`;
+  const verificationUrl = `${baseUrl}/verify/${PCRAA}`;
 
   const saveAsImage = async () => {
     if (!permitRef.current) return;
@@ -29,7 +29,7 @@ export default function SuccessPage() {
         pixelRatio: 2,
       });
       const link    = document.createElement("a");
-      link.download = `Permit-${RIN}.png`;
+      link.download = `Permit-${PCRAA}.png`;
       link.href     = dataUrl;
       link.click();
     } catch (err) {
@@ -67,8 +67,8 @@ export default function SuccessPage() {
           <CardContent className="p-8">
             <div className="flex justify-between items-start gap-4 mb-8 text-left">
               <div className="space-y-1">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Unique RIN</p>
-                <p className="text-3xl font-mono font-black text-blue-600 tracking-tighter uppercase">{RIN}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Unique PCRAA</p>
+                <p className="text-3xl font-mono font-black text-blue-600 tracking-tighter uppercase">{PCRAA}</p>
               </div>
               <div className="bg-white p-2 border shadow-sm rounded-2xl">
                 <QRCodeSVG value={verificationUrl} size={90} level="H" />

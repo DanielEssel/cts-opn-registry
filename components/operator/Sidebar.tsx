@@ -64,8 +64,8 @@ function SidebarInner({ open, setOpen }: { open: boolean; setOpen: (v: boolean) 
     {/* Logo Image */}
     <div className="w-14 h-14 flex items-center justify-center shrink-0">
       <Image
-        src="/logo/ctslogo.png"
-        alt="RIN"
+        src="/logo/pcraa.png"
+        alt="PCRAA"
         width={56}
         height={56}
         className="object-contain brightness-200"
@@ -75,7 +75,7 @@ function SidebarInner({ open, setOpen }: { open: boolean; setOpen: (v: boolean) 
     {/* Text */}
     <div className="leading-tight">
       <p className="text-sm font-black text-slate-900">
-        RIN Registry
+        PCRAA Registry
       </p>
       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
         Operator Portal

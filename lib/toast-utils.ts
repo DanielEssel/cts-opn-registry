@@ -43,7 +43,7 @@ export const toasts = {
   registrationSuccess: (rin: string) =>
     toast.success("Rider registered!", {
       id: TOAST_IDS.REGISTRATION,
-      description: `RIN: ${rin}`,
+      description: `PCRAA: ${rin}`,
     }),
 
   registrationError: (msg?: string) =>
@@ -65,7 +65,7 @@ export const toasts = {
 
   riderNotFound: () =>
     toast.error("Rider not found.", {
-      description: "Check the RIN and try again.",
+      description: "Check the PCRAA and try again.",
     }),
 
   /* ─────────────── STATUS ─────────────── */

@@ -3,7 +3,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Cloud Function: registerRider
  *
- * RIN FORMAT:  [RegionCode][VehicleCode]-[Sequence]-[DistrictCode][MMYY]
+ * PCRAA FORMAT:  [RegionCode][VehicleCode]-[Sequence]-[DistrictCode][MMYY]
  * EXAMPLE:     GAP-0001-KR0326
  *
  * Counter logic: per district only (24 counters max)
@@ -18,7 +18,7 @@ import {
   REGION_CODES,
   DISTRICT_CODES,
   CATEGORY_CODES,
-  composeRIN,
+  composePCRAA,
   getCounterPath,
   COUNTER_START,
 } from "./rin-constants";
@@ -92,19 +92,19 @@ async function checkDuplicates(input: RegisterRiderInput): Promise<void> {
   if (!byId.empty) {
     throw new HttpsError(
       "already-exists",
-      `ID number ${input.idNumber} is already registered under RIN ${byId.docs[0].data().RIN}.`,
+      `ID number ${input.idNumber} is already registered under PCRAA ${byId.docs[0].data().PCRAA}.`,
     );
   }
   if (byPlate && !byPlate.empty) {
     throw new HttpsError(
       "already-exists",
-      `Plate number ${input.plateNumber} is already registered under RIN ${byPlate.docs[0].data().RIN}.`,
+      `Plate number ${input.plateNumber} is already registered under PCRAA ${byPlate.docs[0].data().PCRAA}.`,
     );
   }
   if (byChassis && !byChassis.empty) {
     throw new HttpsError(
       "already-exists",
-      `Chassis number ${input.chassisNumber} is already registered under RIN ${byChassis.docs[0].data().RIN}.`,
+      `Chassis number ${input.chassisNumber} is already registered under PCRAA ${byChassis.docs[0].data().PCRAA}.`,
     );
   }
 }
@@ -232,8 +232,8 @@ if (!isAnonymous) {
         ? Number(counterSnap.data()?.next ?? COUNTER_START)
         : COUNTER_START;
 
-      // Build RIN: GAP-0001-KR0326
-      const RIN = composeRIN(
+      // Build PCRAA: GAP-0001-KR0326
+      const PCRAA = composePCRAA(
         regionCode,
         vehicleCode,
         nextSeq,
@@ -268,9 +268,9 @@ if (!isAnonymous) {
 
         // QR Code
         qrCodeUrl: input.qrCodeUrl ?? null,
-        // RIN metadata
-        RIN,
-        RINPrefix: `${regionCode}${vehicleCode}`,
+        // PCRAA metadata
+        PCRAA,
+        PCRAAPrefix: `${regionCode}${vehicleCode}`,
         sequence: nextSeq,
         regionCode,
         districtCode,
@@ -310,12 +310,12 @@ if (!isAnonymous) {
         adminUid: uid,
         adminRole: role,
         district: effectiveDistrict,
-        RIN,
+        PCRAA,
         status: "success",
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      return { RIN, riderId: riderRef.id };
+      return { PCRAA, riderId: riderRef.id };
     });
 
     return result;
@@ -331,11 +331,11 @@ export const uploadRiderFiles = onCall(
     enforceAppCheck: false,
   },
   async (req) => {
-    const { base64Photo, base64QR, idNumber, RIN, riderId } = req.data as {
+    const { base64Photo, base64QR, idNumber, PCRAA, riderId } = req.data as {
       base64Photo?: string;
       base64QR?: string;
       idNumber: string;
-      RIN: string;
+      PCRAA: string;
       riderId: string;
     };
 
@@ -354,7 +354,7 @@ export const uploadRiderFiles = onCall(
     }
 
     if (base64QR) {
-      const qrFile = bucket.file(`riders/qrcodes/${riderId}_${RIN}.png`);
+      const qrFile = bucket.file(`riders/qrcodes/${riderId}_${PCRAA}.png`);
       await qrFile.save(
         Buffer.from(base64QR.replace(/^data:image\/\w+;base64,/, ""), "base64"),
         { contentType: "image/png" }
@@ -511,7 +511,7 @@ export const initiateMomoCharge = onCall(
     }
 
     const amountPesewas = Math.round(amountGHS * 100);
-    const reference = `RIN-${preRegId}-${Date.now()}`;
+    const reference = `PCRAA-${preRegId}-${Date.now()}`;
 
     try {
       const response = await axios.post(

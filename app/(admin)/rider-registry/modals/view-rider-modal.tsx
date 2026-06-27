@@ -62,7 +62,7 @@ export function ViewRiderModal({ open, rider, onOpenChange }: ViewRiderModalProp
     w.document.write(`<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8"/>
-<title>Rider — ${rider.RIN}</title>
+<title>Rider — ${rider.PCRAA}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;font-size:11px;line-height:1.5}
@@ -121,10 +121,10 @@ export function ViewRiderModal({ open, rider, onOpenChange }: ViewRiderModalProp
 
   <div class="hdr">
     <div>
-      <div class="hdr-label">Rider Profile · CTS Africa</div>
+      <div class="hdr-label">Rider Profile · PCRAA</div>
       <div class="hdr-name">${rider.fullName}</div>
       <div class="hdr-badges">
-        <span class="badge" style="font-family:monospace;font-size:11px">${rider.RIN}</span>
+        <span class="badge" style="font-family:monospace;font-size:11px">${rider.PCRAA}</span>
         <span class="badge">${rider.status}</span>
         <span class="badge">${rider.vehicleCategory}</span>
       </div>
@@ -213,11 +213,11 @@ export function ViewRiderModal({ open, rider, onOpenChange }: ViewRiderModalProp
 
   <div class="footer">
     <div class="footer-note">
-      Official CTS Africa rider registration record.<br/>
+      Official PCRAA rider registration record.<br/>
       Verify authenticity by scanning the QR code above.<br/>
       Unauthorised reproduction is strictly prohibited.
     </div>
-    <div class="footer-rin">${rider.RIN}</div>
+    <div class="footer-rin">${rider.PCRAA}</div>
   </div>
 
 </div>
@@ -245,7 +245,7 @@ export function ViewRiderModal({ open, rider, onOpenChange }: ViewRiderModalProp
             <p className="text-xs font-bold uppercase tracking-widest text-green-200 mb-0.5">Rider Profile</p>
             <h2 className="text-xl font-bold text-white leading-tight">{rider.fullName}</h2>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="font-mono text-xs bg-white/10 text-green-100 px-2 py-0.5 rounded">{rider.RIN}</span>
+              <span className="font-mono text-xs bg-white/10 text-green-100 px-2 py-0.5 rounded">{rider.PCRAA}</span>
               <Badge className={`text-xs ${STATUS_STYLES[rider.status] ?? "bg-slate-500 text-white"}`}>{rider.status}</Badge>
               <Badge variant="outline" className="text-xs border-green-400 text-green-100">{rider.vehicleCategory}</Badge>
             </div>
@@ -270,7 +270,7 @@ export function ViewRiderModal({ open, rider, onOpenChange }: ViewRiderModalProp
 
               <div className="flex flex-col items-center justify-center bg-white border-2 border-green-200 rounded-xl p-4 gap-2">
                 {rider.qrCodeUrl
-                  ? <><img src={rider.qrCodeUrl} alt={`QR ${rider.RIN}`} className="w-28 h-28 object-contain" /><p className="text-[10px] font-bold uppercase tracking-wider text-green-700">Scan to Verify</p></>
+                  ? <><img src={rider.qrCodeUrl} alt={`QR ${rider.PCRAA}`} className="w-28 h-28 object-contain" /><p className="text-[10px] font-bold uppercase tracking-wider text-green-700">Scan to Verify</p></>
                   : <p className="text-xs text-slate-400 italic">No QR code</p>}
               </div>
 

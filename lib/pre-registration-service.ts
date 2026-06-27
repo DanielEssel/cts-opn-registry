@@ -19,14 +19,14 @@ export type PreRegistrationStatus =
   | "pending_training"   // just submitted
   | "training_scheduled" // training date assigned by admin
   | "trained"            // passed training
-  | "rin_issued";        // RIN has been generated (bridge complete)
+  | "rin_issued";        // PCRAA has been generated (bridge complete)
 
 export interface PreRegistrationRecord extends PreRegistrationData {
   id: string;
   status: PreRegistrationStatus;
   preRegId: string;          // human-readable ID e.g. PR-2026-00042
   trainingDate?: string | null;
-  rinId?: string | null;     // populated when bridged to RIN engine
+  rinId?: string | null;     // populated when bridged to PCRAA engine
   createdAt: string;
   updatedAt: string;
 }
@@ -76,7 +76,7 @@ export async function savePreRegistration(
   }
 }
 
-// ─── Lookup by phone (used by duplicate guard + RIN bridge) ───────────────────
+// ─── Lookup by phone (used by duplicate guard + PCRAA bridge) ───────────────────
 
 export async function getPreRegistrationByPhone(
   phone: string
@@ -119,12 +119,12 @@ export async function getPreRegistrationById(
   }
 }
 
-// ─── RIN Bridge (call this from the RIN engine after issuing a RIN) ───────────
+// ─── PCRAA Bridge (call this from the PCRAA engine after issuing a PCRAA) ───────────
 // Drop this into your existing saveRiderRegistration() flow when ready.
 //
-// Usage in RIN engine:
+// Usage in PCRAA engine:
 //   const pre = await getPreRegistrationByPhone(data.phoneNumber);
-//   if (pre) await markPreRegistrationAsIssued(pre.id, generatedRIN);
+//   if (pre) await markPreRegistrationAsIssued(pre.id, generatedPCRAA);
 
 export async function markPreRegistrationAsIssued(
   docId: string,

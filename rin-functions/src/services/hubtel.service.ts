@@ -26,7 +26,7 @@ export interface SMSResult {
 export async function sendSMS(params: SendSMSParams): Promise<SMSResult> {
   const clientId = process.env.HUBTEL_CLIENT_ID;
   const clientSecret = process.env.HUBTEL_CLIENT_SECRET;
-  const senderId = process.env.HUBTEL_SENDER_ID || "RIN-System";
+  const senderId = process.env.HUBTEL_SENDER_ID || "PCRAA-System";
 
   if (!clientId || !clientSecret) {
     throw new Error("Hubtel credentials (HUBTEL_CLIENT_ID / HUBTEL_CLIENT_SECRET) are not configured.");
@@ -87,39 +87,39 @@ export function buildSMSMessage(
       return (
         `Hello ${data.riderName}, your training application (Ref: ${data.reference}) ` +
         `has been received. We will review it and notify you of the next steps. ` +
-        `Thank you for registering with the RIN System.`
+        `Thank you for registering with the PCRAA System.`
       );
 
     case "training_approved":
       return (
         `Hello ${data.riderName}, your training application has been APPROVED. ` +
         `Your training is scheduled for ${data.trainingDate || "a date to be confirmed"}. ` +
-        `Please report on time. - RIN System`
+        `Please report on time. - PCRAA System`
       );
 
     case "training_rejected":
       return (
         `Hello ${data.riderName}, unfortunately your training application has not been approved. ` +
         `Reason: ${data.rejectionReason || "Does not meet current requirements"}. ` +
-        `You may re-apply after 30 days. - RIN System`
+        `You may re-apply after 30 days. - PCRAA System`
       );
 
     case "rin_issued":
       return (
-        `Congratulations ${data.riderName}! Your Rider Identification Number (RIN) ` +
-        `has been issued. Your RIN is: ${data.rin}. ` +
-        `Please keep this safe. - RIN System`
+        `Congratulations ${data.riderName}! Your Progressive Certified Riders of Africa Association (PCRAA) ` +
+        `has been issued. Your PCRAA is: ${data.rin}. ` +
+        `Please keep this safe. - PCRAA System`
       );
 
     case "payment_confirmed":
       return (
         `Hello ${data.riderName}, your payment of ${data.amount} has been confirmed. ` +
         `Reference: ${data.reference}. Your application is now being processed. ` +
-        `- RIN System`
+        `- PCRAA System`
       );
 
     default:
-      return `Hello ${data.riderName}, you have a new update from the RIN System.`;
+      return `Hello ${data.riderName}, you have a new update from the PCRAA System.`;
   }
 }
 

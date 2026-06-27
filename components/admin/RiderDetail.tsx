@@ -10,7 +10,7 @@ import {
 interface RiderDetailProps {
   rider: {
     name: string;
-    RIN: string;
+    PCRAA: string;
     town: string;
     status: string;
     phone: string;
@@ -34,7 +34,7 @@ export default function RiderDetail({ rider }: RiderDetailProps) {
         </div>
         <div>
           <h3 className="text-xl font-bold text-slate-900">{rider.name}</h3>
-          <p className="text-sm text-slate-500 font-mono">{rider.RIN}</p>
+          <p className="text-sm text-slate-500 font-mono">{rider.PCRAA}</p>
         </div>
         <Badge className={
           rider.status === "Active" ? "bg-green-100 text-green-700 border-none" : "bg-red-100 text-red-700 border-none"

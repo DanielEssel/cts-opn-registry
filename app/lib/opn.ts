@@ -1,6 +1,6 @@
 import { DISTRICT_CODES, CATEGORY_CODES } from "@/lib/rin-constants";
 
-export type RINParts = {
+export type PCRAAParts = {
   districtCode: string;
   categoryCode?: string;
   sequence: number;
@@ -8,7 +8,7 @@ export type RINParts = {
   year: string; // "26"
 };
 
-export function formatRINV2(input: {
+export function formatPCRAAV2(input: {
   districtMunicipality: string;
   vehicleCategory: string;
   sequence: number;
@@ -35,8 +35,8 @@ export function formatRINV2(input: {
  * v1: AM-1001-02-26
  * v2: AM-QC-1001-02-26
  */
-export function parseRIN(RIN: string): { version: "v1" | "v2"; parts: RINParts } | null {
-  const parts = RIN.split("-");
+export function parsePCRAA(PCRAA: string): { version: "v1" | "v2"; parts: PCRAAParts } | null {
+  const parts = PCRAA.split("-");
 
   // v2 expected length = 5
   if (parts.length === 5) {

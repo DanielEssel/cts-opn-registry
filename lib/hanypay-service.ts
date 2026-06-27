@@ -95,7 +95,7 @@ export async function initiatePayment(opts: {
           reference,
           phone:       momoPhone,
           network:     opts.network,
-          description: `CTS Africa rider pre-registration — ${opts.preRegId}`,
+          description: `PCRAA rider pre-registration — ${opts.preRegId}`,
           customer:    opts.riderName,
           callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/hanypay/webhook`,
         }),

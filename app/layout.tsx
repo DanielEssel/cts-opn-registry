@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RIN Registry | CTS Riders ",
-  description: "Official platform for the secure registration of motor riders and the issuance of Rider Identification Numbers (RIN).",
+  title: "PCRAA Registry | CTS Riders ",
+  description: "Official platform for the secure registration of motor riders and the issuance of Progressive Certified Riders of Africa Associations (PCRAA).",
 };
 
 export default function RootLayout({

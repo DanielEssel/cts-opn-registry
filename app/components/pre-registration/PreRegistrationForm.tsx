@@ -996,7 +996,7 @@ function PaymentWidget({
         <div className="flex items-start gap-2 p-3 bg-slate-50 border border-slate-100 rounded-lg">
           <Shield className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-xs text-slate-500" style={FONT_BODY}>
-            Payment is processed securely via Hanypay. CTS Africa does not store
+            Payment is processed securely via Hanypay. PCRAA does not store
             your Mobile Money PIN.
           </p>
         </div>
@@ -1197,7 +1197,7 @@ function ConfirmationReceipt({
           style={FONT_BODY}
         >
           Please print this receipt and present it at the training centre on
-          your scheduled date. A CTS Africa official will issue your Rider ID
+          your scheduled date. A PCRAA official will issue your Rider ID
           card upon completion of training.
         </p>
       </div>
@@ -1217,7 +1217,7 @@ function ConfirmationReceipt({
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-300/90 mb-2">
-          CTS Africa · Greater Accra Pilot
+          PCRAA · Greater Accra Pilot
         </p>
         <h3 className="text-xl sm:text-2xl font-bold leading-tight tracking-tight mb-1">
           Training Registration Receipt
@@ -1346,7 +1346,7 @@ function ConfirmationReceipt({
           <ul className="space-y-2">
             {[
               "You will be contacted with your assigned training date and location.",
-              "Attend training and present this receipt to the CTS Africa official.",
+              "Attend training and present this receipt to the PCRAA official.",
               "Upon successful completion, your Rider ID card will be issued.",
             ].map((step, i) => (
               <li
@@ -1400,7 +1400,7 @@ function ConfirmationReceipt({
         className="text-center text-[10px] text-slate-400 mt-4 print:hidden"
         style={FONT_BODY}
       >
-        Secured by PayStack · CTS Africa Limited · All rights reserved
+        Secured by PayStack · PCRAA Limited · All rights reserved
       </p>
     </div>
   );
@@ -1642,11 +1642,11 @@ async function handlePaymentSuccess(
       return;
     }
 
-    const displayRef = `CTS-${result.RIN.slice(-8).toUpperCase()}`;
+    const displayRef = `CTS-${result.PCRAA.slice(-8).toUpperCase()}`;
     setBookingRef(displayRef);
     setSuccess(true);
     setCompleted((p) => [...new Set([...p, step])]);
-    onSuccess?.(result.RIN);
+    onSuccess?.(result.PCRAA);
     toast.success("Registration complete!", {
       description: `Booking ref: ${displayRef}`,
     });
@@ -1914,7 +1914,7 @@ async function handlePaymentSuccess(
     style={FONT_BODY}
   >
     <Shield className="h-3 w-3 shrink-0" />
-    Secured by PayStack · CTS Africa Limited · All rights reserved
+    Secured by PayStack · PCRAA Limited · All rights reserved
   </p>
   
   {/* Privacy Policy Link */}

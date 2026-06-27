@@ -156,7 +156,7 @@ export default function RiderRegistry() {
 
     const matchSearch = !term
       || r.fullName?.toLowerCase().includes(term)
-      || r.RIN?.toLowerCase().includes(term)
+      || r.PCRAA?.toLowerCase().includes(term)
       || r.phoneNumber?.includes(term);
 
     const matchStatus   = effectiveFilters.status === "All"              || r.status === effectiveFilters.status;
@@ -277,7 +277,7 @@ export default function RiderRegistry() {
             action:    "Deleted rider record",
             target:    deletingRider.fullName ?? "",
             targetId:  deletingRider.id,
-            RIN:       deletingRider.RIN ?? "",
+            PCRAA:       deletingRider.PCRAA ?? "",
             district:  deletingRider.districtMunicipality ?? "",
             status:    "success",
             timestamp: serverTimestamp(),
@@ -299,7 +299,7 @@ export default function RiderRegistry() {
       id:                   rider.id,
       fullName:             rider.fullName,
       phoneNumber:          rider.phoneNumber,
-      RIN:                  rider.RIN,
+      PCRAA:                  rider.PCRAA,
       vehicleCategory:      rider.vehicleCategory,
       districtMunicipality: rider.districtMunicipality,
       expiryDate:           rider.expiryDate,

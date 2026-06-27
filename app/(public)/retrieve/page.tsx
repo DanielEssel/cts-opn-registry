@@ -7,7 +7,7 @@
 // import Link from "next/link";
 
 // interface RiderResult {
-//   RIN:                  string;
+//   PCRAA:                  string;
 //   fullName:             string;
 //   status:               "Active" | "Expired" | "Suspended" | "Pending";
 //   expiryDate:           string;
@@ -23,7 +23,7 @@
 //   Pending:   { icon: Clock,        color: "#ca8a04", bg: "#fefce8", border: "#fde047", text: "Pending Approval"       },
 // };
 
-// export default function RetrieveRIN() {
+// export default function RetrievePCRAA() {
 //   const [phone,   setPhone]   = useState("");
 //   const [idNum,   setIdNum]   = useState("");
 //   const [loading, setLoading] = useState(false);
@@ -53,7 +53,7 @@
 //       } else {
 //         const data = snap.docs[0].data();
 //         setResult({
-//           RIN:                  data.RIN,
+//           PCRAA:                  data.PCRAA,
 //           fullName:             data.fullName,
 //           status:               data.status,
 //           expiryDate:           data.expiryDate,
@@ -70,9 +70,9 @@
 //     }
 //   };
 
-//   const copyRIN = () => {
+//   const copyPCRAA = () => {
 //     if (!result) return;
-//     navigator.clipboard.writeText(result.RIN);
+//     navigator.clipboard.writeText(result.PCRAA);
 //     setCopied(true);
 //     setTimeout(() => setCopied(false), 2000);
 //   };
@@ -108,7 +108,7 @@
 //                 className="font-black text-white mb-2"
 //                 style={{ fontSize: 28, letterSpacing: "-0.02em" }}
 //               >
-//                 Find Your RIN
+//                 Find Your PCRAA
 //               </h1>
 //               <p className="text-sm text-slate-400">
 //                 Enter your registered phone number and ID to retrieve your permit.
@@ -200,7 +200,7 @@
 //                   ) : (
 //                     <span className="flex items-center justify-center gap-2">
 //                       <Search className="h-4 w-4" />
-//                       Find My RIN
+//                       Find My PCRAA
 //                     </span>
 //                   )}
 //                 </button>
@@ -245,23 +245,23 @@
 
 //               <div className="p-7 space-y-5">
 
-//                 {/* RIN display */}
+//                 {/* PCRAA display */}
 //                 <div
 //                   className="rounded-xl p-5 text-center"
 //                   style={{ background: "#0d1117", border: "1px solid #30363d" }}
 //                 >
 //                   <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-500 mb-2">
-//                     Rider Identification Number
+//                     Progressive Certified Riders of Africa Association
 //                   </p>
 //                   <div className="flex items-center justify-center gap-3">
 //                     <p
 //                       className="font-mono font-black text-white"
 //                       style={{ fontSize: 26, letterSpacing: "0.08em" }}
 //                     >
-//                       {result.RIN}
+//                       {result.PCRAA}
 //                     </p>
 //                     <button
-//                       onClick={copyRIN}
+//                       onClick={copyPCRAA}
 //                       className="p-2 rounded-lg transition-colors"
 //                       style={{ background: copied ? "rgba(22,163,74,0.15)" : "rgba(255,255,255,0.05)" }}
 //                     >
@@ -304,7 +304,7 @@
 //                     Search Again
 //                   </button>
 //                   <Link
-//                     href={`/verify/${result.RIN}`}
+//                     href={`/verify/${result.PCRAA}`}
 //                     className="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-white text-center transition-all"
 //                     style={{
 //                       background: "linear-gradient(135deg,#166534,#15803d)",
@@ -337,7 +337,7 @@
 import { ArrowLeft, Shield, Phone, MapPin, Mail, Clock } from "lucide-react";
 import Link from "next/link";
 
-export default function RetrieveRIN() {
+export default function RetrievePCRAA() {
   return (
     <div className="min-h-screen flex flex-col items-center" style={{ background: "#0c1117" }}>
 
@@ -362,11 +362,11 @@ export default function RetrieveRIN() {
               className="font-black text-white mb-3"
               style={{ fontSize: 26, letterSpacing: "-0.02em" }}
             >
-              Retrieve Your RIN
+              Retrieve Your PCRAA
             </h1>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm mx-auto">
-              For your security, RIN retrieval is handled in person or through
-              our official contact channels. Please reach out to CTS Africa
+              For your security, PCRAA retrieval is handled in person or through
+              our official contact channels. Please reach out to PCRAA
               using any of the options below.
             </p>
           </div>
@@ -398,7 +398,7 @@ export default function RetrieveRIN() {
               {
                 icon: MapPin,
                 label: "Visit Our Office",
-                value: "CTS Africa Head Office",
+                value: "PCRAA Head Office",
                 sub: "Greater Accra — address on request",
                 href: null,
               },
@@ -448,7 +448,7 @@ export default function RetrieveRIN() {
             <Shield className="h-3.5 w-3.5 text-green-600 shrink-0 mt-0.5" />
             <p className="text-[11px] text-slate-500 leading-relaxed">
               In-person retrieval requires a valid government-issued ID and the
-              phone number used during registration. This ensures your RIN is
+              phone number used during registration. This ensures your PCRAA is
               only released to you.
             </p>
           </div>

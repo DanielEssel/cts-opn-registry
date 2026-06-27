@@ -47,14 +47,14 @@ const STEP_SCHEMAS: Record<number, Record<string, unknown>> = {  1: bioDataSchem
 
 interface RegistrationFormProps {
   compact?: boolean;
-  onSuccess?: (RIN: string) => void;
+  onSuccess?: (PCRAA: string) => void;
 }
 
 // ─── Dedicated print window ───────────────────────────────────────────────────
 
 function printCertificate(
   data: RiderRegistrationData,
-  generatedRIN: string,
+  generatedPCRAA: string,
   qrCodeUrl: string,
   photoPreview: string | null,
 ) {
@@ -87,7 +87,7 @@ function printCertificate(
   w.document.write(`<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8"/>
-<title>RIN Certificate — ${generatedRIN}</title>
+<title>PCRAA Certificate — ${generatedPCRAA}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;font-size:11px;line-height:1.5}
@@ -139,13 +139,13 @@ function printCertificate(
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
 </head><body>
-<div class="watermark">RIN</div>
+<div class="watermark">PCRAA</div>
 <div class="page">
 
   <div class="hdr">
     <div>
-      <div class="hdr-eyebrow">Republic of Ghana · CTS Africa</div>
-      <div class="hdr-title">Rider Identification Number</div>
+      <div class="hdr-eyebrow">Republic of Ghana · PCRAA</div>
+      <div class="hdr-title">Progressive Certified Riders of Africa Association</div>
       <div class="hdr-sub">This certifies the successful registration of a commercial rider</div>
     </div>
     <div style="display:flex;align-items:flex-start;gap:12px">
@@ -162,8 +162,8 @@ function printCertificate(
 
   <div class="rin-panel">
     <div class="rin-box">
-      <div class="rin-label">Rider Identification Number (RIN)</div>
-      <div class="rin-value">${generatedRIN}</div>
+      <div class="rin-label">Progressive Certified Riders of Africa Association (PCRAA)</div>
+      <div class="rin-value">${generatedPCRAA}</div>
       <div class="rin-issued">Issued ${issuedDate} at ${issuedTime}</div>
     </div>
     <div class="photo-col">${photo}<span class="col-label">Passport Photo</span></div>
@@ -215,7 +215,7 @@ function printCertificate(
       Scan the QR code to verify authenticity online.<br/>
       Unauthorised reproduction is strictly prohibited.
     </div>
-    <div class="footer-rin">${generatedRIN}</div>
+    <div class="footer-rin">${generatedPCRAA}</div>
   </div>
 
 </div>
@@ -245,7 +245,7 @@ export function RegistrationForm({
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
-  const [generatedRIN, setGeneratedRIN] = useState<string>("");
+  const [generatedPCRAA, setGeneratedPCRAA] = useState<string>("");
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [showFloatingNav, setShowFloatingNav] = useState(false);
@@ -335,13 +335,13 @@ setCompletedSteps((prev) =>
     try {
       const result = await saveRiderRegistration(data);
       if (result.success) {
-        setGeneratedRIN(result.RIN);
+        setGeneratedPCRAA(result.PCRAA);
         setQrCodeUrl(result.qrCodeUrl ?? "");
         setSuccess(true);
         setCompletedSteps((prev) => [...new Set([...prev, currentStep])]);
-        onSuccess?.(result.RIN);
+        onSuccess?.(result.PCRAA);
         window.scrollTo({ top: 0, behavior: "smooth" });
-        toasts.registrationSuccess(result.RIN);
+        toasts.registrationSuccess(result.PCRAA);
       } else {
         toasts.registrationError(
   result.error || "Registration failed. Please try again."
@@ -382,7 +382,7 @@ setCompletedSteps((prev) =>
     setCurrentStep(1);
     setCompletedSteps([]);
     setPhotoPreview(null);
-    setGeneratedRIN("");
+    setGeneratedPCRAA("");
     setQrCodeUrl("");
     form.reset();
   };
@@ -392,7 +392,7 @@ setCompletedSteps((prev) =>
 
   const opened = printCertificate(
     data,
-    generatedRIN,
+    generatedPCRAA,
     qrCodeUrl,
     photoPreview
   );
@@ -434,7 +434,7 @@ setCompletedSteps((prev) =>
               Registration Successful
             </p>
             <p className="text-sm text-green-700">
-              RIN generated. Print or save this certificate for the rider's
+              PCRAA generated. Print or save this certificate for the rider's
               records.
             </p>
           </div>
@@ -445,10 +445,10 @@ setCompletedSteps((prev) =>
           <div className="bg-green-700 px-7 py-6 text-white flex items-start justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-200 mb-1">
-                Republic of Ghana · CTS Africa
+                Republic of Ghana · PCRAA
               </p>
               <h1 className="text-xl font-bold leading-tight">
-                Rider Identification Number
+                Progressive Certified Riders of Africa Association
               </h1>
               <p className="text-sm text-green-200 mt-1">
                 This certifies successful registration of a commercial rider
@@ -459,14 +459,14 @@ setCompletedSteps((prev) =>
             </div>
           </div>
 
-          {/* RIN + photo + QR */}
+          {/* PCRAA + photo + QR */}
           <div className="bg-slate-50 border-b border-slate-200 px-7 py-5 grid grid-cols-[1fr_auto_auto] gap-4 items-center">
             <div className="bg-green-50 border-2 border-green-600 rounded-xl px-6 py-5">
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-green-700 mb-2">
-                Rider Identification Number
+                Progressive Certified Riders of Africa Association
               </p>
               <p className="text-3xl font-black font-mono tracking-widest text-green-900 select-all">
-                {generatedRIN}
+                {generatedPCRAA}
               </p>
               <p className="text-xs text-green-600 mt-2 italic">
                 Issued {issuedDate} at {issuedTime}

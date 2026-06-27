@@ -22,7 +22,7 @@ import {
 import { httpsCallable } from "firebase/functions";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { RiderRegistrationData } from "@/app/lib/validations";
-import { isValidRIN } from "./rin-constants";
+import { isValidPCRAA } from "./rin-constants";
 import QRCode from "qrcode";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -32,8 +32,8 @@ export interface RiderRecord extends Omit<
   "passportPhoto"
 > {
   id?: string;
-  RIN: string;
-  RINPrefix: string;
+  PCRAA: string;
+  PCRAAPrefix: string;
   sequence: number;
   regionCode: string;
   districtCode: string;
@@ -56,7 +56,7 @@ export interface RiderLookupResult {
 
 export interface RegisterResult {
   success: boolean;
-  RIN: string;
+  PCRAA: string;
   riderId: string;
   qrCodeUrl: string;
   error?: string;
@@ -91,7 +91,7 @@ interface RegisterRiderPayload {
 
 const registerRiderFn = httpsCallable<
   RegisterRiderPayload,
-  { RIN: string; riderId: string }
+  { PCRAA: string; riderId: string }
 >(functions, "registerRider");
 
 const updateRiderQRFn = httpsCallable(functions, "updateRiderQR");
@@ -135,12 +135,12 @@ async function uploadPassportPhoto(
 // ─── QR CODE GENERATION ───────────────────────────────────────────────────────
 
 async function generateAndUploadQRCode(
-  RIN: string,
+  PCRAA: string,
   riderId: string,
 ): Promise<string | null> {
   try {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const verifyUrl = `https://rin.thectsafrica.com/verify/${RIN}?t=${Date.now()}`;
+    const verifyUrl = `https://rin.thectsafrica.com/verify/${PCRAA}?t=${Date.now()}`;
     console.log(`🔲 Generating QR for: ${verifyUrl}`);
 
     // Generate as data URL then convert to blob
@@ -154,9 +154,9 @@ async function generateAndUploadQRCode(
     // Convert base64 data URL to blob
     const res = await fetch(dataUrl);
     const blob = await res.blob();
-    const qrFile = new File([blob], `qr_${RIN}.png`, { type: "image/png" });
+    const qrFile = new File([blob], `qr_${PCRAA}.png`, { type: "image/png" });
 
-    const storageRef = ref(storage, `riders/qrcodes/${riderId}_${RIN}.png`);
+    const storageRef = ref(storage, `riders/qrcodes/${riderId}_${PCRAA}.png`);
     const snapshot = await uploadBytes(storageRef, qrFile, {
       contentType: "image/png",
     });
@@ -202,7 +202,7 @@ export async function saveRiderRegistration(
     } else {
       console.warn("⚠️ No photo file found in form data.");
     }
-// 1. Call Cloud Function first to get RIN and riderId
+// 1. Call Cloud Function first to get PCRAA and riderId
 const response = await registerRiderFn({
   fullName: data.fullName,
   phoneNumber: data.phoneNumber,
@@ -228,10 +228,10 @@ const response = await registerRiderFn({
   paymentAmount: payment?.paymentAmount ?? null,
 });
 
-const { RIN, riderId } = response.data;
+const { PCRAA, riderId } = response.data;
 
-// 2. Generate QR using the RIN we just got back
-const qrCodeUrl = await generateAndUploadQRCode(RIN, riderId);
+// 2. Generate QR using the PCRAA we just got back
+const qrCodeUrl = await generateAndUploadQRCode(PCRAA, riderId);
 
 // 3. Patch QR URL back using a dedicated Cloud Function or keep client update
 //    but use Admin SDK approach — or just accept it's a best-effort update
@@ -245,9 +245,9 @@ if (qrCodeUrl) {
     try {
       const pre = await getPreRegistrationByPhone(data.phoneNumber);
       if (pre && pre.status !== "rin_issued") {
-        await markPreRegistrationAsIssued(pre.id, RIN);
+        await markPreRegistrationAsIssued(pre.id, PCRAA);
         console.log(
-          `🔗 Pre-registration ${pre.preRegId} marked as issued → ${RIN}`,
+          `🔗 Pre-registration ${pre.preRegId} marked as issued → ${PCRAA}`,
         );
       }
     } catch (err) {
@@ -255,7 +255,7 @@ if (qrCodeUrl) {
       console.warn("⚠️ Pre-registration bridge failed (non-fatal):", err);
     }
 
-    return { success: true, RIN, riderId, qrCodeUrl: qrCodeUrl ?? "" };
+    return { success: true, PCRAA, riderId, qrCodeUrl: qrCodeUrl ?? "" };
   } catch (err: any) {
     console.error("❌ Registration error:", err);
     const message =
@@ -264,7 +264,7 @@ if (qrCodeUrl) {
       "Registration failed. Please try again.";
     return {
       success: false,
-      RIN: "",
+      PCRAA: "",
       riderId: "",
       qrCodeUrl: "",
       error: message,
@@ -290,7 +290,7 @@ export async function updateRiderStatus(
 export async function updateRider(
   riderId: string,
   updates: Partial<
-    Omit<RiderRecord, "RIN" | "sequence" | "status" | "createdBy" | "createdAt">
+    Omit<RiderRecord, "PCRAA" | "sequence" | "status" | "createdBy" | "createdAt">
   >,
 ): Promise<boolean> {
   try {
@@ -335,14 +335,14 @@ export const lookupByPassport = (id: string) =>
 export const lookupByPhoneNumber = (p: string) => lookupRider("phoneNumber", p);
 export const lookupByIdNumber = (id: string) => lookupRider("idNumber", id);
 
-export async function lookupByRIN(RIN: string): Promise<RiderLookupResult> {
-  if (!isValidRIN(RIN)) {
+export async function lookupByPCRAA(PCRAA: string): Promise<RiderLookupResult> {
+  if (!isValidPCRAA(PCRAA)) {
     return {
       found: false,
-      error: "Invalid RIN format. Expected: GAP-0001-KR0326",
+      error: "Invalid PCRAA format. Expected: GAP-0001-KR0326",
     };
   }
-  return lookupRider("RIN", RIN);
+  return lookupRider("PCRAA", PCRAA);
 }
 
 // ─── QUERIES ──────────────────────────────────────────────────────────────────

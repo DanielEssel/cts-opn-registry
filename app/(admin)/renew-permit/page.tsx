@@ -35,7 +35,7 @@ interface RenewalCandidate {
   id:              string;
   fullName:        string;
   phoneNumber:     string;
-  RIN:             string;
+  PCRAA:             string;
   vehicleCategory: string;
   districtMunicipality: string;
   expiryDate:      string;
@@ -137,7 +137,7 @@ export default function RenewPermitsPage() {
           id:                   d.id,
           fullName:             data.fullName             ?? "",
           phoneNumber:          data.phoneNumber          ?? "",
-          RIN:                  data.RIN                  ?? "",
+          PCRAA:                  data.PCRAA                  ?? "",
           vehicleCategory:      data.vehicleCategory      ?? "",
           districtMunicipality: data.districtMunicipality ?? "",
           expiryDate:           data.expiryDate           ?? "",
@@ -173,7 +173,7 @@ export default function RenewPermitsPage() {
     const maxDays = parseInt(windowDays);
     return candidates.filter((c) => {
       const matchWindow = c.daysUntilExpiry <= maxDays;
-      const matchSearch = !search || [c.fullName, c.RIN, c.phoneNumber, c.districtMunicipality]
+      const matchSearch = !search || [c.fullName, c.PCRAA, c.phoneNumber, c.districtMunicipality]
         .some((v) => v.toLowerCase().includes(search.toLowerCase()));
       return matchWindow && matchSearch;
     });
@@ -200,8 +200,8 @@ export default function RenewPermitsPage() {
       newExpiryDate.setMonth(newExpiryDate.getMonth() + PERMIT_VALIDITY_MONTHS);
 
       // ── Update rider document ──────────────────────────────────────────
-      // RIN does NOT change — it is a permanent identity number
-      // QR URL does NOT change — it encodes /verify/RIN which is permanent
+      // PCRAA does NOT change — it is a permanent identity number
+      // QR URL does NOT change — it encodes /verify/PCRAA which is permanent
       await updateDoc(doc(db, "riders", selected.id), {
         issueDate:  newIssueDate.toISOString(),
         expiryDate: newExpiryDate.toISOString(),
@@ -213,7 +213,7 @@ export default function RenewPermitsPage() {
       await addDoc(collection(db, "renewals"), {
         riderId:          selected.id,
         riderName:        selected.fullName,
-        RIN:              selected.RIN,   // same RIN, permanent
+        PCRAA:              selected.PCRAA,   // same PCRAA, permanent
         renewalFee:       0,              // fee collected externally — update if needed
         paymentMethod,
         status:           "completed",
@@ -233,7 +233,7 @@ export default function RenewPermitsPage() {
         action:    `Renewed registration — new expiry ${format(newExpiryDate, "dd MMM yyyy")}`,
         target:    selected.fullName,
         targetId:  selected.id,
-        RIN:       selected.RIN,
+        PCRAA:       selected.PCRAA,
         district:  selected.districtMunicipality,
         status:    "success",
         timestamp: serverTimestamp(),
@@ -300,7 +300,7 @@ export default function RenewPermitsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           <Input
-            placeholder="Search by name, RIN, phone, district..."
+            placeholder="Search by name, PCRAA, phone, district..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-10"
@@ -338,7 +338,7 @@ export default function RenewPermitsPage() {
             <TableHeader>
               <TableRow className="bg-slate-50 border-b">
                 <TableHead className="font-bold text-slate-600 text-xs">Rider</TableHead>
-                <TableHead className="font-bold text-slate-600 text-xs">RIN</TableHead>
+                <TableHead className="font-bold text-slate-600 text-xs">PCRAA</TableHead>
                 <TableHead className="font-bold text-slate-600 text-xs">Vehicle</TableHead>
                 <TableHead className="font-bold text-slate-600 text-xs">District</TableHead>
                 <TableHead className="font-bold text-slate-600 text-xs">Expiry</TableHead>
@@ -359,7 +359,7 @@ export default function RenewPermitsPage() {
                     </TableCell>
 
                     <TableCell>
-                      <span className="font-mono text-xs font-bold text-slate-700">{c.RIN}</span>
+                      <span className="font-mono text-xs font-bold text-slate-700">{c.PCRAA}</span>
                     </TableCell>
 
                     <TableCell>
@@ -425,7 +425,7 @@ export default function RenewPermitsPage() {
               Confirm Renewal
             </DialogTitle>
             <p className="text-xs text-green-200 mt-0.5">
-              {selected?.fullName} — {selected?.RIN}
+              {selected?.fullName} — {selected?.PCRAA}
             </p>
           </div>
 
@@ -459,8 +459,8 @@ export default function RenewPermitsPage() {
                   <p className="font-semibold text-slate-900">{selected.phoneNumber}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">RIN</p>
-                  <p className="font-mono font-bold text-green-700">{selected.RIN}</p>
+                  <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">PCRAA</p>
+                  <p className="font-mono font-bold text-green-700">{selected.PCRAA}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase text-slate-400 mb-0.5">Vehicle</p>
@@ -513,9 +513,9 @@ export default function RenewPermitsPage() {
                 </Select>
               </div>
 
-              {/* Note: RIN unchanged */}
+              {/* Note: PCRAA unchanged */}
               <p className="text-[11px] text-slate-400 italic">
-                The RIN and QR code remain unchanged — only issue and expiry dates are updated.
+                The PCRAA and QR code remain unchanged — only issue and expiry dates are updated.
               </p>
 
               <DialogFooter className="gap-2 pt-1">

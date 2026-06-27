@@ -113,7 +113,7 @@ export default function AdminLayout({
 
   const roleLabel = useMemo(() => {
     if (!profile) return "";
-    if (profile.role === "Super Admin") return "CTS Africa";
+    if (profile.role === "Super Admin") return "PCRAA";
     if (profile.role === "District Admin")
       return `District • ${profile.entity ?? "—"}`;
     return "Operator";
@@ -151,8 +151,8 @@ export default function AdminLayout({
               <Link href="/dashboard" className="flex items-center space-x-3">
                 <div className="w-21.5 h-21.5 flex items-center justify-center">
                               <Image
-                                src="/logo/ctslogo.png"
-                                alt="RIN"
+                                src="/logo/pcraa.png"
+                                alt="PCRAA"
                                 width={86}
                                 height={86}
                                 className="object-contain brightness-200"
@@ -161,7 +161,7 @@ export default function AdminLayout({
 
                 <div>
                   <h1 className="font-bold text-gray-900 text-sm">
-                    Rider Identification Number
+                    Progressive Certified Riders of Africa Association
                   </h1>
                   <p className="text-xs text-gray-500"></p>
                 </div>

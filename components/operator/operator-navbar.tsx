@@ -43,7 +43,7 @@ const navItems = [
     label: "Register Driver",
     href: "/operator/register",
     icon: FileText,
-    description: "Register new riders for RIN permits",
+    description: "Register new riders for PCRAA permits",
   },
   {
     label: "Daily Report",
@@ -193,15 +193,15 @@ export default function OperatorNavbar() {
             >
               <div className="w-21.5 h-21.5 flex items-center justify-center">
                             <Image
-                              src="/logo/ctslogo.png"
-                              alt="RIN"
+                              src="/logo/pcraa.png"
+                              alt="PCRAA"
                               width={86}
                               height={86}
                               className="object-contain brightness-200"
                             />
                           </div>
               <div className="hidden sm:block">
-                <h1 className="text-base font-bold text-slate-900">RIN Registry</h1>
+                <h1 className="text-base font-bold text-slate-900">PCRAA Registry</h1>
                 <p className="text-xs text-slate-500 font-medium">Operator</p>
               </div>
             </Link>

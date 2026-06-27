@@ -45,8 +45,8 @@ export default function TrainingDetailsPage() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 transition-transform group-hover:scale-105">
               <Image
-                src="/logo/ctslogo.png"
-                alt="CTS Africa"
+                src="/logo/pcraa.png"
+                alt="PCRAA"
                 width={40}
                 height={40}
                 className="object-contain"
@@ -54,7 +54,7 @@ export default function TrainingDetailsPage() {
             </div>
             <div className="border-l border-slate-200 pl-3">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none">
-                CTS Africa
+                PCRAA
               </p>
               <p className="text-sm font-black text-slate-900 leading-tight">
                 Official Rider Registration
@@ -164,7 +164,7 @@ export default function TrainingDetailsPage() {
                 {
                   step: "01",
                   title: "Access the Portal",
-                  desc: "Visit the official CTS Africa website to begin your application.",
+                  desc: "Visit the official PCRAA website to begin your application.",
                   icon: "🌐",
                   color: "bg-green-700",
                 },
@@ -207,7 +207,7 @@ export default function TrainingDetailsPage() {
                   subItems: [
                     "SMS Schedule Notification",
                     "Digital Training Booklet",
-                    "Official RIN Activation",
+                    "Official PCRAA Activation",
                   ],
                   icon: "📧",
                   color: "bg-emerald-500",
@@ -337,7 +337,7 @@ export default function TrainingDetailsPage() {
             </h3>
             <ul className="space-y-3">
               {[
-                "Receive your official RIN number",
+                "Receive your official PCRAA number",
                 "Get your Rider ID Card",
                 "Valid for 6 months",
                 "Renewable online",
@@ -366,7 +366,7 @@ export default function TrainingDetailsPage() {
               </h3>
               <ul className="space-y-2">
                 {[
-                  "RIN number is issued AFTER successful completion of training",
+                  "PCRAA number is issued AFTER successful completion of training",
                   "Training lasts for 3 weeks maximum",
                   "PPE and learning materials provided to all registered applicants",
                   "Bring your registration receipt to the training center",
@@ -417,7 +417,7 @@ export default function TrainingDetailsPage() {
           style={FONT_BODY}
         >
           <Shield className="h-3 w-3 shrink-0" />
-          Secured by PayStack · CTS Africa Limited · All rights reserved
+          Secured by PayStack · PCRAA Limited · All rights reserved
         </p>
 
         {/* Privacy Policy Link */}

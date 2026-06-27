@@ -65,7 +65,7 @@ export const initiateMomoCharge = onCall(
     }
 
     const amountPesewas = Math.round(amountGHS * 100);
-    const reference = `RIN-${preRegId}-${Date.now()}`;
+    const reference = `PCRAA-${preRegId}-${Date.now()}`;
 
     try {
       const response = await axios.post(

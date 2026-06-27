@@ -1,6 +1,6 @@
 /**
  * rin-constants.ts
- * RIN FORMAT: [RegionCode][VehicleCode]-[Sequence]-[DistrictCode][MMYY]
+ * PCRAA FORMAT: [RegionCode][VehicleCode]-[Sequence]-[DistrictCode][MMYY]
  * EXAMPLE:    GAP-0001-KR0326
  *
  * Counter logic: per district only (24 counters max)
@@ -55,7 +55,7 @@ export function padSequence(n: number): string {
   return String(n).padStart(4, "0");
 }
 
-export function composeRIN(
+export function composePCRAA(
   regionCode:   string,
   vehicleCode:  string,
   sequence:     number,
@@ -65,7 +65,7 @@ export function composeRIN(
   return `${regionCode}${vehicleCode}-${padSequence(sequence)}-${districtCode}${toMMYY(date)}`;
 }
 
-export function parseRIN(rin: string): {
+export function parsePCRAA(rin: string): {
   regionCode:   string;
   vehicleCode:  string;
   sequence:     number;
@@ -83,8 +83,8 @@ export function parseRIN(rin: string): {
   };
 }
 
-export function isValidRIN(rin: string): boolean {
-  return parseRIN(rin) !== null;
+export function isValidPCRAA(rin: string): boolean {
+  return parsePCRAA(rin) !== null;
 }
 
 /**

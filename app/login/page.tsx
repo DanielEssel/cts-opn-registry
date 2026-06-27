@@ -114,11 +114,11 @@ export default function LoginPage() {
               </div>
 
               <h1 className="text-3xl xl:text-4xl font-black text-white tracking-tight leading-tight mb-4">
-                RIN Register<br /><span className="text-green-400">System</span>
+                PCRAA Register<br /><span className="text-green-400">System</span>
               </h1>
 
               <p className="text-slate-400 text-sm xl:text-base leading-relaxed max-w-xs">
-                CTS's official secure portal for commercial motor rider
+                PCRAA's official secure portal for commercial motor rider
                 registration and permit issuance.
               </p>
 
@@ -139,8 +139,8 @@ export default function LoginPage() {
             <div>
              <div className="w-21.5 h-21.5 flex items-center justify-center">
                            <Image
-                             src="/logo/ctslogo.png"
-                             alt="RIN"
+                             src="/logo/pcraa.png"
+                             alt="PCRAA"
                              width={86}
                              height={86}
                              className="object-contain brightness-200"
@@ -163,8 +163,8 @@ export default function LoginPage() {
   <div className="w-24 h-14 rounded-full bg-gradient-to-br from-emerald-700 to-emerald-600 p-0.5 shadow-md">
     <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
       <Image
-        src="/logo/ctslogo.png"
-        alt="CTS Africa Logo"
+        src="/logo/pcraa.png"
+        alt="PCRAA Logo"
         width={50}
         height={50}
         className="object-contain p-1.5 "
@@ -172,8 +172,8 @@ export default function LoginPage() {
     </div>
   </div>
   <div>
-    <p className="text-sm font-black text-emerald-800">CTS Africa</p>
-    <p className="text-[10px] font-semibold text-slate-500">Rider Identification Number</p>
+    <p className="text-sm font-black text-emerald-800">PCRAA</p>
+    <p className="text-[10px] font-semibold text-slate-500">Progressive Certified Riders of Africa Association</p>
   </div>
 </div>
 
@@ -288,7 +288,7 @@ export default function LoginPage() {
 
             <div className="mt-10 pt-6 border-t border-slate-100 text-center">
               <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
-                © 2026 CTS Africa · RIN Registry · v2.4.0
+                © 2026 PCRAA · PCRAA Registry · v2.4.0
               </p>
             </div>
           </div>

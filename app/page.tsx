@@ -50,8 +50,8 @@ export default function HomePage() {
     <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 transition-transform group-hover:scale-105">
               <Image
-                src="/logo/ctslogo.png"
-                alt="CTS Africa"
+                src="/logo/pcraa.png"
+                alt="PCRAA"
                 width={40}
                 height={40}
                 className="object-contain"
@@ -59,10 +59,10 @@ export default function HomePage() {
             </div>
             <div className="border-l border-slate-200 pl-3">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none">
-                CTS Africa
+                PCRAA
               </p>
               <p className="text-sm font-black text-slate-900 leading-tight">
-                Official Rider Registration
+                Progressive Certified <br /> Riders of Africa Association
               </p>
             </div>
           </Link>
@@ -73,7 +73,7 @@ export default function HomePage() {
           variant="ghost"
           className="hidden sm:flex gap-2 text-slate-600 hover:text-slate-900 font-semibold"
         >
-          <Search className="h-4 w-4" /> Find RIN
+          <Search className="h-4 w-4" /> Find Your RIN
         </Button>
       </Link>
 
@@ -87,7 +87,7 @@ export default function HomePage() {
 </header>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-<section className="relative bg-gradient-to-b from-green-50 to-white overflow-hidden py-16 md:py-20">
+<section className="relative bg-gradient-to-b from-green-50 to-white overflow-hidden py-14 md:py-18">
   <div className="absolute inset-0 checker opacity-60 pointer-events-none" />
 
   <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -99,16 +99,16 @@ export default function HomePage() {
           Greater Accra Region Pilot
         </div>
 
-        <h1 className="text-5xl md:text-6xl font-black text-slate-900 leading-[1.05] tracking-tight mb-5">
-          Rider
+        <h1 className="text-4xl md:text-5xl font-black text-slate-900 leading-[1.05] tracking-tight mb-5">
+          Progressive Certified
           <br />
-          <span className="text-green-700">Identification</span>
+          <span className="text-green-700"> Riders of Africa </span>
           <br />
-          <span className="text-yellow-500">Number System</span>
+          <span className="text-yellow-500">Association (PCRAA)</span>
         </h1>
 
         <p className="text-lg text-slate-500 mb-8 max-w-md leading-relaxed">
-          Official CTS digital platform for commercial transport rider
+          Official PCRAA digital platform for commercial transport rider
           identification in Ghana.
         </p>
 
@@ -319,7 +319,7 @@ export default function HomePage() {
       <h3 className="text-xl font-black text-slate-900 mb-6 text-center">How to Register</h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { step: "1", title: "Visit Website", desc: "Go to CTS Africa portal" },
+          { step: "1", title: "Visit Website", desc: "Go to PCRAA portal" },
           { step: "2", title: "Fill Form", desc: "Submit personal details & photo" },
           { step: "3", title: "Pay Fee", desc: "Mobile money payment" },
           { step: "4", title: "Get Receipt", desc: "Instant confirmation" }
@@ -361,7 +361,7 @@ export default function HomePage() {
         Why This System
       </p>
       <h2 className="text-4xl font-black text-white leading-tight">
-        Built for CTS's
+        Built for PCRAA's
         <br />
         <span className="text-green-500">commercial riders.</span>
       </h2>
@@ -372,7 +372,7 @@ export default function HomePage() {
         {
           icon: Shield,
           title: "Official System",
-          body: "Government-approved platform. Every RIN issued is permanently recorded and verifiable by any officer.",
+          body: "Government-approved platform. Every PCRAA issued is permanently recorded and verifiable by any officer.",
           accent: "#166534",
           light: "#f0fdf4",
         },
@@ -424,7 +424,7 @@ export default function HomePage() {
         Registration Process
       </p>
       <h2 className="text-4xl font-black text-slate-900">
-        How to get your RIN
+        How to get your PCRAA
       </h2>
       <p className="text-slate-500 mt-3">
         Registration is done through authorized operators only.
@@ -454,8 +454,8 @@ export default function HomePage() {
         {
           step: "04",
           icon: CheckCircle,
-          title: "Receive Your RIN Certificate",
-          body: "Get your Rider Identification Number instantly with a QR code. Keep it safe for checks.",
+          title: "Receive Your PCRAA Certificate",
+          body: "Get your Progressive Certified Riders of Africa Association instantly with a QR code. Keep it safe for checks.",
         },
       ].map(({ step, icon: Icon, title, body }, i) => (
         <div
@@ -506,7 +506,7 @@ export default function HomePage() {
             "Training registration requires a fee - GHS 150.00",
             "Only register through authorized government operators",
             "Beware of fraudulent agents charging illegal fees",
-            "Keep your RIN safe and present it during checks",
+            "Keep your PCRAA safe and present it during checks",
             "Renew your registration before the 6-month expiry date",
           ].map((item) => (
             <li
@@ -535,7 +535,7 @@ export default function HomePage() {
       Identification Number
     </h2>
     <p className="text-green-200 mb-10 text-lg">
-      Retrieve your RIN and check your permit status online in seconds.
+      Retrieve your PCRAA and check your permit status online in seconds.
     </p>
     <Link href="/retrieve">
       <Button
@@ -543,7 +543,7 @@ export default function HomePage() {
         className="bg-white hover:bg-slate-50 text-green-900 font-black gap-2 px-8 h-13 shadow-2xl text-base"
       >
         <Search className="h-5 w-5" />
-        Find My RIN
+        Find My PCRAA
         <ArrowRight className="h-5 w-5" />
       </Button>
     </Link>
@@ -556,11 +556,11 @@ export default function HomePage() {
     <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
       <div className="md:col-span-2">
         <div className="flex items-center gap-3 mb-4">
-          <img src="/ctslogo.png" alt="CTS Logo" className="w-9 h-9 object-contain" />
-          <span className="font-black text-white text-lg">CTS Africa</span>
+          <img src="/pcraa.png" alt="CTS Logo" className="w-9 h-9 object-contain" />
+          <span className="font-black text-white text-lg">PCRAA</span>
         </div>
         <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-          Official CTS Rider Registration System. Ensuring safe, legal, and regulated commercial transport across Greater Accra.
+          Progressive Certified Riders of Africa Association. Ensuring safe, legal, and regulated commercial transport across Greater Accra.
         </p>
       </div>
 
@@ -570,7 +570,7 @@ export default function HomePage() {
         </p>
         <ul className="space-y-2.5">
           {[
-            ["Find My RIN", "/retrieve"],
+            ["Find My PCRAA", "/retrieve"],
             ["Check Status", "/retrieve"],
           ].map(([label, href]) => (
             <li key={label}>
@@ -609,7 +609,7 @@ export default function HomePage() {
 
     <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
       <p className="text-xs text-slate-600">
-        © {new Date().getFullYear()} CTS Africa · Rider Identification Number Registry
+        © {new Date().getFullYear()} PCRAA · Progressive Certified Riders of Africa Association Registry
       </p>
       <div className="flex gap-6">
         <Link

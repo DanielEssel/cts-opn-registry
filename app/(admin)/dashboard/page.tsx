@@ -43,7 +43,7 @@ interface Rider {
   districtMunicipality?: string;
   createdAt?: any;
   createdBy?: string;
-  RIN?: string;
+  PCRAA?: string;
 }
 
 interface ActivityLog {
@@ -53,7 +53,7 @@ interface ActivityLog {
   admin: string;
   time: string;
   status?: string;
-  RIN?: string;
+  PCRAA?: string;
 }
 
 interface SystemAlert {
@@ -237,7 +237,7 @@ export default function AdvancedDashboard() {
               hour: "2-digit", minute: "2-digit",
             }) || "Just now",
             status: data.status || "Pending",
-            RIN:    data.RIN,
+            PCRAA:    data.PCRAA,
           };
         }));
         setLoading(false);
@@ -436,9 +436,9 @@ export default function AdvancedDashboard() {
                       <p className="text-sm font-semibold text-slate-900 truncate">{item.admin}</p>
                       <p className="text-xs text-slate-500">{item.action}</p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        {item.RIN && (
+                        {item.PCRAA && (
                           <Badge variant="secondary" className="text-[10px] font-mono font-bold">
-                            {item.RIN}
+                            {item.PCRAA}
                           </Badge>
                         )}
                         <Badge className={

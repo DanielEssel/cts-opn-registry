@@ -70,10 +70,10 @@ export function RiderTableRow({
         <p className="text-xs text-slate-400 mt-0.5">{rider.phoneNumber}</p>
       </TableCell>
 
-      {/* RIN */}
+      {/* PCRAA */}
       <TableCell>
         <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded">
-          {rider.RIN}
+          {rider.PCRAA}
         </span>
       </TableCell>
 
@@ -83,7 +83,7 @@ export function RiderTableRow({
           {rider.qrCodeUrl ? (
             <img
               src={rider.qrCodeUrl}
-              alt={`QR ${rider.RIN}`}
+              alt={`QR ${rider.PCRAA}`}
               className="w-9 h-9 rounded border border-slate-100 shadow-sm"
               referrerPolicy="no-referrer"
             />
@@ -258,7 +258,7 @@ export function RidersTable({
                 <Checkbox checked={allSelected} onCheckedChange={onToggleAll} />
               </TableHead>
               <TableHead className="font-bold text-slate-600 text-xs">Rider</TableHead>
-              <TableHead className="font-bold text-slate-600 text-xs">RIN</TableHead>
+              <TableHead className="font-bold text-slate-600 text-xs">PCRAA</TableHead>
               <TableHead className="font-bold text-slate-600 text-xs text-center">QR</TableHead>
               {showTownColumn && (
                 <TableHead className="font-bold text-slate-600 text-xs">District</TableHead>

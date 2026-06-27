@@ -36,7 +36,7 @@ function toDateStr(val: any): string {
 
 function exportCSV(riders: any[], entity?: string) {
   const headers = [
-    "RIN",
+    "PCRAA",
     "Full Name",
     "Phone Number",
     "ID Type",
@@ -59,7 +59,7 @@ function exportCSV(riders: any[], entity?: string) {
   ];
 
   const rows = riders.map((r) => [
-    r.RIN ?? "",
+    r.PCRAA ?? "",
     r.fullName ?? "",
     r.phoneNumber ?? "",
     r.idType ?? "",

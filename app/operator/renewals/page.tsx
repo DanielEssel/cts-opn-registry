@@ -38,10 +38,10 @@ export default function RenewalsPage() {
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center">
                   <BadgeIcon className="h-5 w-5 text-white" />
                 </div>
-                <span className="font-bold text-gray-900">RIN Registry</span>
+                <span className="font-bold text-gray-900">PCRAA Registry</span>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed">
-                A trusted Rider Identification Number registration system for riders and operators.
+                A trusted Progressive Certified Riders of Africa Association registration system for riders and operators.
               </p>
             </div>
 
@@ -59,8 +59,8 @@ export default function RenewalsPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/operator/RIN-issuance" className="text-sm text-gray-600 hover:text-green-600 transition-colors">
-                    RIN Issuance
+                  <Link href="/operator/PCRAA-issuance" className="text-sm text-gray-600 hover:text-green-600 transition-colors">
+                    PCRAA Issuance
                   </Link>
                 </li>
                 <li>
@@ -77,13 +77,13 @@ export default function RenewalsPage() {
                 <li className="flex items-center gap-3">
                   <Phone className="h-4 w-4 text-green-600 flex-shrink-0" />
                   <a href="tel:0800123456" className="text-sm text-gray-600 hover:text-green-600 transition-colors">
-                    0800-RIN-HELP
+                    0800-PCRAA-HELP
                   </a>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-green-600 flex-shrink-0" />
-                  <a href="mailto:support@RIN.gov.gh" className="text-sm text-gray-600 hover:text-green-600 transition-colors">
-                    support@RIN.gov.gh
+                  <a href="mailto:support@PCRAA.gov.gh" className="text-sm text-gray-600 hover:text-green-600 transition-colors">
+                    support@PCRAA.gov.gh
                   </a>
                 </li>
                 <li className="flex items-center gap-3">
@@ -98,12 +98,12 @@ export default function RenewalsPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-600">
-              &copy; 2024 Rider Identification Number Registry. All rights reserved.
+              &copy; 2024 Progressive Certified Riders of Africa Association Registry. All rights reserved.
             </p>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <span>Made with</span>
               <Heart className="h-4 w-4 text-red-500 fill-red-500" />
-              <span>by RIN Team</span>
+              <span>by PCRAA Team</span>
             </div>
           </div>
         </div>

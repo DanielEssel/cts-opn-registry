@@ -237,10 +237,10 @@ export const phoneLookupSchema = z.object({
     .regex(phoneRegex, "Phone number must be exactly 10 digits"),
 });
 
-export const RINLookupSchema = z.object({
-  RIN: z
+export const PCRAALookupSchema = z.object({
+  PCRAA: z
     .string()
-    .regex(/^[A-Z]{2}[A-Z]-\d{4}-[A-Z]{2}\d{4}$/, "Invalid RIN format. Expected: GAT-0001-AM0326"),
+    .regex(/^[A-Z]{2}[A-Z]-\d{4}-[A-Z]{2}\d{4}$/, "Invalid PCRAA format. Expected: GAT-0001-AM0326"),
 });
 
 // ============================================================================
