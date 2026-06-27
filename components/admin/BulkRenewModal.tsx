@@ -147,7 +147,7 @@ export function BulkRenewModal({
       }
 
       // Small delay so UI updates are visible per rider
-      await new Promise((res) => setTimeout(res, 150));
+      await new Promise((res) => setTimeout(res, 400));
     }
 
     setPhase("done");

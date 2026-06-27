@@ -503,7 +503,7 @@ export default function HomePage() {
         </h3>
         <ul className="space-y-2.5">
           {[
-            "Training registration requires a fee - GHS 150.00",
+            "Training registration requires a fee - GHS 400.00",
             "Only register through authorized government operators",
             "Beware of fraudulent agents charging illegal fees",
             "Keep your PCRAA safe and present it during checks",

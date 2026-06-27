@@ -17,7 +17,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-export const REGISTRATION_FEE_GHS = 150;
+export const REGISTRATION_FEE_GHS = 400;
 
 export type MomoNetwork = "MTN" | "VODAFONE" | "AIRTELTIGO";
 
@@ -115,7 +115,7 @@ export async function initiatePayment(opts: {
 
   // ── STUB path (active until Hanypay credentials are configured) ───────────
   console.warn("[Hanypay STUB] Simulating payment initiation — no real charge.");
-  await new Promise((r) => setTimeout(r, 1500)); // simulate network delay
+  await new Promise((r) => setTimeout(r, 4000)); // simulate network delay
 
   return {
     success: true,

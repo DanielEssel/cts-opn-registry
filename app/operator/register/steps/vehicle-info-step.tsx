@@ -86,7 +86,7 @@ export function VehicleInfoStep({ form }: VehicleInfoStepProps) {
                     }
                     className={`
                       relative flex items-center gap-4 px-4 py-4 rounded-xl border-2
-                      text-left transition-all duration-150
+                      text-left transition-all duration-400
                       ${isSelected
                         ? "border-green-600 bg-green-50"
                         : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"

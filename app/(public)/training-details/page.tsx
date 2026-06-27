@@ -191,7 +191,7 @@ export default function TrainingDetailsPage() {
                 {
                   step: "04",
                   title: "Secure Fee Settlement",
-                  desc: "Process your GHS 150.00 registration fee via our secure payment gateway.",
+                  desc: "Process your GHS 400.00 registration fee via our secure payment gateway.",
                   subItems: [
                     "MTN Momo / Telecel Cash",
                     "Automated Payment Prompt",
@@ -265,7 +265,7 @@ export default function TrainingDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-3xl font-black text-amber-800 mb-2">
-                GHS 150.00
+                GHS 400.00
               </p>
               <p className="text-sm text-slate-600">
                 One-time registration fee

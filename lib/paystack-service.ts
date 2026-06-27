@@ -7,7 +7,7 @@ import { functions } from "@/lib/firebase";
 
 export type MomoNetwork = "MTN" | "VODAFONE" | "AIRTELTIGO";
 export type PaymentStatus = "idle" | "pending" | "success" | "failed";
-export const REGISTRATION_FEE_GHS = 150;
+export const REGISTRATION_FEE_GHS = 400;
 
 // ── Initiate Payment ──────────────────────────────────────────────────────────
 

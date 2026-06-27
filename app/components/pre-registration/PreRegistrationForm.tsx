@@ -124,7 +124,7 @@ const MOMO_NETWORKS: {
   },
 ];
 
-const REGISTRATION_FEE_GHS = 150;
+const REGISTRATION_FEE_GHS = 400;
 
 // ─── Steps ─────────────────────────────────────────────────────────────────────
 const STEPS = [
@@ -1803,7 +1803,7 @@ async function handlePaymentSuccess(
           <div className="flex flex-wrap items-center justify-center gap-2 mt-4 sm:mt-5">
             {[
               { icon: Shield, label: "Certified Programme" },
-              { icon: CreditCard, label: "GHS 150 One-time Fee" },
+              { icon: CreditCard, label: "GHS 400 One-time Fee" },
               { icon: CheckCircle2, label: "Rider ID on Completion" },
             ].map(({ icon: Icon, label }) => (
               <div
