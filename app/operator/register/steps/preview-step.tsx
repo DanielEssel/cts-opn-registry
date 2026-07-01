@@ -286,7 +286,7 @@ export function PreviewStep({ data, photoPreview }: PreviewStepProps) {
       </div>
 
       {/* CONFIRMATION BOX */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 p-6">
+      <div className="bg-linear-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 p-6">
         <div className="flex gap-4">
           <div className="flex-shrink-0 pt-1">
             <div className="flex items-center justify-center h-8 w-8 rounded-full bg-green-600">

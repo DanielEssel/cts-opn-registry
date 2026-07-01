@@ -103,7 +103,7 @@ export function RegistrationProgress({
         </div>
         <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-green-600 to-emerald-600 transition-all duration-300"
+            className="h-full bg-linear-to-r from-green-600 to-emerald-600 transition-all duration-300"
             style={{
               width: `${(completedSteps.length / steps.length) * 100}%`,
             }}

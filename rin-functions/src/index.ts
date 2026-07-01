@@ -1,17 +1,5 @@
-/**
- * functions/src/index.ts
- * ─────────────────────────────────────────────────────────────────────────────
- * Cloud Function: registerRider
- *
- * PCRAA FORMAT:  [RegionCode][VehicleCode]-[Sequence]-[DistrictCode][MMYY]
- * EXAMPLE:     GAP-0001-KR0326
- *
- * Counter logic: per district only (24 counters max)
- * District locking: District Admin only — Super Admin + Operator pick freely
- */
-import { defineSecret } from "firebase-functions/params";
-import axios from "axios";
-import { sendSMS, buildSMSMessage } from "./services/hubtel.service";
+
+
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import {
@@ -22,9 +10,12 @@ import {
   getCounterPath,
   COUNTER_START,
 } from "./rin-constants";
+import { db } from "./firebase";
+export { initiateMomoCharge }      from "./bridge/initiateMomoCharge";
+export { bridgeCallback }          from "./bridge/bridge.callback";
+export { checkTransactionStatus } from "./bridge/bridge.status";
 
-admin.initializeApp();
-const db = admin.firestore();
+
 
 type Role = "Super Admin" | "District Admin" | "Operator";
 
@@ -210,7 +201,35 @@ if (!isAnonymous) {
       );
     }
 
-    
+    if (!input.paymentReference) {
+  throw new HttpsError(
+    "failed-precondition",
+    "Payment reference missing."
+  );
+}
+
+const paymentSnap = await db
+  .collection("payments")
+  .doc(input.paymentReference)
+  .get();
+
+if (!paymentSnap.exists) {
+  throw new HttpsError(
+    "failed-precondition",
+    "Payment record not found."
+  );
+}
+
+const payment = paymentSnap.data()!;
+
+if (payment.status !== "success") {
+  throw new HttpsError(
+    "failed-precondition",
+    "Payment has not been completed."
+  );
+}
+
+
     // Step 5. Duplicate check
     await checkDuplicates({
       ...input,
@@ -454,227 +473,7 @@ export const updateRiderStatus = onCall(
   },
 );
 
-// ─── Paystack MoMo ────────────────────────────────────────────────────────────
 
-const PAYSTACK_SECRET_KEY = defineSecret("PAYSTACK_SECRET_KEY");
-
-const NETWORK_MAP: Record<string, string> = {
-  MTN: "mtn",
-  VODAFONE: "vod",
-  AIRTELTIGO: "tgo",
-};
-
-function normalizePhone(phone: string): string {
-  const cleaned = phone.replace(/\s+/g, "").replace(/[^\d+]/g, "");
-  if (cleaned.startsWith("+")) return cleaned;
-  if (cleaned.startsWith("0")) return `+233${cleaned.slice(1)}`;
-  return `+233${cleaned}`;
-}
-
-export const initiateMomoCharge = onCall(
-  {
-    region: "europe-west2",
-    secrets: [PAYSTACK_SECRET_KEY],
-    cors: true,
-    timeoutSeconds: 30,
-    memory: "256MiB",
-  },
-  async (request) => {
-    const secretKey = PAYSTACK_SECRET_KEY.value();
-    if (!secretKey) {
-      throw new HttpsError("internal", "Payment service is not configured.");
-    }
-
-    const { phone, network, preRegId, riderName, email, amountGHS } =
-      request.data as {
-        phone: string;
-        network: string;
-        preRegId: string;
-        riderName: string;
-        email: string;
-        amountGHS: number;
-      };
-
-    if (!phone || !network || !email) {
-      throw new HttpsError(
-        "invalid-argument",
-        "phone, network, and email are required.",
-      );
-    }
-
-    const paystackNetwork = NETWORK_MAP[network];
-    if (!paystackNetwork) {
-      throw new HttpsError(
-        "invalid-argument",
-        `Unsupported network: ${network}`,
-      );
-    }
-
-    const amountPesewas = Math.round(amountGHS * 100);
-    const reference = `PCRAA-${preRegId}-${Date.now()}`;
-
-    try {
-      const response = await axios.post(
-        "https://api.paystack.co/charge",
-        {
-          email,
-          amount: amountPesewas,
-          currency: "GHS",
-          reference,
-          mobile_money: {
-            phone: normalizePhone(phone),
-            provider: paystackNetwork,
-          },
-          metadata: { preRegId, riderName, phone, network },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${secretKey}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      const result = response.data;
-
-      // "pay_offline" or "charge_attempted" means MoMo prompt was sent — this is SUCCESS
-      const successStatuses = [
-        "pay_offline",
-        "charge_attempted",
-        "pending",
-        "success",
-      ];
-
-      if (!successStatuses.includes(result.data?.status)) {
-        throw new HttpsError(
-          "internal",
-          result.data?.message || "Failed to initiate payment.",
-        );
-      }
-
-      await db.collection("payments").doc(reference).set({
-        reference,
-        preRegId,
-        riderName,
-        phone,
-        email,
-        network,
-        amountGHS,
-        amountPesewas,
-        status: "pending",
-        paystackStatus: result.data?.status,
-        initiatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      return {
-        success: true,
-        reference,
-        status: result.data?.status,
-        displayText: result.data?.display_text || null,
-      };
-    } catch (error: any) {
-      console.error(
-        "Paystack charge error:",
-        error?.response?.data || error.message,
-      );
-      throw new HttpsError(
-        "internal",
-        error?.response?.data?.message || "Failed to initiate payment.",
-      );
-    }
-  },
-);
-
-export const checkMomoStatus = onCall(
-  {
-    region: "europe-west2",
-    secrets: [PAYSTACK_SECRET_KEY],
-    cors: true,
-    timeoutSeconds: 30,
-    memory: "256MiB",
-  },
-  async (request) => {
-    const secretKey = PAYSTACK_SECRET_KEY.value();
-    if (!secretKey) {
-      throw new HttpsError("internal", "Payment service is not configured.");
-    }
-
-    const { reference } = request.data as { reference: string };
-    if (!reference) {
-      throw new HttpsError("invalid-argument", "reference is required.");
-    }
-
-    try {
-      const response = await axios.get(
-        `https://api.paystack.co/charge/${encodeURIComponent(reference)}`,
-        { headers: { Authorization: `Bearer ${secretKey}` } },
-      );
-
-      const chargeData = response.data.data;
-      const paystackStatus: string = chargeData.status;
-      const transactionId: string = chargeData.id?.toString() || "";
-
-      const paymentRef = db.collection("payments").doc(reference);
-      const paymentDoc = await paymentRef.get();
-
-      if (!paymentDoc.exists) {
-        return { status: "pending", transactionId: "", reference };
-      }
-
-      const paymentData = paymentDoc.data()!;
-
-      if (paymentData.status !== "success" && paystackStatus === "success") {
-        await paymentRef.update({
-          status: "success",
-          paystackStatus,
-          transactionId,
-          paidAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-
-        if (paymentData.phone) {
-          await sendSMS({
-            to: paymentData.phone,
-            message: buildSMSMessage("payment_confirmed", {
-              riderName: paymentData.riderName,
-              reference,
-              amount: `GHS ${paymentData.amountGHS}`,
-            }),
-          });
-          await sendSMS({
-            to: paymentData.phone,
-            message: buildSMSMessage("application_confirmation", {
-              riderName: paymentData.riderName,
-              reference: paymentData.preRegId,
-            }),
-          });
-        }
-      } else if (paystackStatus === "failed") {
-        await paymentRef.update({
-          status: "failed",
-          paystackStatus,
-          failedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-      }
-
-      return {
-        status:
-          paystackStatus === "success"
-            ? "success"
-            : paystackStatus === "failed"
-              ? "failed"
-              : "pending",
-        transactionId,
-        reference,
-      };
-    } catch (error: any) {
-      console.error(
-        "Paystack status check error:",
-        error?.response?.data || error.message,
-      );
-      return { status: "pending", transactionId: "", reference };
-    }
-  },
-);
 
 // ─── updateRiderQR ────────────────────────────────────────────────────────────
 export const updateRiderQR = onCall(

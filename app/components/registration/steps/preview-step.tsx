@@ -78,7 +78,7 @@ export function PreviewStep({ data, photoPreview }: PreviewStepProps) {
       </div>
 
       {/* Photo + Name banner */}
-      <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+      <div className="flex items-center gap-4 p-4 bg-linear-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
         {photoPreview ? (
           <div className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-green-300 flex-shrink-0 shadow-sm">
             <Image src={photoPreview} alt="Passport Photo" fill className="object-cover" />

@@ -94,7 +94,7 @@ export default function RenewalsPage() {
             </div>
           </div>
 
-          <div className="h-px bg-gradient-to-r from-transparent via-gray-300/50 to-transparent mb-6" />
+          <div className="h-px bg-linear-to-r from-transparent via-gray-300/50 to-transparent mb-6" />
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-600">

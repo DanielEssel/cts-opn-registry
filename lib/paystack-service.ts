@@ -29,7 +29,7 @@ export async function initiatePayment(
   params: InitiatePaymentParams
 ): Promise<InitiatePaymentResult> {
   try {
-    const initCharge = httpsCallable(functions, "initiateMomoCharge");
+    const initCharge = httpsCallable(functions, "initiatePayment");
 
     const email =
       params.email ||
@@ -73,7 +73,7 @@ export async function verifyPayment(
   reference: string
 ): Promise<VerifyPaymentResult> {
   try {
-    const checkStatus = httpsCallable(functions, "checkMomoStatus");
+    const checkStatus = httpsCallable(functions, "checkPaymentStatus");
 
 const result = await checkStatus({ reference });
 const data = result.data as { status: string; transactionId: string };

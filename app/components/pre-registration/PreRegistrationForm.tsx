@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { getAuth, signInAnonymously } from "firebase/auth";
-import { useForm, useFormContext } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -61,11 +61,7 @@ import {
 } from "@/lib/pre-registration-schema";
 import { saveRiderRegistration } from "@/lib/rider-service";
 import type { RiderRegistrationData } from "@/app/lib/validations";
-import {
-  initiatePayment,
-  PaymentStatus,
-  verifyPayment,
-} from "@/lib/paystack-service";
+import { initiatePayment, verifyPayment, PaymentStatus } from "@/lib/bridge-service";
 import { DISTRICT_CODES, CATEGORY_CODES } from "@/lib/rin-constants";
 
 
@@ -124,7 +120,7 @@ const MOMO_NETWORKS: {
   },
 ];
 
-const REGISTRATION_FEE_GHS = 400;
+const REGISTRATION_FEE_GHS =2;
 
 // ─── Steps ─────────────────────────────────────────────────────────────────────
 const STEPS = [
@@ -829,29 +825,32 @@ function PaymentWidget({
 
 
 
-  async function handleInitiate() {
-    if (!network || !momoPhone.trim()) return;
-    setStatus("pending");
-    setError("");
+  // ─── Update this function inside your PaymentWidget ─────────────────
+async function handleInitiate() {
+  if (!network || !momoPhone.trim()) return;
+  setStatus("pending");
+  setError("");
 
-    const result = await initiatePayment({
-      phone: momoPhone,
-      network: network as MomoNetwork,
-      preRegId,
-      riderName,
-      email: `rider.${momoPhone.replace(/\D/g, "")}@rinsystem.gh`,
+  // Fix the key name mapping right here:
+  const result = await initiatePayment({
+    phone: momoPhone,
+    network: network as MomoNetwork,
+    preRegId: preRegId, // 👈 Change this back to 'preRegId'
+    riderName,
+    email: `rider.${momoPhone.replace(/\D/g, "")}@rinsystem.gh`,
+  });
+
+  if (!result.success) {
+    setStatus("failed");
+    setError(result.error ?? "Payment initiation failed. Please try again.");
+    toast.error("Could not send payment prompt", {
+      description: result.error ?? "Please try again.",
     });
-    if (!result.success) {
-      setStatus("failed");
-      setError(result.error ?? "Payment initiation failed. Please try again.");
-      toast.error("Could not send payment prompt", {
-        description: result.error ?? "Please try again.",
-      });
-      return;
-    }
-    setReference(result.reference);
-    startPolling(result.reference);
+    return;
   }
+  setReference(result.reference);
+  startPolling(result.reference);
+}
 
   if (status === "pending") {
     return (

@@ -159,7 +159,7 @@ export default function LoginPage() {
         <div className="flex-1 flex flex-col justify-center px-6 py-8 sm:px-8 lg:px-10 xl:px-12 min-h-[520px]">
 
          {/* Mobile logo - Horizontal */}
-<div className="flex items-center mb-2 justify-center gap-3 py-3 px-4 bg-gradient-to-r">
+<div className="flex items-center mb-2 justify-center gap-3 py-3 px-4 bg-linear-to-r">
   <div className="w-24 h-14 rounded-full bg-gradient-to-br from-emerald-700 to-emerald-600 p-0.5 shadow-md">
     <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
       <Image
