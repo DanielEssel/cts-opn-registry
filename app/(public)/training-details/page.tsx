@@ -444,7 +444,7 @@ export default function TrainingDetailsPage() {
           style={FONT_BODY}
         >
           <Shield className="h-3 w-3 shrink-0" />
-          Secured by PayStack · PCRAA Limited · All rights reserved
+          Secured by Bridge · PCRAA Limited · All rights reserved
         </p>
 
         {/* Privacy Policy Link */}

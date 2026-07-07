@@ -1,76 +1,52 @@
+// rin-functions/src/bridge/bridge.functions.ts
+
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
-import { defineSecret } from "firebase-functions/params";
-import { getTransactionStatus } from "./client"; 
 import { db } from "../firebase";
 
+// Secrets no longer needed here — we only read Firestore.
+// Bridge API is called by bridgeCallback, not by the poller.
 
-
-export const BRIDGE_CLIENT_KEY = defineSecret("BRIDGE_CLIENT_KEY");
-export const BRIDGE_SECRET_KEY = defineSecret("BRIDGE_SECRET_KEY");
-export const BRIDGE_SERVICE_ID = defineSecret("BRIDGE_SERVICE_ID");
-
-
-export const checkBridgePaymentStatus = onCall(
-  {
-    region: "europe-west2",
-    secrets: [
-      BRIDGE_CLIENT_KEY,
-      BRIDGE_SECRET_KEY,
-      BRIDGE_SERVICE_ID,
-    ],
-  },
+export const checkMomoStatus = onCall(
+  { region: "europe-west2" },
   async (request) => {
-    const { reference } = request.data;
+    const { reference } = request.data as { reference?: string };
 
     if (!reference) {
       throw new HttpsError("invalid-argument", "reference is required");
     }
 
-    const paymentRef = db.collection("payments").doc(reference);
-    const paymentSnap = await paymentRef.get();
+    const paymentSnap = await db
+      .collection("payments")
+      .doc(reference)
+      .get();
 
     if (!paymentSnap.exists) {
-      throw new HttpsError("not-found", "Payment not found");
+      // Not found yet — return pending so the poller keeps trying.
+      // bridgeCallback might not have fired yet.
+      console.warn(`[checkMomoStatus] payment ${reference} not found yet`);
+      return {
+        success: true,
+        localStatus: "pending",
+        status: null,
+        payment: null,
+      };
     }
 
     const payment = paymentSnap.data()!;
+    const localStatus = payment.status as string; // "pending"|"success"|"failed"|"cancelled"
 
-    // 1. Call Bridge API safely
-    const response = await getTransactionStatus(reference);
-
-    const bridge = response?.data?.response_data;
-
-    if (!bridge) {
-      throw new HttpsError("internal", "Invalid Bridge response");
-    }
-
-    // 2. Map status ONCE (cleaner)
-    const statusMap: Record<string, string> = {
-      "000": "success",
-      "001": "failed",
-      "002": "pending",
-      "003": "cancelled",
-    };
-
-    const newStatus = statusMap[bridge.status] ?? "unknown";
-
-    // 3. Update Firestore ONLY if changed
-    if (payment.bridgeStatus !== bridge.status) {
-      await paymentRef.update({
-        status: newStatus,
-        bridgeStatus: bridge.status,
-        transactionId: bridge.network_transaction_id || payment.transactionId,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    }
+    console.log(`[checkMomoStatus] ${reference} → ${localStatus}`);
 
     return {
-      success: true,
-      status: bridge.status,
-      description: bridge.status_desc,
-      localStatus: newStatus,
-      payment: paymentSnap.data(),
+      success:     true,
+      localStatus,
+      status:      payment.bridgeStatus ?? null,
+      description: payment.bridgeStatus === "000" ? "SUCCESSFUL" : null,
+      payment: {
+        transactionId:  payment.transactionId  ?? reference,
+        amountPaid:     payment.amountPaid     ?? null,
+        paidAt:         payment.paidAt         ?? null,
+      },
     };
   }
 );

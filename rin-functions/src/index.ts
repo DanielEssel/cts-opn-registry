@@ -2,6 +2,7 @@
 
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+export { checkMomoStatus } from "./bridge/bridge.functions";
 import {
   REGION_CODES,
   DISTRICT_CODES,

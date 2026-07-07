@@ -1,7 +1,8 @@
 
 
-import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
-import { getApp } from "firebase/app";
+import { httpsCallable, HttpsCallableResult } from "firebase/functions";
+import { functions } from "@/lib/firebase"; //
+import { toInternational } from "@/lib/ghana-phone";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ const NETWORK_MAP: Record<"MTN" | "VODAFONE" | "AIRTELTIGO", string> = {
 // ── Singleton Firebase Functions instance ─────────────────────────────────────
 
 function getFunctionsInstance() {
-  return getFunctions(getApp(), "europe-west2");
+  return functions;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -114,39 +115,49 @@ export async function initiatePayment(
   const transactionId = generateTransactionId();
   const mappedNetwork = NETWORK_MAP[params.network];
 
-  // 1. CRITICAL FRONTEND GUARD: Log and catch missing values before hitting Firebase
-  if (!params.phone || !mappedNetwork || !params.preRegId) {
-    console.error("❌ PAYMENT BLOCKED: Frontend missing critical parameters!", {
-      phone: params.phone,
-      networkRaw: params.network,
-      networkMapped: mappedNetwork,
-      preRegId: params.preRegId
+  // ── Convert phone to Bridge international format ─────────────────────────
+  // Form collects 0XXXXXXXXX — Bridge requires 233XXXXXXXXX
+  const internationalPhone = toInternational(params.phone);
+
+  if (!internationalPhone) {
+    console.error("❌ PAYMENT BLOCKED: Could not convert phone to international format", {
+      raw: params.phone,
     });
     return {
       success: false,
       reference: transactionId,
-      error: "Missing required billing details. Please check your phone or network selection.",
+      error: "Invalid phone number format. Please enter a valid Ghana number.",
+    };
+  }
+
+  if (!internationalPhone || !mappedNetwork || !params.preRegId) {
+    console.error("❌ PAYMENT BLOCKED: Missing critical parameters", {
+      phone:    internationalPhone,
+      network:  mappedNetwork,
+      preRegId: params.preRegId,
+    });
+    return {
+      success: false,
+      reference: transactionId,
+      error: "Missing required billing details.",
     };
   }
 
   try {
-    const functions = getFunctionsInstance();
-    const initiate  = httpsCallable<
-      InitiateMomoChargeRequest,
-      InitiateMomoChargeResponse
-    >(functions, "initiateMomoCharge");
+    const fn = httpsCallable<InitiateMomoChargeRequest, InitiateMomoChargeResponse>(
+      getFunctionsInstance(),
+      "initiateMomoCharge"
+    );
 
-    // 2. DEBUG LOG: See exactly what goes over the wire
-    console.log("🚀 Sending Payload to Cloud Function:", {
-      phone: params.phone,
-      network: mappedNetwork,
+    console.log("🚀 Sending to initiateMomoCharge:", {
+      phone:     internationalPhone,   // ← now 233XXXXXXXXX
+      network:   mappedNetwork,
       transactionId,
-      preRegId: params.preRegId,
-      riderName: params.riderName,
+      preRegId:  params.preRegId,
     });
 
-    const result = await initiate({
-      phone:         params.phone,
+    const result = await fn({
+      phone:         internationalPhone,  // ← converted
       network:       mappedNetwork,
       transactionId,
       preRegId:      params.preRegId,
@@ -154,28 +165,21 @@ export async function initiatePayment(
     });
 
     const data = result.data;
-
     if (!data.success) {
       return {
         success:   false,
         reference: transactionId,
-        error:     data.message ?? "Payment initiation failed. Please try again.",
+        error:     data.message ?? "Payment initiation failed.",
       };
     }
 
-    return {
-      success:   true,
-      reference: transactionId,
-    };
+    return { success: true, reference: transactionId };
 
   } catch (err) {
     return {
       success:   false,
       reference: transactionId,
-      error:     extractErrorMessage(
-        err,
-        "Could not send payment prompt. Please check your connection and try again."
-      ),
+      error:     extractErrorMessage(err, "Could not send payment prompt."),
     };
   }
 }
@@ -191,10 +195,13 @@ export async function verifyPayment(
 ): Promise<VerifyPaymentResult> {
   try {
     const functions = getFunctionsInstance();
-    const check     = httpsCallable<
-      CheckBridgePaymentStatusRequest,
-      CheckBridgePaymentStatusResponse
-    >(functions, "checkBridgePaymentStatus");
+    const check = httpsCallable<
+  CheckBridgePaymentStatusRequest,
+  CheckBridgePaymentStatusResponse
+>(
+  functions,
+  "checkMomoStatus"
+);
 
     const result: HttpsCallableResult<CheckBridgePaymentStatusResponse> =
       await check({ reference: transactionId });
