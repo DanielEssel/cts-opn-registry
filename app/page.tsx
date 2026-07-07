@@ -258,7 +258,7 @@ export default function HomePage() {
               </h2>
 
               <p className="text-lg text-slate-300 mb-8 leading-relaxed max-w-lg">
-                The <strong className="text-white">CTS Driver App App</strong> is the official working platform 
+                The <strong className="text-white">CTS Driver App</strong> is the official working platform 
                 for certified PCRAA riders. Accept rides, deliver parcels, and handle gas cylinder 
                 orders — all from one professional app.
               </p>
