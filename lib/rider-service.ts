@@ -85,6 +85,9 @@ interface RegisterRiderPayload {
   paymentTxnId?: string | null;
   paymentStatus?: string | null;
   paymentAmount?: number | null;
+  source: "public" | "operator"; // ← new
+  method: "momo" | "cash"; // ← new
+  operatorName?: string | null; // ← new
 }
 
 // ─── CF CALLABLES ─────────────────────────────────────────────────────────────
@@ -179,10 +182,13 @@ export async function saveRiderRegistration(
     paymentTxnId?: string;
     paymentStatus?: string;
     paymentAmount?: number;
+    source?: "public" | "operator"; // ← new
+    method?: "momo" | "cash"; // ← new
+    operatorName?: string;
   },
   options?: {
     requireAuth?: boolean; // defaults to true
-  }
+  },
 ): Promise<RegisterResult> {
   try {
     const requireAuth = options?.requireAuth ?? true;
@@ -202,44 +208,45 @@ export async function saveRiderRegistration(
     } else {
       console.warn("⚠️ No photo file found in form data.");
     }
-// 1. Call Cloud Function first to get PCRAA and riderId
-const response = await registerRiderFn({
-  fullName: data.fullName,
-  phoneNumber: data.phoneNumber,
-  idType: data.idType,
-  idNumber: data.idNumber,
-  dateOfBirth: data.dateOfBirth,
-  gender: data.gender,
-  region: data.region,
-  districtMunicipality: data.districtMunicipality,
-  residentialTown: data.residentialTown,
-  vehicleCategory: data.vehicleCategory,
-  plateNumber: data.plateNumber,
-  chassisNumber: data.chassisNumber,
-  driversLicenseNumber: data.driversLicenseNumber,
-  licenseExpiryDate: data.licenseExpiryDate,
-  nextOfKinName: data.nextOfKinName,
-  nextOfKinContact: data.nextOfKinContact,
-  passportPhotoUrl,
-  qrCodeUrl: null,                        // null on first save
-  paymentReference: payment?.paymentReference ?? null,
-  paymentTxnId: payment?.paymentTxnId ?? null,
-  paymentStatus: payment?.paymentStatus ?? null,
-  paymentAmount: payment?.paymentAmount ?? null,
-});
+    // 1. Call Cloud Function first to get PCRAA and riderId
+    const response = await registerRiderFn({
+      fullName: data.fullName,
+      phoneNumber: data.phoneNumber,
+      idType: data.idType,
+      idNumber: data.idNumber,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      region: data.region,
+      districtMunicipality: data.districtMunicipality,
+      residentialTown: data.residentialTown,
+      vehicleCategory: data.vehicleCategory,
+      plateNumber: data.plateNumber,
+      chassisNumber: data.chassisNumber,
+      driversLicenseNumber: data.driversLicenseNumber,
+      licenseExpiryDate: data.licenseExpiryDate,
+      nextOfKinName: data.nextOfKinName,
+      nextOfKinContact: data.nextOfKinContact,
+      passportPhotoUrl,
+      qrCodeUrl: null, // null on first save
+      paymentReference: payment?.paymentReference ?? null,
+      paymentTxnId: payment?.paymentTxnId ?? null,
+      paymentStatus: payment?.paymentStatus ?? null,
+      paymentAmount: payment?.paymentAmount ?? null,
+      source: payment?.source ?? "public", // ← new
+      method: payment?.method ?? "momo", // ← new
+      operatorName: payment?.operatorName ?? null,
+    });
 
-const { PCRAA, riderId } = response.data;
+    const { PCRAA, riderId } = response.data;
 
-// 2. Generate QR using the PCRAA we just got back
-const qrCodeUrl = await generateAndUploadQRCode(PCRAA, riderId);
+    // 2. Generate QR using the PCRAA we just got back
+    const qrCodeUrl = await generateAndUploadQRCode(PCRAA, riderId);
 
-// 3. Patch QR URL back using a dedicated Cloud Function or keep client update
-//    but use Admin SDK approach — or just accept it's a best-effort update
-if (qrCodeUrl) {
-  await updateRiderQRFn({ riderId, qrCodeUrl }); // separate lightweight function
-}
-
-    
+    // 3. Patch QR URL back using a dedicated Cloud Function or keep client update
+    //    but use Admin SDK approach — or just accept it's a best-effort update
+    if (qrCodeUrl) {
+      await updateRiderQRFn({ riderId, qrCodeUrl }); // separate lightweight function
+    }
 
     // ✅ 5. Bridge: mark pre-registration as issued if one exists
     try {
@@ -290,7 +297,10 @@ export async function updateRiderStatus(
 export async function updateRider(
   riderId: string,
   updates: Partial<
-    Omit<RiderRecord, "PCRAA" | "sequence" | "status" | "createdBy" | "createdAt">
+    Omit<
+      RiderRecord,
+      "PCRAA" | "sequence" | "status" | "createdBy" | "createdAt"
+    >
   >,
 ): Promise<boolean> {
   try {

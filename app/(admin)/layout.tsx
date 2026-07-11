@@ -161,7 +161,7 @@ export default function AdminLayout({
 
                 <div>
                   <h1 className="font-bold text-gray-900 text-sm">
-                    Progressive Certified Riders of Africa Association
+                    PCRAA
                   </h1>
                   <p className="text-xs text-gray-500"></p>
                 </div>

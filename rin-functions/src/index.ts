@@ -43,6 +43,9 @@ interface RegisterRiderInput {
   paymentTxnId?: string | null;
   paymentStatus?: string | null;
   paymentAmount?: number | null;
+  source: "public" | "operator"; // ← new
+  method: "momo" | "cash"; // ← new
+  operatorName?: string | null; // ← new
 }
 
 const PERMIT_VALIDITY_MONTHS = 6;
@@ -202,32 +205,43 @@ if (!isAnonymous) {
       );
     }
 
-    if (!input.paymentReference) {
-  throw new HttpsError(
-    "failed-precondition",
-    "Payment reference missing."
-  );
-}
+    // ── Step 4. Payment validation ────────────────────────────────────────────
+let paymentReference = input.paymentReference;
 
-const paymentSnap = await db
-  .collection("payments")
-  .doc(input.paymentReference)
-  .get();
+if (input.source === "operator" && input.method === "cash") {
+  // Operator cash registration — create an auditable cash payment record
+  if (!req.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Operator must be signed in.");
+  }
+  paymentReference = input.paymentReference ?? `CASH-${req.auth.uid}-${Date.now()}`;
 
-if (!paymentSnap.exists) {
-  throw new HttpsError(
-    "failed-precondition",
-    "Payment record not found."
-  );
-}
+  await db.collection("payments").doc(paymentReference).set({
+    transactionId:   paymentReference,
+    type:            "registration",
+    method:          "cash",
+    status:          "success",
+    amount:          input.paymentAmount ?? 0,
+    currency:        "GHS",
+    collectedBy:     req.auth.uid,
+    collectedByName: input.fullName ?? null,
+    source:          "operator",
+    riderName:       input.fullName,
+    createdAt:       admin.firestore.FieldValue.serverTimestamp(),
+    paidAt:          admin.firestore.FieldValue.serverTimestamp(),
+  });
 
-const payment = paymentSnap.data()!;
-
-if (payment.status !== "success") {
-  throw new HttpsError(
-    "failed-precondition",
-    "Payment has not been completed."
-  );
+} else {
+  // Public MoMo, or operator MoMo — validate the real payment record
+  if (!paymentReference) {
+    throw new HttpsError("failed-precondition", "Payment reference missing.");
+  }
+  const paymentSnap = await db.collection("payments").doc(paymentReference).get();
+  if (!paymentSnap.exists) {
+    throw new HttpsError("failed-precondition", "Payment record not found.");
+  }
+  if (paymentSnap.data()!.status !== "success") {
+    throw new HttpsError("failed-precondition", "Payment has not been completed.");
+  }
 }
 
 

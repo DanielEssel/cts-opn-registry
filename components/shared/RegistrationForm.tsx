@@ -24,12 +24,16 @@ import {
   complianceSchema,
 } from "@/app/lib/validations";
 import { saveRiderRegistration } from "@/lib/rider-service";
-import { StepIndicator } from "@/components/operator/StepIndicator";
 import { BioDataStep } from "@/app/components/registration/steps/bio-data-step";
 import { LocationStep } from "@/app/operator/register/steps/location-step";
 import { VehicleInfoStep } from "@/app/components/registration/steps/vehicle-info-step";
 import { ComplianceStep } from "@/app/components/registration/steps/compliance-step";
 import { PreviewStep } from "@/app/operator/register/steps/preview-step";
+import {
+  OperatorPaymentDialog,
+  type OperatorPaymentResult,
+} from "./../shared/OperatorPaymentDialog";
+import { getAuth } from "firebase/auth";
 
 const STEPS = [
   { id: 1, title: "Bio Data", description: "Personal Information" },
@@ -39,7 +43,8 @@ const STEPS = [
   { id: 5, title: "Review", description: "Verify Information" },
 ];
 
-const STEP_SCHEMAS: Record<number, Record<string, unknown>> = {  1: bioDataSchema.shape,
+const STEP_SCHEMAS: Record<number, Record<string, unknown>> = {
+  1: bioDataSchema.shape,
   2: locationSchema.shape,
   3: vehicleInfoSchema.shape,
   4: complianceSchema.shape,
@@ -239,8 +244,6 @@ export function RegistrationForm({
   compact = false,
   onSuccess,
 }: RegistrationFormProps) {
-
-
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -249,6 +252,7 @@ export function RegistrationForm({
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [showFloatingNav, setShowFloatingNav] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
 
   const form = useForm<RiderRegistrationData>({
     resolver: zodResolver(riderRegistrationSchema),
@@ -307,9 +311,9 @@ export function RegistrationForm({
         .map((f) => (errors[f] as { message?: string })?.message || String(f));
 
       toasts.error(
-  "Complete required fields",
-  failedMessages.slice(0, 3).join(" · ")
-);
+        "Complete required fields",
+        failedMessages.slice(0, 3).join(" · "),
+      );
     }
 
     return valid;
@@ -318,9 +322,10 @@ export function RegistrationForm({
   const handleNext = async () => {
     const valid = await validateStep(currentStep);
     if (valid) {
-setCompletedSteps((prev) =>
-  prev.includes(currentStep) ? prev : [...prev, currentStep]
-);      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
+      setCompletedSteps((prev) =>
+        prev.includes(currentStep) ? prev : [...prev, currentStep],
+      );
+      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -330,10 +335,38 @@ setCompletedSteps((prev) =>
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const onSubmit = async (data: RiderRegistrationData) => {
+  // Step 5 "Register" now opens the payment dialog instead of registering directly
+  const onSubmit = async (_data: RiderRegistrationData) => {
+    // Validate the whole form before collecting payment
+    const valid = await form.trigger();
+    if (!valid) {
+      toasts.error("Incomplete form", "Please fix all errors before payment.");
+      return;
+    }
+    setShowPayment(true);
+  };
+
+  // Called once payment (momo or cash) is confirmed
+  const handlePaymentComplete = async (payment: OperatorPaymentResult) => {
+    setShowPayment(false);
     setIsSubmitting(true);
     try {
-      const result = await saveRiderRegistration(data);
+      const auth = getAuth();
+      const data = form.getValues();
+
+      const result = await saveRiderRegistration(data, {
+        paymentReference: payment.paymentReference,
+        paymentTxnId: payment.paymentTxnId,
+        paymentStatus: "success",
+        paymentAmount: payment.paymentAmount,
+        source: "operator",
+        method: payment.method,
+        operatorName:
+          auth.currentUser?.displayName ??
+          auth.currentUser?.email ??
+          "Operator",
+      });
+
       if (result.success) {
         setGeneratedPCRAA(result.PCRAA);
         setQrCodeUrl(result.qrCodeUrl ?? "");
@@ -343,16 +376,14 @@ setCompletedSteps((prev) =>
         window.scrollTo({ top: 0, behavior: "smooth" });
         toasts.registrationSuccess(result.PCRAA);
       } else {
-        toasts.registrationError(
-  result.error || "Registration failed. Please try again."
-);
+        toasts.registrationError(result.error || "Registration failed.");
       }
     } catch (err) {
       console.error("Registration error:", err);
       toasts.error(
-  "Unexpected error",
-  "Something went wrong. Please try again."
-);
+        "Unexpected error",
+        "Something went wrong. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -388,28 +419,28 @@ setCompletedSteps((prev) =>
   };
 
   const handlePrint = () => {
-  const data = form.getValues();
+    const data = form.getValues();
 
-  const opened = printCertificate(
-    data,
-    generatedPCRAA,
-    qrCodeUrl,
-    photoPreview
-  );
-
-  if (!opened) {
-    toasts.error(
-      "Popups blocked",
-      "Allow popups in your browser to print the certificate."
+    const opened = printCertificate(
+      data,
+      generatedPCRAA,
+      qrCodeUrl,
+      photoPreview,
     );
-    return;
-  }
 
-  toasts.success(
-    "Print dialog opened",
-    "Your certificate is ready to print."
-  );
-};
+    if (!opened) {
+      toasts.error(
+        "Popups blocked",
+        "Allow popups in your browser to print the certificate.",
+      );
+      return;
+    }
+
+    toasts.success(
+      "Print dialog opened",
+      "Your certificate is ready to print.",
+    );
+  };
 
   // ── Success screen ─────────────────────────────────────────────────────────
 
@@ -790,6 +821,15 @@ setCompletedSteps((prev) =>
             )}
           </div>
         </div>
+      )}
+      {/* Operator payment dialog — overlays via fixed positioning */}
+      {showPayment && (
+        <OperatorPaymentDialog
+          applicantPhone={form.getValues().phoneNumber ?? ""}
+          applicantName={form.getValues().fullName ?? "Applicant"}
+          onComplete={handlePaymentComplete}
+          onCancel={() => setShowPayment(false)}
+        />
       )}
     </div>
   );
