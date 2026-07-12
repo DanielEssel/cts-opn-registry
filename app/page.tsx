@@ -21,7 +21,6 @@ import {
   Package,
   Bike,
   Star,
-  Download
 } from "lucide-react";
 import Image from "next/image";
 
@@ -60,13 +59,14 @@ export default function HomePage() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 transition-transform group-hover:scale-105">
               <Image
-                src="/logo/pcraa.png"
-                alt="PCRAA"
-                width={60}
-                height={60}
-                className="object-contain"
-                style={{ width: "auto", height: "auto" }}
-              />
+  src="/logo/pcraa.png"
+  alt="PCRAA"
+  width={60}
+  height={60}
+  priority
+  className="object-contain"
+  style={{ width: "auto", height: "auto" }}
+/>
             </div>
             <div className="border-l border-slate-200 pl-3">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none">
@@ -176,6 +176,8 @@ export default function HomePage() {
                       alt="Pragya"
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      priority // ← add (implies eager loading + preload)
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   </div>
                   <div className="bg-white px-4 py-3 border-t border-slate-100">
@@ -193,6 +195,8 @@ export default function HomePage() {
                       alt="Okada"
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      priority // ← add (implies eager loading + preload)
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   </div>
                   <div className="bg-white px-4 py-3 border-t border-slate-100">
@@ -210,6 +214,8 @@ export default function HomePage() {
                       alt="Aboboyaa"
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      priority // ← add (implies eager loading + preload)
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   </div>
                   <div className="bg-white px-4 py-3 border-t border-slate-100">
@@ -235,10 +241,13 @@ export default function HomePage() {
       <section className="py-20 bg-linear-to-br from-slate-900 via-slate-800 to-green-900 relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, #16a34a 1px, transparent 1px)`,
-            backgroundSize: '40px 40px'
-          }} />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20% 50%, #16a34a 1px, transparent 1px)`,
+              backgroundSize: "40px 40px",
+            }}
+          />
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -259,22 +268,44 @@ export default function HomePage() {
               </h2>
 
               <p className="text-lg text-slate-300 mb-8 leading-relaxed max-w-lg">
-                The <strong className="text-white">CTS Driver App</strong> is the official working platform 
-                for certified PCRAA riders. Accept rides, deliver parcels, and handle gas cylinder 
-                orders — all from one professional app.
+                The <strong className="text-white">CTS Driver App</strong> is
+                the official working platform for certified PCRAA riders. Accept
+                rides, deliver parcels, and handle gas cylinder orders — all
+                from one professional app.
               </p>
 
               {/* Key Features */}
               <div className="grid grid-cols-2 gap-4 mb-8">
                 {[
-                  { icon: Bike, label: "Ride Hailing", color: "text-green-400" },
-                  { icon: Package, label: "Parcel Delivery", color: "text-sky-400" },
-                  { icon: TrendingUp, label: "Gas Delivery", color: "text-amber-400" },
-                  { icon: Zap, label: "Instant Payouts", color: "text-purple-400" },
+                  {
+                    icon: Bike,
+                    label: "Ride Hailing",
+                    color: "text-green-400",
+                  },
+                  {
+                    icon: Package,
+                    label: "Parcel Delivery",
+                    color: "text-sky-400",
+                  },
+                  {
+                    icon: TrendingUp,
+                    label: "Gas Delivery",
+                    color: "text-amber-400",
+                  },
+                  {
+                    icon: Zap,
+                    label: "Instant Payouts",
+                    color: "text-purple-400",
+                  },
                 ].map(({ icon: Icon, label, color }) => (
-                  <div key={label} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
+                  <div
+                    key={label}
+                    className="flex items-center gap-3 bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10"
+                  >
                     <Icon className={`h-5 w-5 ${color}`} />
-                    <span className="text-sm font-semibold text-slate-200">{label}</span>
+                    <span className="text-sm font-semibold text-slate-200">
+                      {label}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -294,7 +325,7 @@ export default function HomePage() {
               <div className="relative mx-auto w-72 h-125 bg-slate-800 rounded-[3rem] border-4 border-slate-700 shadow-2xl overflow-hidden">
                 {/* Phone Notch */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-900 rounded-b-2xl z-10" />
-                
+
                 {/* App Screen Content */}
                 <div className="pt-10 px-4 h-full bg-linear-to-b from-green-900 to-slate-900">
                   {/* App Header */}
@@ -303,7 +334,9 @@ export default function HomePage() {
                       <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
                         <Bike className="h-5 w-5 text-white" />
                       </div>
-                      <span className="text-white font-bold text-sm">CTS Driver App</span>
+                      <span className="text-white font-bold text-sm">
+                        CTS Driver App
+                      </span>
                     </div>
                     <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
                       <Star className="h-4 w-4 text-yellow-900" />
@@ -312,7 +345,9 @@ export default function HomePage() {
 
                   {/* Balance Card */}
                   <div className="bg-linear-to-r from-green-600 to-green-700 rounded-2xl p-4 mb-4">
-                    <p className="text-green-200 text-xs font-medium">Available Balance</p>
+                    <p className="text-green-200 text-xs font-medium">
+                      Available Balance
+                    </p>
                     <p className="text-white text-2xl font-black">₵ 1,840.00</p>
                     <div className="flex gap-2 mt-3">
                       <button className="bg-white/20 text-white text-xs px-3 py-1 rounded-lg backdrop-blur-sm">
@@ -331,8 +366,12 @@ export default function HomePage() {
                         <Bike className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-white font-semibold text-sm">Ride Request</p>
-                        <p className="text-slate-400 text-xs">₵45 • 2.3 km away</p>
+                        <p className="text-white font-semibold text-sm">
+                          Ride Request
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          ₵45 • 2.3 km away
+                        </p>
                       </div>
                       <button className="bg-green-500 text-white text-xs px-3 py-1 rounded-lg font-semibold">
                         Accept
@@ -344,8 +383,12 @@ export default function HomePage() {
                         <Package className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-white font-semibold text-sm">Parcel Delivery</p>
-                        <p className="text-slate-400 text-xs">₵35 • 1.8 km away</p>
+                        <p className="text-white font-semibold text-sm">
+                          Parcel Delivery
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          ₵35 • 1.8 km away
+                        </p>
                       </div>
                       <button className="bg-sky-500 text-white text-xs px-3 py-1 rounded-lg font-semibold">
                         Accept
@@ -357,8 +400,12 @@ export default function HomePage() {
                         <Zap className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-white font-semibold text-sm">Gas Delivery</p>
-                        <p className="text-slate-400 text-xs">₵60 • 4.1 km away</p>
+                        <p className="text-white font-semibold text-sm">
+                          Gas Delivery
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          ₵60 • 4.1 km away
+                        </p>
                       </div>
                       <button className="bg-amber-500 text-white text-xs px-3 py-1 rounded-lg font-semibold">
                         Accept
@@ -391,7 +438,8 @@ export default function HomePage() {
               Professional Rider Training
             </h2>
             <p className="text-slate-500 mt-3 max-w-2xl mx-auto">
-              Comprehensive 3-week training program for commercial riders in Greater Accra
+              Comprehensive 3-week training program for commercial riders in
+              Greater Accra
             </p>
           </div>
 
@@ -403,30 +451,35 @@ export default function HomePage() {
                 type: "Motorcycle",
                 icon: "🏍️",
                 color: "amber",
-                description: "Professional motorcycle training for commercial transport"
+                description:
+                  "Professional motorcycle training for commercial transport",
               },
               {
                 title: "Aboboyaa Drivers",
                 type: "Tricycle",
                 icon: "🛺",
                 color: "blue",
-                description: "Tricycle operation and safety certification"
+                description: "Tricycle operation and safety certification",
               },
               {
                 title: "Quadricycle Drivers",
                 type: "4-Wheel",
                 icon: "🚗",
                 color: "purple",
-                description: "Quadricycle training for urban transport"
-              }
+                description: "Quadricycle training for urban transport",
+              },
             ].map(({ title, type, icon, color, description }) => (
               <div
                 key={title}
                 className={`rounded-2xl p-6 border-2 border-${color}-100 bg-linear-to-br from-${color}-50/30 to-white shadow-lg hover:shadow-xl transition-all group cursor-pointer`}
               >
                 <div className="text-5xl mb-3">{icon}</div>
-                <h3 className="text-xl font-black text-slate-900 mb-1">{title}</h3>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">{type}</p>
+                <h3 className="text-xl font-black text-slate-900 mb-1">
+                  {title}
+                </h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                  {type}
+                </p>
                 <p className="text-sm text-slate-600">{description}</p>
               </div>
             ))}
@@ -441,7 +494,10 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/training-details">
-              <Button variant="outline" className="border-2 border-green-200 text-green-700 font-bold hover:bg-green-50 h-12 text-base">
+              <Button
+                variant="outline"
+                className="border-2 border-green-200 text-green-700 font-bold hover:bg-green-50 h-12 text-base"
+              >
                 Read More
                 <Plus className="h-4 w-4 ml-2" />
               </Button>
@@ -572,9 +628,7 @@ export default function HomePage() {
                       {title}
                     </h3>
                   </div>
-                  <p className="text-slate-600 leading-relaxed">
-                    {body}
-                  </p>
+                  <p className="text-slate-600 leading-relaxed">{body}</p>
                 </div>
                 {i < 3 && (
                   <div className="hidden md:flex items-center self-center text-slate-300">
@@ -656,11 +710,17 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <img src="/pcraa.png" alt="PCRAA Logo" className="w-9 h-9 object-contain" />
+                <img
+                  src="/pcraa.png"
+                  alt="PCRAA Logo"
+                  className="w-9 h-9 object-contain"
+                />
                 <span className="font-black text-white text-lg">PCRAA</span>
               </div>
               <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
-                Progressive Certified Riders of Africa Association. Ensuring safe, legal, and regulated commercial transport across Greater Accra.
+                Progressive Certified Riders of Africa Association. Ensuring
+                safe, legal, and regulated commercial transport across Greater
+                Accra.
               </p>
             </div>
 
@@ -710,7 +770,8 @@ export default function HomePage() {
 
           <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-slate-600">
-              © {new Date().getFullYear()} PCRAA · Progressive Certified Riders of Africa Association Registry
+              © {new Date().getFullYear()} PCRAA · Progressive Certified Riders
+              of Africa Association Registry
             </p>
             <div className="flex gap-6">
               <Link

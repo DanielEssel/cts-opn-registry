@@ -150,19 +150,19 @@ export default function AdminLayout({
             <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
               <Link href="/dashboard" className="flex items-center space-x-3">
                 <div className="w-21.5 h-21.5 flex items-center justify-center">
-                              <Image
-                                src="/logo/pcraa.png"
-                                alt="PCRAA"
-                                width={86}
-                                height={86}
-                                className="object-contain brightness-200"
-                              />
-                            </div>
+                  <Image
+                    src="/logo/pcraa.png"
+                    alt="PCRAA"
+                    width={86}
+                    height={86}
+                    priority
+                    className="object-contain brightness-200"
+                    style={{ width: "auto", height: "auto" }}
+                  />
+                </div>
 
                 <div>
-                  <h1 className="font-bold text-white text-sm">
-                    PCRAA
-                  </h1>
+                  <h1 className="font-bold text-white text-sm">PCRAA</h1>
                   <p className="text-xs text-gray-500"></p>
                 </div>
               </Link>
@@ -174,7 +174,6 @@ export default function AdminLayout({
                 <X className="w-5 h-5" />
               </button>
             </div>
-
 
             {/* Navigation */}
             <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
