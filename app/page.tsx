@@ -24,6 +24,44 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+const vehicleCategories = [
+  {
+    title: "Motorcycle Riders",
+    type: "Motorcycle",
+    image: "/images/categories/motorcycle.jpg",
+    description:
+      "Professional motorcycle rider training for safe and efficient commercial transport.",
+  },
+  {
+    title: "Taxi Drivers",
+    type: "Taxi",
+    image: "/images/categories/taxi.jpg",
+    description:
+      "Comprehensive taxi driver training focused on passenger safety, customer service, and road regulations.",
+  },
+  {
+    title: "Quadricycle Drivers",
+    type: "Quadricycle",
+    image: "/images/categories/quadricycle.jpg",
+    description:
+      "Specialized training for modern quadricycle operators serving urban and community transport routes.",
+  },
+  {
+    title: "Aboboyaa Drivers",
+    type: "Tricycle",
+    image: "/images/categories/aboboyaa.jpg",
+    description:
+      "Professional tricycle (Aboboyaa) training covering cargo handling, safety, and responsible road use.",
+  },
+  {
+    title: "Mini Truck Drivers",
+    type: "Mini Truck",
+    image: "/images/categories/minitruck.jpg",
+    description:
+      "Commercial mini truck driver training for goods transportation, logistics, and defensive driving.",
+  },
+];
+
 export default function HomePage() {
   return (
     <div
@@ -59,14 +97,14 @@ export default function HomePage() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 transition-transform group-hover:scale-105">
               <Image
-  src="/logo/pcraa.png"
-  alt="PCRAA"
-  width={60}
-  height={60}
-  priority
-  className="object-contain"
-  style={{ width: "auto", height: "auto" }}
-/>
+                src="/logo/pcraa.png"
+                alt="PCRAA"
+                width={60}
+                height={60}
+                priority
+                className="object-contain"
+                style={{ width: "auto", height: "auto" }}
+              />
             </div>
             <div className="border-l border-slate-200 pl-3">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none">
@@ -438,49 +476,56 @@ export default function HomePage() {
               Professional Rider Training
             </h2>
             <p className="text-slate-500 mt-3 max-w-2xl mx-auto">
-              Comprehensive 3-week training program for commercial riders in
+              Comprehensive 3-Days training program for commercial riders in
               Greater Accra
             </p>
           </div>
 
           {/* Vehicle Categories */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {[
-              {
-                title: "Okada Riders",
-                type: "Motorcycle",
-                icon: "🏍️",
-                color: "amber",
-                description:
-                  "Professional motorcycle training for commercial transport",
-              },
-              {
-                title: "Aboboyaa Drivers",
-                type: "Tricycle",
-                icon: "🛺",
-                color: "blue",
-                description: "Tricycle operation and safety certification",
-              },
-              {
-                title: "Quadricycle Drivers",
-                type: "4-Wheel",
-                icon: "🚗",
-                color: "purple",
-                description: "Quadricycle training for urban transport",
-              },
-            ].map(({ title, type, icon, color, description }) => (
-              <div
-                key={title}
-                className={`rounded-2xl p-6 border-2 border-${color}-100 bg-linear-to-br from-${color}-50/30 to-white shadow-lg hover:shadow-xl transition-all group cursor-pointer`}
-              >
-                <div className="text-5xl mb-3">{icon}</div>
-                <h3 className="text-xl font-black text-slate-900 mb-1">
-                  {title}
-                </h3>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                  {type}
-                </p>
-                <p className="text-sm text-slate-600">{description}</p>
+          {/* Vehicle Categories */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 mb-20">
+            {vehicleCategories.map((vehicle) => (
+              <div key={vehicle.title} className="group relative">
+                {/* Image */}
+                <div className="relative h-[360px] overflow-hidden rounded-[32px] shadow-xl">
+                  <Image
+                    src={vehicle.image}
+                    alt={vehicle.title}
+                    fill
+                    quality={100}
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+
+                  {/* Shine Effect */}
+                  <div className="absolute inset-0 overflow-hidden rounded-[32px]">
+                    <div className="absolute -left-1/2 top-0 h-full w-1/3 rotate-12 bg-white/20 blur-2xl transition-all duration-1000 group-hover:left-[120%]" />
+                  </div>
+                </div>
+
+                {/* Floating Glass Card */}
+                <div className="relative mx-5 -mt-20 rounded-3xl border border-white/30 bg-white/70 backdrop-blur-xl shadow-2xl p-6 transition-all duration-500 group-hover:-translate-y-2">
+                  <div className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                    {vehicle.type}
+                  </div>
+
+                  <h3 className="mt-4 text-xl font-black tracking-tight text-slate-900">
+                    {vehicle.title}
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    {vehicle.description}
+                  </p>
+
+                  <button className="mt-5 flex items-center gap-2 font-semibold text-amber-600 transition-colors group-hover:text-amber-500">
+                    Learn More
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">
+                      →
+                    </span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

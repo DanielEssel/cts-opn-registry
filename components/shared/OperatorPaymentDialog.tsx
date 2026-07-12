@@ -13,7 +13,7 @@ import {
 } from "@/lib/ghana-phone";
 
 
-const REGISTRATION_FEE_GHS = 10.00;
+const REGISTRATION_FEE_GHS = 400.00;
 type Stage  = "choose" | "momo_input" | "momo_pending" | "cash_confirm";
 
 export interface OperatorPaymentResult {

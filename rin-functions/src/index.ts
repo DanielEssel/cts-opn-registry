@@ -317,7 +317,7 @@ if (input.source === "operator" && input.method === "cash") {
         createdBy: uid ?? "pre-registration",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        paymentReference: input.paymentReference ?? null,
+        paymentReference,
         paymentTxnId: input.paymentTxnId ?? null,
         paymentStatus: input.paymentStatus ?? null,
         paymentAmount: input.paymentAmount ?? null,
