@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -146,7 +147,8 @@ export function EditRiderModal({
             <p className="text-xs font-bold uppercase tracking-widest text-green-200 mb-0.5">
               Edit Rider
             </p>
-            <h2 className="text-xl font-bold leading-tight">{rider.fullName}</h2>
+            <DialogTitle className="text-xl font-bold leading-tight">{rider.fullName}</DialogTitle>
+
             <p className="text-xs text-green-300 font-mono mt-0.5">{rider.PCRAA}</p>
           </div>
           <button

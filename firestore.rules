@@ -166,8 +166,16 @@ match /pre_registrations/{docId} {
 // Written by Cloud Functions via Admin SDK — no direct client access
 
 match /payments/{docId} {
-  allow read:  if isAnyAdmin();
-  allow write: if false;
+  allow read:   if isAnyAdmin();
+  // Admins may record cash payments (bulk + single renewals).
+  // Constraints: must be cash, must stamp themselves as collector,
+  // and must be marked operator-sourced. MoMo payments are written
+  // exclusively by Cloud Functions (Admin SDK bypasses these rules).
+  allow create: if isAnyAdmin()
+                && request.resource.data.method == "cash"
+                && request.resource.data.collectedBy == request.auth.uid;
+  // Payment records are immutable from the client
+  allow update, delete: if false;
 }
   }
 }

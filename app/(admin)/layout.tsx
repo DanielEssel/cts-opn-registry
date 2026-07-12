@@ -141,7 +141,7 @@ export default function AdminLayout({
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0",
+            "fixed inset-y-0 left-0 z-50 w-72 bg-green-900 border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0",
             sidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
@@ -160,7 +160,7 @@ export default function AdminLayout({
                             </div>
 
                 <div>
-                  <h1 className="font-bold text-gray-900 text-sm">
+                  <h1 className="font-bold text-white text-sm">
                     PCRAA
                   </h1>
                   <p className="text-xs text-gray-500"></p>
@@ -169,7 +169,7 @@ export default function AdminLayout({
 
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden text-gray-500 hover:text-gray-700"
+                className="lg:hidden text-white hover:text-gray-700"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -189,7 +189,7 @@ export default function AdminLayout({
                       "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group relative",
                       isActive
                         ? "bg-green-50 text-green-700 shadow-sm"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                        : "text-white hover:bg-gray-50 hover:text-gray-900",
                     )}
                   >
                     <item.icon

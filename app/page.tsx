@@ -65,6 +65,7 @@ export default function HomePage() {
                 width={60}
                 height={60}
                 className="object-contain"
+                style={{ width: "auto", height: "auto" }}
               />
             </div>
             <div className="border-l border-slate-200 pl-3">

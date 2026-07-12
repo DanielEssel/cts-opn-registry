@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -243,7 +243,8 @@ export function ViewRiderModal({ open, rider, onOpenChange }: ViewRiderModalProp
         <div className="sticky top-0 z-50 bg-green-700 px-6 py-5 flex items-start justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-green-200 mb-0.5">Rider Profile</p>
-            <h2 className="text-xl font-bold text-white leading-tight">{rider.fullName}</h2>
+            <DialogTitle className="text-xl font-bold text-white leading-tight">{rider.fullName}</DialogTitle>
+
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className="font-mono text-xs bg-white/10 text-green-100 px-2 py-0.5 rounded">{rider.PCRAA}</span>
               <Badge className={`text-xs ${STATUS_STYLES[rider.status] ?? "bg-slate-500 text-white"}`}>{rider.status}</Badge>

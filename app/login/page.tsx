@@ -168,6 +168,7 @@ export default function LoginPage() {
         width={50}
         height={50}
         className="object-contain p-1.5 "
+        style={{ width: "auto", height: "auto" }}
       />
     </div>
   </div>

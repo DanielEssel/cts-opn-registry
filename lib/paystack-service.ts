@@ -7,7 +7,7 @@ import { functions } from "@/lib/firebase";
 
 export type MomoNetwork = "MTN" | "VODAFONE" | "AIRTELTIGO";
 export type PaymentStatus = "idle" | "pending" | "success" | "failed";
-export const REGISTRATION_FEE_GHS = 400;
+export const amount = 400;
 
 // ── Initiate Payment ──────────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ export async function initiatePayment(
       preRegId: params.preRegId,
       riderName: params.riderName,
       email,
-      amountGHS: REGISTRATION_FEE_GHS,
+      amountGHS: amount,
     });
 
    const data = result.data as { success: boolean; reference: string; status: string };

@@ -96,6 +96,7 @@ export default function AdminLayout({
                                 width={86}
                                 height={86}
                                 className="object-contain brightness-200"
+                                style={{ width: "auto", height: "auto" }}
                               />
                             </div>
                 <div>

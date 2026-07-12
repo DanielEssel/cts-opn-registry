@@ -65,6 +65,7 @@ const DETECTED_TO_UI: Record<GhanaMomoNetwork, MomoNetwork> = {
 // ─── Constants ──────────────────────────────────────────────────────────────────
 const DISTRICTS  = Object.keys(DISTRICT_CODES);
 const VEHICLES   = Object.keys(CATEGORY_CODES);
+const amount     = 400;
 
 const ID_TYPES = [
   { value: "GHANA_CARD", label: "Ghana Card",   placeholder: "GHA-712014412-4", icon: IdCard     },
@@ -78,7 +79,7 @@ const MOMO_NETWORKS: { value: MomoNetwork; label: string; logo: string; abbr: st
   { value: "AIRTELTIGO", label: "AirtelTigo Money",  logo: "/logo/at.png",      abbr: "AT"     },
 ];
 
-const REGISTRATION_FEE_GHS = 2;
+
 
 const STEPS = [
   { id: 1, title: "Personal Info",  description: "Name, phone & DOB"              },
@@ -182,7 +183,7 @@ function PassportPhotoUpload({ value, onChange, error }: {
     <Section title="Passport Photograph" icon={Camera}>
       <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6">
         <div
-          className={`relative flex-shrink-0 w-32 h-40 sm:w-36 sm:h-44 rounded-xl border-2 overflow-hidden transition-all cursor-pointer ${
+          className={`relative shrink-0 w-32 h-40 sm:w-36 sm:h-44 rounded-xl border-2 overflow-hidden transition-all cursor-pointer ${
             dragging      ? "border-emerald-500 bg-emerald-50"
             : value       ? "border-emerald-400 bg-white"
             : error       ? "border-red-400 border-dashed bg-red-50 hover:border-red-500"
@@ -812,7 +813,7 @@ function PaymentWidget({ riderPhone, riderName, preRegId, onPaymentSuccess }: {
             Awaiting your confirmation
           </p>
           <p className="text-sm text-emerald-700 mt-1 max-w-sm" style={FONT_BODY}>
-            A payment prompt of <strong>GHS {REGISTRATION_FEE_GHS}</strong> has been sent to{" "}
+            A payment prompt of <strong>GHS {amount}</strong> has been sent to{" "}
             <strong className="font-mono">{formatForDisplay(momoPhone)}</strong>.
             Approve it on your phone to complete your registration.
           </p>
@@ -852,7 +853,7 @@ function PaymentWidget({ riderPhone, riderName, preRegId, onPaymentSuccess }: {
           <p className="text-xs text-emerald-400 mt-0.5" style={FONT_BODY}>One-time · Non-refundable</p>
         </div>
         <p className="text-3xl sm:text-4xl font-black text-white" style={FONT_DISPLAY}>
-          GHS {REGISTRATION_FEE_GHS}
+          GHS {amount}
         </p>
       </div>
 
@@ -971,7 +972,7 @@ function PaymentWidget({ riderPhone, riderName, preRegId, onPaymentSuccess }: {
           style={{ background: "linear-gradient(135deg, #065f46 0%, #047857 100%)", ...FONT_BODY }}
         >
           <Wallet className="h-4 w-4" />
-          Pay GHS {REGISTRATION_FEE_GHS}
+          Pay GHS {amount}
         </Button>
       </div>
     </div>
@@ -1234,7 +1235,7 @@ function ConfirmationReceipt({ bookingRef, data, txnId, photo, onReset }: {
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-800">Payment Details</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-              <ReceiptField label="Amount Paid"    value={`GHS ${REGISTRATION_FEE_GHS}.00`} highlight valueClassName="text-emerald-700 font-bold" />
+              <ReceiptField label="Amount Paid"    value={`GHS ${amount}.00`} highlight valueClassName="text-emerald-700 font-bold" />
               <ReceiptField label="Transaction ID" value={txnId || "—"} />
               <ReceiptField label="Payment Date"   value={issuedDate} />
               <div>
@@ -1551,7 +1552,7 @@ export function PreRegistrationForm({ onSuccess }: { onSuccess?: (id: string) =>
           paymentReference: reference,
           paymentTxnId:     transactionId,
           paymentStatus:    "paid",
-          paymentAmount:    REGISTRATION_FEE_GHS,
+          paymentAmount:    amount,
         },
         { requireAuth: false },
       );

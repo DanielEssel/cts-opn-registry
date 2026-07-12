@@ -17,7 +17,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-export const REGISTRATION_FEE_GHS = 400;
+export const amount = 400;
 
 export type MomoNetwork = "MTN" | "VODAFONE" | "AIRTELTIGO";
 
@@ -90,7 +90,7 @@ export async function initiatePayment(opts: {
           "api-key":     process.env.HANYPAY_API_KEY!,
         },
         body: JSON.stringify({
-          amount:      REGISTRATION_FEE_GHS,
+          amount:      amount,
           currency:    "GHS",
           reference,
           phone:       momoPhone,
@@ -120,7 +120,7 @@ export async function initiatePayment(opts: {
   return {
     success: true,
     reference,
-    message: `[TEST MODE] A payment prompt would be sent to ${momoPhone} for GHS ${REGISTRATION_FEE_GHS}.`,
+    message: `[TEST MODE] A payment prompt would be sent to ${momoPhone} for GHS ${amount}.`,
   };
 }
 

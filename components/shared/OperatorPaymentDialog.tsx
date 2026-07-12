@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getAuth } from "firebase/auth";
 import {
-  Loader2, Smartphone, Banknote, CheckCircle2,
+ Smartphone, Banknote, CheckCircle2,
   AlertCircle, X, Zap, ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,8 @@ import {
   isValidGhanaPhone, detectNetwork, formatForDisplay,
 } from "@/lib/ghana-phone";
 
-const REGISTRATION_FEE_GHS = 2; // match your live fee
 
-type Method = "momo" | "cash";
+const REGISTRATION_FEE_GHS = 10.00;
 type Stage  = "choose" | "momo_input" | "momo_pending" | "cash_confirm";
 
 export interface OperatorPaymentResult {
@@ -25,8 +24,12 @@ export interface OperatorPaymentResult {
 }
 
 interface Props {
-  applicantPhone: string;   // pre-fill from bio-data step
+  applicantPhone: string;
   applicantName: string;
+  amount?: number;          // defaults to registration fee
+  title?: string;           // defaults to "Collect Payment"
+  referenceId?: string;     // links payment to rider/PCRAA for audit
+  paymentType?: "registration" | "renewal";
   onComplete: (result: OperatorPaymentResult) => void;
   onCancel: () => void;
 }
@@ -42,6 +45,10 @@ const DETECTED_TO_UI: Record<string, string> = {
 
 export function OperatorPaymentDialog({
   applicantPhone, applicantName, onComplete, onCancel,
+  amount = REGISTRATION_FEE_GHS,
+  title = "Collect Payment",
+  referenceId,
+  paymentType = "registration",
 }: Props) {
   const [stage, setStage]       = useState<Stage>("choose");
   const [network, setNetwork]   = useState<string>("");
@@ -49,9 +56,13 @@ export function OperatorPaymentDialog({
   const [error, setError]       = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [pollCount, setPollCount] = useState(0);
-  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeRef = useRef(true); // false = cancelled; in-flight polls must do nothing
 
-  useEffect(() => () => { if (pollRef.current) clearTimeout(pollRef.current); }, []);
+  useEffect(() => () => {
+    activeRef.current = false;
+    if (pollRef.current) clearTimeout(pollRef.current);
+  }, []);
 
   useEffect(() => {
     const cleaned = momoPhone.replace(/\D/g, "");
@@ -75,18 +86,30 @@ export function OperatorPaymentDialog({
       return;
     }
     pollRef.current = setTimeout(async () => {
-      const v = await verifyPayment(ref);
-      if (v.status === "success") {
-        onComplete({
-          method: "momo",
-          paymentReference: ref,
-          paymentTxnId: v.transactionId,
-          paymentAmount: REGISTRATION_FEE_GHS,
-        });
-      } else if (v.status === "failed") {
-        setStage("momo_input");
-        setError("Payment declined or cancelled.");
-      } else {
+      if (!activeRef.current) return; // cancelled before this poll started
+
+      try {
+        const v = await verifyPayment(ref);
+        if (!activeRef.current) return; // cancelled while awaiting the server
+
+        if (v.status === "success") {
+          onComplete({
+            method: "momo",
+            paymentReference: ref,
+            paymentTxnId: v.transactionId,
+            paymentAmount: amount,
+          });
+        } else if (v.status === "failed") {
+          setStage("momo_input");
+          setError("Payment declined or cancelled.");
+        } else {
+          setPollCount(count + 1);
+          startPolling(ref, count + 1);
+        }
+      } catch {
+        // The status CHECK failed (network blip) — not the payment itself.
+        // Keep polling; the 12-attempt cap still bounds the loop.
+        if (!activeRef.current) return;
         setPollCount(count + 1);
         startPolling(ref, count + 1);
       }
@@ -98,12 +121,13 @@ export function OperatorPaymentDialog({
     if (!isValidGhanaPhone(phone)) { setPhoneError("Invalid Ghana number"); return; }
     if (!network) { setError("Select the applicant's network"); return; }
 
+    activeRef.current = true; // re-arm in case a previous attempt was cancelled
     setStage("momo_pending");
     setError(""); setPollCount(0);
 
     const res = await initiatePayment({
       phone, network: network as any,
-      preRegId: `OP-${Date.now()}`,
+      preRegId: referenceId ?? `${paymentType.toUpperCase()}-${Date.now()}`,
       riderName: applicantName,
       email: `rider.${phone}@rinsystem.gh`,
     });
@@ -123,21 +147,21 @@ export function OperatorPaymentDialog({
     onComplete({
       method: "cash",
       paymentReference: `CASH-${uid}-${Date.now()}`,
-      paymentAmount: REGISTRATION_FEE_GHS,
+      paymentAmount: amount,
     });
   }
 
   // ── UI ───────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
+    <div className="fixed inset-0 z-200 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
       <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 max-h-[92vh] overflow-y-auto">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-lg font-bold text-slate-900">Collect Payment</h3>
+            <h3 className="text-lg font-bold text-slate-900">{title}</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              GHS {REGISTRATION_FEE_GHS.toFixed(2)} · {applicantName}
+              GHS {amount.toFixed(2)} · {applicantName}
             </p>
           </div>
           <button onClick={onCancel} className="p-1.5 rounded-full hover:bg-slate-100">
@@ -246,7 +270,7 @@ export function OperatorPaymentDialog({
               disabled={momoPhone.length < 10 || !!phoneError || !network}
               className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 rounded-xl"
             >
-              Send Prompt · GHS {REGISTRATION_FEE_GHS.toFixed(2)}
+              Send Prompt · GHS {amount.toFixed(2)}
             </Button>
           </div>
         )}
@@ -261,7 +285,7 @@ export function OperatorPaymentDialog({
             </div>
             <p className="font-semibold text-slate-900">Waiting for approval</p>
             <p className="text-sm text-slate-500 mt-1 max-w-xs">
-              Ask the applicant to approve the GHS {REGISTRATION_FEE_GHS.toFixed(2)} prompt on{" "}
+              Ask the applicant to approve the GHS {amount.toFixed(2)} prompt on{" "}
               <span className="font-mono font-semibold">{formatForDisplay(momoPhone)}</span>.
             </p>
             <p className="text-xs text-slate-400 mt-4">
@@ -269,9 +293,10 @@ export function OperatorPaymentDialog({
             </p>
             <button
               onClick={() => {
-                if (pollRef.current) clearTimeout(pollRef.current);
-                setStage("momo_input");
-              }}
+  activeRef.current = false; // stop any in-flight poll from completing
+  if (pollRef.current) clearTimeout(pollRef.current);
+  setStage("momo_input");
+}}
               className="text-xs text-slate-500 underline mt-4"
             >
               Cancel
@@ -293,14 +318,14 @@ export function OperatorPaymentDialog({
               </div>
               <p className="text-sm text-slate-600">
                 Confirm you have collected{" "}
-                <span className="font-bold">GHS {REGISTRATION_FEE_GHS.toFixed(2)}</span>{" "}
+                <span className="font-bold">GHS {amount.toFixed(2)}</span>{" "}
                 in cash from {applicantName}. This will be recorded against your operator account.
               </p>
             </div>
             <Button onClick={handleCash}
               className="w-full h-12 bg-slate-800 hover:bg-slate-900 rounded-xl">
               <CheckCircle2 className="w-4 h-4 mr-2" />
-              Confirm Cash · GHS {REGISTRATION_FEE_GHS.toFixed(2)}
+              Confirm Cash · GHS {amount.toFixed(2)}
             </Button>
           </div>
         )}
