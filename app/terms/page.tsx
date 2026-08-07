@@ -212,8 +212,13 @@ const TermsOfUsePage = () => {
                 </a>
                 <br />
                 Phone:{" "}
-                <a href="tel:+233244267329" className="text-emerald-600 hover:underline">
-                  +233 244 267 329
+                <a href="tel:+233555994787" className="text-emerald-600 hover:underline">
+                  +233 555 994 787
+                </a>
+                <br />
+                Office:{" "}
+                <a href="tel:0307031166" className="text-emerald-600 hover:underline">
+                  030 703 1166
                 </a>
                 <br />
                 Location: Greater Accra, Ghana

@@ -153,7 +153,8 @@ const PrivacyPolicyPage = () => {
               <p className="text-gray-800">
                 <strong>PCRAA</strong><br />
                 Email: <a href="mailto:ctsofficical716@gmail.com" className="text-emerald-600 hover:underline">ctsofficial716@gmail.com</a><br />
-                Phone: <a href="tel:+233244267329" className="text-emerald-600 hover:underline">+233 244 267 329</a><br />
+                Phone: <a href="tel:+233555994787" className="text-emerald-600 hover:underline">+233 555 994 787</a><br />
+                Office: <a href="tel:0307031166" className="text-emerald-600 hover:underline">030 703 1166</a><br />
                 Location: Greater Accra, Ghana
               </p>
             </div>
