@@ -22,7 +22,7 @@ const DriverAgreementPage = () => {
       <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-r-xl">
         <p className="text-sm text-amber-800">
           <strong>🤝 Agreement Notice:</strong> This Driver &amp; Rider Agreement applies to everyone
-          who provides transport, delivery, or gas services through the CTS Transport platform. By
+          who provides transport, delivery, or gas services through the CTS Go platform. By
           completing driver setup, you agree to these terms in addition to our Terms of Service and
           Privacy Policy.
         </p>
@@ -34,7 +34,7 @@ const DriverAgreementPage = () => {
             <HandshakeIcon className="h-5 w-5" /> 1. Independent Contractor Relationship
           </h2>
           <p className="text-gray-700">
-            You provide services on the CTS Transport platform as an independent contractor, not as
+            You provide services on the CTS Go platform as an independent contractor, not as
             an employee, agent, or partner of CTS. Nothing in this Agreement creates an employment
             relationship. You control how and when you work, decide which requests to accept, and are
             responsible for your own vehicle, equipment, and operating costs.
@@ -179,7 +179,7 @@ const DriverAgreementPage = () => {
             </p>
             <div className="mt-3">
               <p className="text-gray-800">
-                <strong>CTS Transport</strong>
+                <strong>CTS Go</strong>
                 <br />
                 Email:{" "}
                 <a
@@ -209,7 +209,7 @@ const DriverAgreementPage = () => {
       {/* Footer */}
       <div className="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
         <p className="text-sm text-gray-500">
-          © {new Date().getFullYear()} CTS Transport. All rights reserved.
+          © {new Date().getFullYear()} CTS Go. All rights reserved.
         </p>
         <div className="flex gap-3">
           

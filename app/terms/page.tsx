@@ -19,7 +19,7 @@ const TermsOfUsePage = () => {
 
       <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-r-xl">
         <p className="text-sm text-amber-800">
-          <strong>📋 Agreement Notice:</strong> By creating an account or using the CTS Transport
+          <strong>📋 Agreement Notice:</strong> By creating an account or using the CTS Go
           apps, you agree to these Terms of Service. Please read them carefully. If you do not agree,
           please do not use our services.
         </p>
@@ -28,10 +28,10 @@ const TermsOfUsePage = () => {
       <div className="space-y-6">
         <section>
           <h2 className="text-xl font-semibold text-emerald-800 mb-3 flex items-center gap-2">
-            <FileText className="h-5 w-5" /> 1. About CTS Transport
+            <FileText className="h-5 w-5" /> 1. About CTS Go
           </h2>
           <p className="text-gray-700">
-            CTS Transport (&quot;CTS&quot;, &quot;we&quot;, &quot;us&quot;) operates a technology
+            CTS Go (&quot;CTS&quot;, &quot;we&quot;, &quot;us&quot;) operates a technology
             platform that connects passengers and customers with independent drivers and riders for
             on-demand transport, parcel delivery, and LPG gas delivery services within Ghana. CTS
             provides the platform that facilitates these connections; the transport, delivery, and
@@ -201,7 +201,7 @@ const TermsOfUsePage = () => {
             </p>
             <div className="mt-3">
               <p className="text-gray-800">
-                <strong>CTS Transport</strong>
+                <strong>CTS Go</strong>
                 <br />
                 Email:{" "}
                 <a
@@ -231,7 +231,7 @@ const TermsOfUsePage = () => {
       {/* Footer */}
       <div className="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
         <p className="text-sm text-gray-500">
-          © {new Date().getFullYear()} CTS Transport. All rights reserved.
+          © {new Date().getFullYear()} CTS Go. All rights reserved.
         </p>
         <div className="flex gap-3">
           <Link

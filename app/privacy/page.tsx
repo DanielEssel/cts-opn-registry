@@ -21,7 +21,7 @@ const CTSPrivacyPolicyPage = () => {
 
       <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-r-xl">
         <p className="text-sm text-amber-800">
-          <strong>📢 Data Protection Notice:</strong> CTS Transport is committed to protecting your
+          <strong>📢 Data Protection Notice:</strong> CTS Go is committed to protecting your
           personal information in compliance with the{" "}
           <strong>Data Protection Act 2012 (Act 843)</strong> of Ghana. Your data is collected,
           processed, and stored securely, and used only for the purposes described below.
@@ -34,7 +34,7 @@ const CTSPrivacyPolicyPage = () => {
             <FileText className="h-5 w-5" /> 1. Who We Are
           </h2>
           <p className="text-gray-700">
-            CTS Transport (&quot;CTS&quot;, &quot;we&quot;, &quot;us&quot;) operates a technology
+            CTS Go (&quot;CTS&quot;, &quot;we&quot;, &quot;us&quot;) operates a technology
             platform connecting passengers and customers with independent drivers and riders for
             on-demand rides, parcel delivery, and LPG gas delivery in Ghana. This Privacy Policy
             explains how we collect, use, and protect your personal data when you use our passenger
@@ -187,7 +187,7 @@ const CTSPrivacyPolicyPage = () => {
             </p>
             <div className="mt-3">
               <p className="text-gray-800">
-                <strong>CTS Transport</strong>
+                <strong>CTS Go</strong>
                 <br />
                 Email:{" "}
                 <a
@@ -217,7 +217,7 @@ const CTSPrivacyPolicyPage = () => {
       {/* Footer */}
       <div className="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
         <p className="text-sm text-gray-500">
-          © {new Date().getFullYear()} CTS Transport. All rights reserved.
+          © {new Date().getFullYear()} CTS Go. All rights reserved.
         </p>
         <div className="flex gap-3">
          
