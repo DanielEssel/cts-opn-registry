@@ -135,7 +135,7 @@ const CTSPrivacyPolicyPage = () => {
           </p>
           <ul className="list-disc ml-6 space-y-1 text-gray-700">
             <li>Access, update, or request correction of your personal data.</li>
-            <li>Request deletion of your account and personal data, which you can start from within the app.</li>
+            <li>You can request deletion of your account and personal data by contacting CTS Transport using the account deletion procedure provided at https://rin.thectsafrica.com/delete-account.</li>
             <li>Withdraw consent where processing is based on consent.</li>
             <li>Object to or request restriction of certain processing.</li>
             <li>File a complaint with the Ghana Data Protection Commission.</li>
